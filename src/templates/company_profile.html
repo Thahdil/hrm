@@ -1,0 +1,161 @@
+{% extends 'base_modern.html' %} 
+{% block title %}Company Profile - Nexteons HR{% endblock %} 
+{% block header_title %}Company Profile{% endblock %} 
+
+{% block content %}
+<div class="flex-1" style="width: 100%; display: flex; flex-direction: column;">
+    <div style="display: grid; grid-template-columns: 1fr; gap: var(--spacing-xl);">
+        
+        <!-- 1. General Settings -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h3 class="card-title">Organization Details</h3>
+                    <p class="card-subtitle">General settings, branding, and working days</p>
+                </div>
+            </div>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <!-- Logo -->
+                    <div style="grid-column: span 2; padding: 20px; background: var(--gray-50); border-radius: var(--radius-lg); border: 1px solid var(--border);">
+                        <label class="form-label" style="margin-bottom: 12px;">Company Logo</label>
+                        <div style="display: flex; align-items: center; gap: 24px;">
+                            {% if form.instance.logo %}
+                            <div style="background: white; padding: 8px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
+                                <img src="{{ form.instance.logo.url }}" alt="Logo" style="height: 64px; object-fit: contain;">
+                            </div>
+                            {% endif %}
+                            <div style="flex: 1;">
+                                {{ form.logo }}
+                                <p style="font-size: 12px; color: var(--gray-500); margin-top: 8px;">Upload a high-resolution PNG or JPG logo.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Basic Info -->
+                    <div class="form-group">
+                        <label class="form-label">Company Name</label>
+                        {{ form.name }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Official Website</label>
+                        {{ form.website }}
+                    </div>
+
+                    <!-- HR Config -->
+                    <div style="grid-column: span 2; padding: 20px; background: #fafafa; border-radius: var(--radius-lg); border: 1px solid var(--border); margin: 10px 0;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                            <i class="ri-user-settings-line" style="color: var(--primary); font-size: 20px;"></i>
+                            <h4 style="margin: 0; font-size: 1rem; font-weight: 600;">Employee ID Configuration</h4>
+                        </div>
+                        <div class="form-group" style="max-width: 400px;">
+                            <label class="form-label">Employee ID Prefix</label>
+                            {{ form.employee_id_prefix }}
+                            <p style="font-size: 12px; color: var(--gray-500); margin-top: 8px;">The default prefix for new employee IDs (e.g., NEX-, EMP-). While creating an employee, you only need to type the number.</p>
+                        </div>
+                    </div>
+
+                    <!-- Indian Specifics -->
+                    <div class="form-group">
+                        <label class="form-label">PAN Number</label>
+                        {{ form.pan_number }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">GSTIN Number</label>
+                        {{ form.gstin }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">TAN Number</label>
+                        {{ form.tan_number }}
+                    </div>
+
+                    <!-- Address -->
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Registered Address</label>
+                        {{ form.address }}
+                    </div>
+                    
+                    <!-- Working Days -->
+                    <div style="grid-column: span 2; margin-top: 10px; background: #F0F9FF; padding: 20px; border-radius: var(--radius-lg); border: 1px solid #BAE6FD;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                            <i class="ri-calendar-2-line" style="color: #0284C7; font-size: 20px;"></i>
+                            <h4 style="margin: 0; font-size: 1rem; font-weight: 600; color: #0C4A6E;">Standard Working Days</h4>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                            <label class="checkbox-pill">
+                                {{ form.work_monday }}
+                                <span>Monday</span>
+                            </label>
+                            <label class="checkbox-pill">
+                                {{ form.work_tuesday }}
+                                <span>Tuesday</span>
+                            </label>
+                            <label class="checkbox-pill">
+                                {{ form.work_wednesday }}
+                                <span>Wednesday</span>
+                            </label>
+                            <label class="checkbox-pill">
+                                {{ form.work_thursday }}
+                                <span>Thursday</span>
+                            </label>
+                            <label class="checkbox-pill">
+                                {{ form.work_friday }}
+                                <span>Friday</span>
+                            </label>
+                            <label class="checkbox-pill">
+                                {{ form.work_saturday }}
+                                <span>Saturday</span>
+                            </label>
+                            <label class="checkbox-pill">
+                                {{ form.work_sunday }}
+                                <span>Sunday</span>
+                            </label>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #0369A1; margin-top: 12px; display: flex; align-items: center; gap: 4px;">
+                            <i class="ri-information-line"></i> Unchecked days will be treated as automated Weekly Offs.
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 32px; display: flex; gap: 12px; border-top: 1px solid var(--border); padding-top: 24px;">
+                    <button type="submit" class="btn btn-primary">Save Organization Profile</button>
+                    <a href="{% url 'system_admin' %}" class="btn btn-outline">Return to Admin</a>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+    </div>
+</div>
+
+<style>
+    .checkbox-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: white;
+        padding: 8px 16px;
+        border-radius: var(--radius-full);
+        border: 1px solid #BAE6FD;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #0369A1;
+    }
+    
+    .checkbox-pill:hover {
+        background: #E0F2FE;
+    }
+    
+    .checkbox-pill input[type="checkbox"] {
+        accent-color: #0284C7;
+        width: 16px;
+        height: 16px;
+    }
+</style>
+{% endblock %}

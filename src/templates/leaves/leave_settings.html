@@ -1,0 +1,151 @@
+{% extends 'base_modern.html' %}
+
+{% block title %}Leave Settings - Nexteons HR{% endblock %}
+{% block header_title %}Leave Policy Configuration{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: none; padding-bottom: 0;">
+            <div>
+                <h3 class="card-title">Leave Types & Entitlements</h3>
+                <p class="card-subtitle">Manage different leave categories and their respective quotas</p>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <!-- Status Filter -->
+                <div class="btn-group" style="background: var(--gray-100); padding: 4px; border-radius: 10px; display: flex; gap: 4px;">
+                    <a href="?status=active" class="btn" style="padding: 6px 16px; font-size: 13px; font-weight: 700; border: none; border-radius: 8px; {% if current_status != 'archived' %}background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05);{% else %}background: transparent; color: var(--gray-500);{% endif %}">
+                        Active
+                    </a>
+                    <a href="?status=archived" class="btn" style="padding: 6px 16px; font-size: 13px; font-weight: 700; border: none; border-radius: 8px; {% if current_status == 'archived' %}background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05);{% else %}background: transparent; color: var(--gray-500);{% endif %}">
+                        Archived
+                    </a>
+                </div>
+                <a href="{% url 'leave_type_add' %}" class="btn btn-primary" style="height: 40px; border-radius: 10px;">
+                    <i class="ri-add-line"></i> Add Leave Type
+                </a>
+            </div>
+        </div>
+
+        <div class="table-container" style="padding-top: 16px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="padding-left: 24px;">Leave Category</th>
+                        <th>Annual Quota</th>
+                        <th>Eligibility Rules</th>
+                        <th style="text-align: center;">Paid Status</th>
+                        <th style="text-align: center;">Carry Forward</th>
+                        <th style="text-align: right; padding-right: 24px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for type in leave_types %}
+                    <tr style="{% if not type.is_active %}opacity: 0.7; background: #f8fafc;{% endif %}">
+                        <td style="padding-left: 24px;">
+                            <div style="font-weight: 600; color: var(--gray-900);">
+                                {{ type.name }}
+                                {% if not type.is_active %}
+                                <span style="font-size: 10px; background: #fee2e2; color: #ef4444; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 800;">ARCHIVED</span>
+                                {% endif %}
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--gray-500);">Type ID: #LT{{ type.id|stringformat:"03d" }}</div>
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">
+                                    {% if type.accrual_frequency == 'MONTHLY' %}
+                                        {% widthratio type.days_entitlement 12 1 %}.0
+                                    {% else %}
+                                        {{ type.days_entitlement }}
+                                    {% endif %}
+                                </span>
+                                <span style="font-size: 0.85rem; color: var(--gray-500);">
+                                    {% if type.accrual_frequency == 'MONTHLY' %}Days / Month{% else %}Days / Year{% endif %}
+                                </span>
+                            </div>
+                            {% if type.duration_days == 1 %}
+                                <div style="font-size: 10px; color: #6366f1; font-weight: 700; text-transform: uppercase; margin-top: 4px;">
+                                    <i class="ri-checkbox-circle-line"></i> Single Day Only
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <span class="badge badge-info" style="width: fit-content;">{{ type.get_eligibility_gender_display }}</span>
+                                {% if type.min_service_days > 0 %}
+                                <div style="font-size: 0.75rem; color: var(--gray-500); display: flex; align-items: center; gap: 4px;">
+                                    <i class="ri-time-line"></i> Min. Service: {{ type.min_service_days }} days
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td style="text-align: center;">
+                            {% if type.is_paid %}
+                            <span class="badge badge-success">PAID</span>
+                            {% else %}
+                            <span class="badge" style="background: var(--gray-100); color: var(--gray-600);">UNPAID</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if type.is_carry_forward %}
+                            <div style="color: var(--primary); font-size: 1.25rem;"><i class="ri-checkbox-circle-fill"></i></div>
+                            {% else %}
+                            <div style="color: var(--gray-300); font-size: 1.25rem;"><i class="ri-indeterminate-circle-fill"></i></div>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right; padding-right: 24px;">
+                            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                                <a href="{% url 'leave_type_edit' type.id %}" class="btn" style="padding: 8px; background: #eff6ff; color: #2563eb; border: none; border-radius: 8px;" title="Edit Policy">
+                                    <i class="ri-edit-line"></i>
+                                </a>
+                                
+                                {% if type.is_active %}
+                                <form action="{% url 'leave_type_delete' type.id %}" method="post" style="display: inline;" onsubmit="return confirm('Archive this leave policy? This will hide it from employees but keep historical data.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn" style="padding: 8px; background: #fff1f2; color: #e11d48; border: none; border-radius: 8px;" title="Archive Policy">
+                                        <i class="ri-archive-line"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form action="{% url 'leave_type_restore' type.id %}" method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn" style="padding: 8px; background: #f0fdf4; color: #16a34a; border: none; border-radius: 8px;" title="Restore Policy">
+                                        <i class="ri-refresh-line"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 60px 20px;">
+                            <div style="width: 60px; height: 60px; background: #f8fafc; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: #cbd5e1;">
+                                <i class="ri-close-circle-line" style="font-size: 32px;"></i>
+                            </div>
+                            <h4 style="color: #64748b; font-weight: 600; margin-bottom: 4px;">No {{ current_status }} leave types</h4>
+                            <p style="color: #94a3b8; font-size: 13px;">Modify filters or add a new leave category.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Accrual Note -->
+    <div style="margin-top: 24px; display: flex; align-items: start; gap: 16px; padding: 20px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: var(--radius-lg); color: #92400E;">
+        <div style="flex-shrink: 0; width: 40px; height: 40px; background: #FCD34D; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; color: #92400E;">
+            <i class="ri-information-line" style="font-size: 24px;"></i>
+        </div>
+        <div style="flex: 1;">
+            <h4 style="font-weight: 600; color: #92400E; margin-bottom: 4px; font-size: 1rem;">Annual Accrual Note</h4>
+            <p style="font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                Leave balances are automatically accrued at the end of every payroll cycle based on the 'Annual Days' setting above. 
+                Any modifications to entitlement days will impact future accrual calculations only. Existing balances will remain unaffected.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

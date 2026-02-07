@@ -1,0 +1,232 @@
+{% extends 'base_modern.html' %}
+{% load static %}
+
+{% block title %}{{ title|default:"User Form" }} - Nexteons HR{% endblock %}
+{% block header_title %}{{ title|default:"User Form" }}{% endblock %}
+{% block page_subtitle %}Manage user account details and permissions.{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; width: 100%;">
+    <div class="card shadow-medium">
+        <div class="card-header border-bottom">
+            <div class="header-content">
+                <h3 class="card-title">{{ title|default:"User Details" }}</h3>
+                <p class="card-subtitle">Please fill in the information below to create or update the user.</p>
+            </div>
+            <div class="icon-box-lg">
+                <i class="ri-user-settings-line"></i>
+            </div>
+        </div>
+
+        <form method="post" class="p-6">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="alert alert-error mb-6">
+                {% for error in form.non_field_errors %}
+                    <div class="alert-content">
+                        <i class="ri-error-warning-line"></i>
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="form-grid-layout">
+                <!-- Identity Section -->
+                <div class="form-section-title">Identity Information</div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}<div class="field-error">{{ form.username.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }}</label>
+                    {{ form.full_name }}
+                    {% if form.full_name.errors %}<div class="field-error">{{ form.full_name.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}<div class="field-error">{{ form.email.errors.0 }}</div>{% endif %}
+                </div>
+
+                <!-- Roles & Permissions -->
+                <div class="form-section-title full-width mt-4">Roles & Management</div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.role.id_for_label }}">{{ form.role.label }}</label>
+                    {{ form.role }}
+                    {% if form.role.errors %}<div class="field-error">{{ form.role.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.additional_role.id_for_label }}">{{ form.additional_role.label }}</label>
+                    {{ form.additional_role }}
+                    {% if form.additional_role.errors %}<div class="field-error">{{ form.additional_role.errors.0 }}</div>{% endif %}
+                </div>
+
+
+                
+                {% if form.password %}
+                <!-- Password Section (for Edit) -->
+                 <div class="form-section-title full-width mt-4">Security</div>
+                 <div class="form-group full-width">
+                    <label class="form-label" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                    {{ form.password }}
+                    <div class="field-help">{{ form.password.help_text }}</div>
+                    {% if form.password.errors %}<div class="field-error">{{ form.password.errors.0 }}</div>{% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Status -->
+                <div class="form-group full-width mt-2">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        {{ form.is_active }}
+                        <div>
+                            <span class="font-medium text-gray-900">Active Account</span>
+                            <p class="text-xs text-gray-500">User can log in and access the system.</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-actions mt-8 border-top pt-6">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="ri-save-line"></i> {{ button_text|default:"Save Changes" }}
+                </button>
+                <a href="{% url 'user_list' %}" class="btn btn-outline btn-lg">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Page Specific Styles matching password_change.html pattern */
+    .icon-box-lg {
+        width: 48px;
+        height: 48px;
+        background: rgba(37, 99, 235, 0.1);
+        color: var(--primary);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+
+    .border-bottom {
+        border-bottom: 1px solid var(--gray-200);
+        padding-bottom: 20px;
+    }
+    
+    .border-top {
+        border-top: 1px solid var(--gray-200);
+    }
+
+    .p-6 { padding: 24px; }
+    .pt-6 { padding-top: 24px; }
+    .mb-6 { margin-bottom: 24px; }
+    .mt-4 { margin-top: 16px; }
+    .mt-8 { margin-top: 32px; }
+
+    .alert-error {
+        background: #FEF2F2;
+        color: #DC2626;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .alert-content {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .form-grid-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .form-section-title {
+        grid-column: 1 / -1;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: var(--gray-500);
+        margin-bottom: 8px;
+        margin-top: 8px;
+        border-bottom: 1px solid var(--gray-100);
+        padding-bottom: 8px;
+    }
+
+    .field-error {
+        color: #DC2626;
+        font-size: 12px;
+        margin-top: 6px;
+        font-weight: 500;
+    }
+
+    .field-help {
+        color: var(--gray-500);
+        font-size: 11px;
+        margin-top: 6px;
+        line-height: 1.4;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    .btn-lg {
+        height: 48px;
+        font-size: 15px;
+        padding: 0 32px;
+    }
+    
+    /* Toggle Checkbox Style */
+    input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        border: 2px solid var(--gray-300);
+        appearance: none;
+        background-color: white;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: contain;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    
+    input[type="checkbox"]:checked {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
+    }
+
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .gap-3 { gap: 12px; }
+    .cursor-pointer { cursor: pointer; }
+    .font-medium { font-weight: 500; }
+    .text-gray-900 { color: var(--gray-900); }
+    .text-xs { font-size: 12px; }
+    .text-gray-500 { color: var(--gray-500); }
+</style>
+{% endblock %}

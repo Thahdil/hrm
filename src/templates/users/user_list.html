@@ -1,0 +1,137 @@
+{% extends 'base_modern.html' %}
+{% load static %}
+
+{% block title %}User Management - Nexteons HR{% endblock %}
+{% block header_title %}User Management{% endblock %}
+{% block page_subtitle %}Manage system users and access control.{% endblock %}
+
+{% block content %}
+<div class="flex-1 dashboard-grid">
+    <div class="card full-height-card no-padding overflow-hidden">
+        <div class="card-header-actions p-6 border-bottom mb-0">
+            <div>
+                <h3 class="card-title">Registered Users</h3>
+                <p class="card-subtitle">Manage system users and access control</p>
+            </div>
+            <a href="{% url 'user_create' %}" class="btn btn-primary">
+                <i class="ri-user-add-line"></i> Create User
+            </a>
+        </div>
+
+        <div class="card-body-scroll">
+            <div class="table-container shadow-none border-0 radius-0">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Last Login</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>
+                        <div class="font-weight-600 text-gray-900">{{ u.username }}</div>
+                    </td>
+                    <td>{{ u.email }}</td>
+
+                    <td>
+                        {% if u.role == 'ADMIN' %}
+                        <span class="badge badge-error">Admin</span>
+                        {% elif u.role == 'HR_MANAGER' %}
+                        <span class="badge badge-warning">HR</span>
+                        {% elif u.role == 'PROJECT_MANAGER' %}
+                        <span class="badge badge-info">Manager</span>
+                        {% elif u.role == 'CEO' %}
+                        <span class="badge badge-purple">CEO</span>
+                        {% else %}
+                        <span class="badge badge-gray">{{ u.get_role_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.is_active %}
+                        <span class="status-indicator active">
+                            <span class="indicator-dot"></span> Active
+                        </span>
+                        {% else %}
+                        <span class="status-indicator inactive">
+                            <span class="indicator-dot"></span> Inactive
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.last_login|default:"Never" }}</td>
+                    <td class="text-right">
+                        <a href="{% url 'user_edit' u.pk %}" class="btn btn-sm btn-outline">
+                            <i class="ri-edit-line"></i> Edit
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center p-8 text-gray-500">No users found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .no-padding { padding: 0 !important; }
+    .overflow-hidden { overflow: hidden; }
+    .p-6 { padding: 24px; }
+    .border-bottom { border-bottom: 1px solid var(--gray-200); }
+    .mb-0 { margin-bottom: 0 !important; }
+    
+    .shadow-none { box-shadow: none; }
+    .border-0 { border: none; }
+    .radius-0 { border-radius: 0; }
+    .w-full { width: 100%; }
+    
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    .p-8 { padding: 32px; }
+    
+    .font-weight-600 { font-weight: 600; }
+    .text-gray-900 { color: var(--gray-900); }
+    
+    /* Badge Variants */
+    .badge-purple { background: #f3e8ff; color: #6b21a8; }
+    .badge-gray { background: #f1f5f9; color: #475569; }
+    
+    /* Status Indicator */
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+    
+    .status-indicator.active { color: var(--success); }
+    .status-indicator.inactive { color: var(--error); }
+    
+    .indicator-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: currentColor;
+    }
+    
+    .btn-sm {
+        padding: 4px 12px;
+        font-size: 13px;
+        height: 32px;
+    }
+    
+    /* Table specific overrides */
+    td { vertical-align: middle; }
+</style>
+{% endblock %}

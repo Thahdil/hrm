@@ -1,0 +1,347 @@
+{% extends 'base_modern.html' %}
+{% load humanize %}
+
+{% block title %}Employees - Nexteons HRMS{% endblock %}
+{% block header_title %}Employee Directory{% endblock %}
+
+{% block content %}
+<div class="employee-directory-container flex-1" style="animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column;">
+    <!-- Page Header Card -->
+    <div class="glass-card" style="margin-bottom: 32px; padding: 32px; border-radius: 24px; background: white; box-shadow: 0 10px 40px rgba(0,0,0,0.04); border: 1px solid var(--gray-100); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1 style="font-size: 28px; font-weight: 800; color: var(--gray-900); margin: 0; letter-spacing: -0.02em;">Employee Directory</h1>
+            <p style="font-size: 15px; color: var(--gray-500); margin: 6px 0 0 0;">Manage and view your organization's entire workforce in one place.</p>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <div class="stat-pill" style="background: rgba(37, 99, 235, 0.05); padding: 12px 20px; border-radius: 16px; border: 1px solid rgba(37, 99, 235, 0.1); text-align: right;">
+                <span style="display: block; font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase;">Total Staff</span>
+                <span style="font-size: 20px; font-weight: 800; color: var(--gray-900);">{{ total_count }}</span>
+            </div>
+            <a href="{% url 'employee_add' %}" class="premium-button primary" style="text-decoration: none;">
+                <i class="ri-user-add-fill"></i>
+                <span>Add Employee</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Advanced Filter Bar -->
+    <div class="glass-card" style="margin-bottom: 32px; padding: 20px; border-radius: 24px; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border: 1px solid var(--gray-100);">
+        <form method="get" style="display: grid; grid-template-columns: 1fr auto auto; gap: 16px; align-items: center;">
+            <div class="search-box-wrapper" style="position: relative;">
+                <i class="ri-search-2-line" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 20px;"></i>
+                <input type="text" name="search" id="employeeSearchInput" class="premium-input" placeholder="Search by name, ID, or designation..." value="{{ search_query }}" style="padding-left: 48px;">
+            </div>
+            
+            <div class="filter-group">
+                <select name="status" class="premium-select" onchange="this.form.submit()">
+                    <option value="active" {% if current_status == 'active' %}selected{% endif %}>Status: Active</option>
+                    <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>Status: Archived</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <select name="department" class="premium-select" onchange="this.form.submit()">
+                    <option value="">All Departments</option>
+                    {% for code, label in departments %}
+                        <option value="{{ code }}" {% if dept_filter == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="glass-card full-height-card flex-1" style="border-radius: 24px; background: white; box-shadow: 0 10px 40px rgba(0,0,0,0.04); border: 1px solid var(--gray-100); overflow: hidden;">
+        <div class="card-body-scroll">
+            <table class="premium-table">
+                <thead style="position: sticky; top: 0; z-index: 10; background: #F8FAFC; box-shadow: 0 1px 0 var(--gray-100);">
+                    <tr>
+                        <th style="width: 30%;">Full Name</th>
+                        <th>Employee ID</th>
+                        <th>Designation</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th style="text-align: right; padding-right: 32px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr>
+                        <td style="padding-left: 32px;">
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div class="premium-avatar">
+                                    {{ emp.full_name|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: var(--gray-900); font-size: 15px;">{{ emp.full_name|upper }}</div>
+                                    <div style="font-size: 12px; color: var(--gray-400);">{{ emp.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge secondary">
+                                {% if emp.employee_id %}{{ emp.employee_id }}{% else %}EMP-{{ emp.pk|stringformat:"03d" }}{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="font-weight: 500; color: var(--gray-700);">{{ emp.designation|default:"--" }}</span>
+                        </td>
+                        <td>
+                            <span class="dept-pill">{{ emp.get_department_display|default:emp.department|default:"General" }}</span>
+                        </td>
+                        <td>
+                            {% if emp.is_on_leave %}
+                                <span class="status-pill warning">On Leave</span>
+                            {% elif emp.status == 'ACTIVE' %}
+                                <span class="status-pill success">Active</span>
+                            {% elif emp.status == 'ARCHIVED' %}
+                                <span class="status-pill danger">Archived</span>
+                            {% else %}
+                                <span class="status-pill secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding-right: 32px; text-align: right;">
+                            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                                {% if emp.status == 'ARCHIVED' %}
+                                    <form action="{% url 'employee_restore' emp.pk %}" method="post">
+                                        {% csrf_token %}
+                                        <button type="submit" class="action-btn success" title="Restore"><i class="ri-refresh-line"></i></button>
+                                    </form>
+                                    <form action="{% url 'employee_permanent_delete' emp.pk %}" method="post">
+                                        {% csrf_token %}
+                                        <button type="submit" class="action-btn danger" title="Delete Permanent"><i class="ri-delete-bin-fill"></i></button>
+                                    </form>
+                                {% else %}
+                                    <a href="{% url 'employee_edit' emp.pk %}" class="action-btn info" title="Edit"><i class="ri-pencil-fill"></i></a>
+                                    <form action="{% url 'employee_delete' emp.pk %}" method="post">
+                                        {% csrf_token %}
+                                        <button type="submit" class="action-btn danger" title="Archive"><i class="ri-archive-fill"></i></button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="padding: 100px; text-align: center;">
+                            <div style="color: var(--gray-300); font-size: 64px; margin-bottom: 16px;">
+                                <i class="ri-group-line"></i>
+                            </div>
+                            <h4 style="margin: 0; color: var(--gray-500); font-weight: 600;">No employees found in the directory</h4>
+                            <p style="margin: 8px 0 0; color: var(--gray-400); font-size: 14px;">Try adjusting your filters or search keywords</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .premium-input {
+        width: 100%;
+        padding: 12px 16px;
+        background: white;
+        border: 2px solid var(--gray-100);
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .premium-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .premium-select {
+        padding: 12px 16px;
+        background: white;
+        border: 2px solid var(--gray-100);
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--gray-700);
+        cursor: pointer;
+        min-width: 180px;
+    }
+
+    .premium-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+
+    .premium-button.primary {
+        background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
+        color: white;
+        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+    }
+
+    .premium-button.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 25px -5px rgba(37, 99, 235, 0.4);
+    }
+
+    .premium-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .premium-table th {
+        background: #F8FAFC;
+        padding: 18px 20px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--gray-400);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .premium-table td {
+        padding: 20px;
+        border-bottom: 1px solid var(--gray-50);
+        vertical-align: middle;
+    }
+
+    .premium-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .premium-table tr:hover td {
+        background: rgba(37, 99, 235, 0.01);
+    }
+
+    .premium-avatar {
+        width: 44px;
+        height: 44px;
+        background: var(--primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 18px;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        flex-shrink: 0;
+        aspect-ratio: 1/1;
+    }
+
+    .dept-pill {
+        padding: 6px 14px;
+        background: var(--gray-50);
+        color: var(--gray-600);
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-pill {
+        padding: 6px 14px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .status-pill.success { background: #ecfdf5; color: #059669; }
+    .status-pill.warning { background: #fffbeb; color: #d97706; }
+    .status-pill.danger { background: #fef2f2; color: #dc2626; }
+    .status-pill.secondary { background: #f9fafb; color: #6b7280; }
+
+    .action-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 18px;
+    }
+
+    .action-btn.info { background: #eff6ff; color: #3b82f6; }
+    .action-btn.info:hover { background: #3b82f6; color: white; }
+    
+    .action-btn.success { background: #ecfdf5; color: #10b981; }
+    .action-btn.success:hover { background: #10b981; color: white; }
+
+    .action-btn.danger { background: #fef2f2; color: #ef4444; }
+    .action-btn.danger:hover { background: #ef4444; color: white; }
+
+    .badge.secondary {
+        background: var(--gray-100);
+        color: var(--gray-600);
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-family: monospace;
+        font-weight: 700;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('employeeSearchInput');
+        const tableRows = document.querySelectorAll('.premium-table tbody tr:not(:has(td[colspan]))');
+
+        if (!searchInput) return;
+
+        // Real-time table filtering
+        searchInput.addEventListener('input', function() {
+            const term = this.value.toLowerCase().trim();
+            
+            // Filter table rows
+            tableRows.forEach(row => {
+                const nameEl = row.querySelector('td:first-child div:nth-child(2) div:first-child');
+                const empIdEl = row.querySelector('td:nth-child(2) span');
+                const designationEl = row.querySelector('td:nth-child(3) span');
+                
+                if (nameEl) {
+                    const name = nameEl.textContent.toLowerCase().trim();
+                    const empId = empIdEl ? empIdEl.textContent.toLowerCase().trim() : '';
+                    const designation = designationEl ? designationEl.textContent.toLowerCase().trim() : '';
+                    
+                    const matches = term === '' || 
+                                  name.startsWith(term) || 
+                                  empId.startsWith(term) || 
+                                  designation.startsWith(term);
+                    
+                    if (matches) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        });
+
+        // Keydown handling
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                this.dispatchEvent(new Event('input'));
+                this.blur();
+            }
+        });
+    });
+</script>
+{% endblock %}

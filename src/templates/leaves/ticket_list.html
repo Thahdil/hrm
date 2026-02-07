@@ -1,0 +1,72 @@
+{% extends 'base_modern.html' %}
+
+{% block title %}Flight Tickets - Nexteons HR{% endblock %}
+{% block header_title %}Flight Ticket Requests{% endblock %}
+
+{% block content %}
+<div class="flex-1" style="width: 100%; display: flex; flex-direction: column;">
+    <div class="card full-height-card flex-1" style="padding: 0; overflow: hidden; border: none; box-shadow: var(--shadow-md);">
+        <div class="card-header" style="padding: 32px; border-bottom: 1px solid var(--gray-100); margin-bottom: 0; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 class="card-title" style="font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em;">Ticket Entitlements</h3>
+                <p class="card-subtitle" style="font-weight: 500; color: var(--gray-500);">Manage flight ticket requests and approvals</p>
+            </div>
+            <a href="{% url 'ticket_add' %}" class="btn btn-primary" style="border-radius: 12px; font-weight: 700; padding: 12px 24px;">
+                <i class="ri-plane-line"></i> New Request
+            </a>
+        </div>
+
+        <div class="card-body-scroll">
+            <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                <thead>
+                    <tr style="background: #fafafa;">
+                        <th style="padding: 16px 32px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Employee</th>
+                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Destination</th>
+                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Travel Date</th>
+                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Type</th>
+                        <th style="padding: 16px 32px; text-align: center; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Status</th>
+                    </tr>
+                </thead>
+                <tbody style="background: white;">
+            {% for ticket in tickets %}
+            <tr style="border-bottom: 1px solid var(--gray-100); transition: background 0.2s;" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background='transparent'">
+                <td style="padding: 16px 32px;">
+                    <div style="font-weight: 600; color: var(--gray-900);">{{ ticket.employee.full_name }}</div>
+                </td>
+                <td style="padding: 16px 20px;">
+                    <span style="font-weight: 500; color: var(--gray-700);">{{ ticket.destination }}</span>
+                </td>
+                <td style="padding: 16px 20px; color: var(--gray-600);">{{ ticket.travel_date|date:"M d, Y" }}</td>
+                <td style="padding: 16px 20px;">
+                    {% if ticket.is_encashment %}
+                    <span class="badge" style="background: #ecfdf5; color: #047857; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700;">Cash Claim</span>
+                    {% else %}
+                    <span class="badge" style="background: #eef2ff; color: #4338ca; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700;">Ticket Booking</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 16px 32px; text-align: center;">
+                    {% if ticket.status == 'BOOKED' or ticket.status == 'ENCASHED' %}
+                    <span class="status-pill success">Approved</span>
+                    {% elif ticket.status == 'REJECTED' %}
+                    <span class="status-pill danger">Rejected</span>
+                    {% else %}
+                    <span class="status-pill warning">Requested</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="padding: 80px 32px; text-align: center;">
+                    <div style="color: var(--gray-400); font-size: 14px;">
+                        <i class="ri-plane-line" style="font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.3;"></i>
+                        No ticket requests found.
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

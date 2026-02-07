@@ -1,0 +1,202 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Nexteons HRMS{% endblock %}</title>
+    
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Remix Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <!-- Modern Design System CSS -->
+    <link rel="stylesheet" href="{% static 'css/modern.css' %}?v=1.0">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- Logo Header -->
+            <div class="sidebar-header">
+                <a href="{% url 'dashboard' %}" class="sidebar-logo" style="display: flex; justify-content: center; width: 100%; padding: 0;">
+                    <img src="{% static 'img/logo_color.png' %}" alt="Nexteons" style="width: 100%; height: auto; max-width: 100%; object-fit: contain;">
+                </a>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="sidebar-nav">
+                <!-- Main Section -->
+                <div class="nav-section">
+                    <a href="{% url 'dashboard' %}" class="nav-item {% if request.path == '/' %}active{% endif %}">
+                        <i class="ri-dashboard-3-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+                
+                <!-- HR Management -->
+                {% if user.is_staff or user.is_admin or user.is_hr or user.is_ceo or user.is_project_manager %}
+                <div class="nav-section">
+                    <div class="nav-section-title">HR Management</div>
+                    
+                    <a href="{% url 'employee_list' %}" class="nav-item {% if 'employees' in request.path and 'my-profile' not in request.path %}active{% endif %}">
+                        <i class="ri-team-line"></i>
+                        <span>Employees</span>
+                    </a>
+                    
+                    <a href="{% url 'attendance_list' %}" class="nav-item {% if 'payroll/attendance' in request.path %}active{% endif %}">
+                        <i class="ri-calendar-check-line"></i>
+                        <span>Attendance</span>
+                    </a>
+                </div>
+                {% endif %}
+                
+                <!-- Leave & Time -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Leave & Time</div>
+                    
+                    <a href="{% url 'leave_list' %}" class="nav-item {% if 'leaves' in request.path %}active{% endif %}">
+                        <i class="ri-time-line"></i>
+                        <span>{% if user.is_admin or user.is_ceo %}Leave Management{% else %}My Leaves{% endif %}</span>
+                    </a>
+                </div>
+                
+                <!-- Payroll -->
+                {% if user.is_staff or user.is_admin or user.is_hr or user.is_ceo %}
+                <div class="nav-section">
+                    <div class="nav-section-title">Payroll</div>
+                    
+                    <a href="{% url 'payroll_list' %}" class="nav-item {% if 'payroll/batches' in request.path %}active{% endif %}">
+                        <i class="ri-money-dollar-circle-line"></i>
+                        <span>Payroll (WPS)</span>
+                    </a>
+                </div>
+                {% endif %}
+                
+                <!-- Resources -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Resources</div>
+                    
+                    <a href="{% url 'document_list' %}" class="nav-item {% if 'documents' in request.path %}active{% endif %}">
+                        <i class="ri-folder-shield-line"></i>
+                        <span>Documents</span>
+                    </a>
+                </div>
+                
+                <!-- System -->
+                {% if user.is_staff or user.is_admin or user.is_ceo %}
+                <div class="nav-section">
+                    <div class="nav-section-title">System</div>
+                    
+                    <a href="{% url 'system_admin' %}" class="nav-item {% if 'system-admin' in request.path or 'administration' in request.path %}active{% endif %}">
+                        <i class="ri-settings-3-line"></i>
+                        <span>Administration</span>
+                    </a>
+                </div>
+                {% endif %}
+            </nav>
+            
+            <!-- User Profile Footer -->
+            <div class="sidebar-footer">
+                <div class="user-profile" onclick="toggleUserMenu()">
+                    <div class="user-avatar">
+                        {{ user.full_name|default:user.username|slice:":1"|upper }}
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">{{ user.full_name|default:user.username|upper }}</span>
+                        <span class="user-role">{{ user.get_role_display|default:"Employee" }}</span>
+                    </div>
+
+                </div>
+                
+                <!-- User Dropdown Menu -->
+                <div id="user-menu" style="display: none; margin-top: 8px; background: var(--gray-50); border-radius: var(--radius); padding: 8px;">
+                    {% if not user.is_admin %}
+                    <a href="{% url 'my_profile' %}" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-sm); text-decoration: none; color: var(--gray-700); font-size: 14px; transition: background 0.2s;">
+                        <i class="ri-user-line"></i>
+                        <span>My Profile</span>
+                    </a>
+                    {% endif %}
+                    <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-sm); background: none; border: none; color: var(--error); font-size: 14px; cursor: pointer; transition: background 0.2s;">
+                            <i class="ri-logout-box-r-line"></i>
+                            <span>Logout</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="page-title-section">
+                    <h1>{% block header_title %}Dashboard{% endblock %}</h1>
+                    <p class="page-subtitle">{% block page_subtitle %}Welcome back, {{ user.full_name|default:user.username|title }}!{% endblock %}</p>
+                </div>
+                
+                <div class="top-bar-actions">
+                    <!-- Actions removed as per request -->
+                </div>
+            </div>
+            
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Messages -->
+                {% if messages %}
+                <div style="margin-bottom: var(--spacing-md);">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}" style="padding: 16px; border-radius: var(--radius); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; {% if message.tags == 'success' %}background: var(--success-light); color: var(--success);{% elif message.tags == 'error' %}background: var(--error-light); color: var(--error);{% elif message.tags == 'warning' %}background: var(--warning-light); color: var(--warning);{% else %}background: var(--info-light); color: var(--info);{% endif %}">
+                        <i class="{% if message.tags == 'success' %}ri-checkbox-circle-line{% elif message.tags == 'error' %}ri-error-warning-line{% elif message.tags == 'warning' %}ri-alert-line{% else %}ri-information-line{% endif %}" style="font-size: 20px;"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Page Content -->
+                {% block content %}
+                {% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // Toggle user menu
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-menu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const userProfile = document.querySelector('.user-profile');
+            const userMenu = document.getElementById('user-menu');
+            
+            if (!userProfile.contains(event.target)) {
+                userMenu.style.display = 'none';
+            }
+        });
+        
+        // Add hover effects to user menu items
+        document.querySelectorAll('#user-menu a, #user-menu button').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.background = 'var(--gray-200)';
+            });
+            item.addEventListener('mouseleave', function() {
+                this.style.background = 'transparent';
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

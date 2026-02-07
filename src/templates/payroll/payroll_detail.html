@@ -1,0 +1,58 @@
+{% extends 'base_modern.html' %}
+
+{% block title %}Payroll Details - Nexteons HR{% endblock %}
+{% block header_title %}Batch Details: {{ batch.month|date:"F Y" }}{% endblock %}
+
+{% block content %}
+<div class="section-wrapper">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h3 class="section-title">Payslip Entries</h3>
+        <div style="display: flex; gap: 10px;">
+            {% if batch.sif_file %}
+            <a href="{{ batch.sif_file.url }}" class="btn btn-outline">
+                <i class="ri-download-line"></i> Download .SIF
+            </a>
+            {% endif %}
+            <a href="{% url 'payroll_list' %}" class="btn">
+                <i class="ri-arrow-left-line"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="text-align: left; background-color: #f8f9fa;">
+                <th style="padding: 12px; border-bottom: 2px solid var(--border);">Employee</th>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border);">Basic</th>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border);">Allowances</th>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border);">Deductions</th>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border);">Net Salary</th>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border);">Work Days</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+            <tr>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border);">
+                    <div style="font-weight: 700; color: #334155; font-size: 14.5px;">{{ entry.employee.full_name|upper }}</div>
+                    <div style="font-size: 11px; color: #94a3b8; font-family: monospace; font-weight: 700;">EMP-{{ entry.employee.pk|stringformat:"03d" }}</div>
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border);">{{ currency_symbol }} {{ entry.basic_salary }}</td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border);">{{ currency_symbol }} {{ entry.allowances }}</td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border); color: #ef4444;">- {{ currency_symbol }} {{ entry.deductions }}</td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border);">
+                    <span style="font-weight: 700; color: #10b981;">{{ currency_symbol }} {{ entry.net_salary }}</span>
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border);">
+                    {{ entry.days_worked }} / 30
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">No entries found for this batch.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

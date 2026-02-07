@@ -1,0 +1,55 @@
+{% extends 'base_modern.html' %}
+
+{% block title %}My Payslips - Nexteons HR{% endblock %}
+{% block header_title %}My Salary History{% endblock %}
+
+{% block content %}
+<div class="section-wrapper">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="text-align: left; background-color: #f8f9fa;">
+                <th style="padding: 12px; border-bottom: 2px solid var(--border);">Month</th>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border);">Basic</th>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border);">Allowances</th>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border);">Deductions</th>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border);">Net Salary</th>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border);">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for slip in payslips %}
+            <tr>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border); font-weight: 500;">
+                    {{ slip.batch.month|date:"F Y" }}
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border);">
+                    {{ slip.basic_salary }} {{ currency_code }}
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border); color: #166534;">
+                    +{{ slip.total_allowances }}
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border); color: #991b1b;">
+                    -{{ slip.total_deductions }}
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border); font-weight: 600;">
+                    {{ slip.net_salary }} {{ currency_code }}
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border);">
+                    {% if slip.is_paid %}
+                    <span
+                        style="font-size: 0.8rem; background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px;">Paid</span>
+                    {% else %}
+                    <span
+                        style="font-size: 0.8rem; background: #f1f5f9; color: #64748b; padding: 4px 8px; border-radius: 4px;">Processing</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="padding: 20px; text-align: center;">No payslip records found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

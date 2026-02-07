@@ -1,0 +1,633 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexteons HRMS - Secure Login</title>
+    
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Remix Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated Background Shapes */
+        .bg-shape {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .shape-1 {
+            width: 500px;
+            height: 500px;
+            background: white;
+            top: -250px;
+            left: -250px;
+            animation-delay: 0s;
+        }
+
+        .shape-2 {
+            width: 400px;
+            height: 400px;
+            background: white;
+            bottom: -200px;
+            right: -200px;
+            animation-delay: 5s;
+        }
+
+        .shape-3 {
+            width: 300px;
+            height: 300px;
+            background: white;
+            top: 50%;
+            right: -150px;
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        /* Main Container */
+        .login-wrapper {
+            width: 100%;
+            max-width: 1100px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            margin: 0 auto;
+            z-index: 10;
+        }
+
+        /* Left Side - Branding */
+        .login-branding {
+            background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+            padding: 60px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-branding::before {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            top: -150px;
+            right: -150px;
+        }
+
+        .login-branding::after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            bottom: -100px;
+            left: -100px;
+        }
+
+        .branding-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .brand-logo {
+            width: 120px;
+            height: auto;
+            margin-bottom: 30px;
+            filter: brightness(0) invert(1);
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .branding-title {
+            font-size: 36px;
+            font-weight: 900;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+            animation: fadeInDown 0.8s ease-out 0.2s both;
+        }
+
+        .branding-subtitle {
+            font-size: 18px;
+            font-weight: 400;
+            opacity: 0.9;
+            line-height: 1.6;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out 0.4s both;
+        }
+
+        .feature-list {
+            text-align: left;
+            margin-top: 40px;
+            animation: fadeInDown 0.8s ease-out 0.6s both;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            font-size: 15px;
+            opacity: 0.95;
+        }
+
+        .feature-item i {
+            font-size: 20px;
+            color: #60A5FA;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Right Side - Login Form */
+        .login-form-section {
+            padding: 60px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #FAFBFC;
+        }
+
+        .form-header {
+            margin-bottom: 40px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .form-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: #0F172A;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .form-subtitle {
+            font-size: 15px;
+            color: #64748B;
+            font-weight: 500;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 16px 18px;
+            border-radius: 12px;
+            margin-bottom: 28px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+            color: #DC2626;
+            border: 1px solid #FECACA;
+        }
+
+        .alert i {
+            font-size: 22px;
+        }
+
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 24px;
+            animation: fadeInUp 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .form-group:nth-child(1) { animation-delay: 0.1s; }
+        .form-group:nth-child(2) { animation-delay: 0.2s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94A3B8;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94A3B8;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 5;
+        }
+
+        .password-toggle:hover {
+            color: #2563EB;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px 20px 16px 52px;
+            border: 2px solid #E2E8F0;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            color: #1E293B;
+            font-family: inherit;
+        }
+
+        .form-input::placeholder {
+            color: #CBD5E1;
+        }
+
+        .form-input:focus {
+            border-color: #2563EB;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+            outline: none;
+            background: white;
+        }
+
+        .form-input:focus ~ .input-icon {
+            color: #2563EB;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out 0.3s both;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 35px -5px rgba(37, 99, 235, 0.5);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn i {
+            font-size: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .submit-btn:hover i {
+            transform: translateX(4px);
+        }
+
+        /* Footer */
+        .login-footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 13px;
+            color: #94A3B8;
+            font-weight: 500;
+            animation: fadeIn 0.8s ease-out 0.8s both;
+        }
+
+        .login-footer strong {
+            color: #64748B;
+            font-weight: 700;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 968px) {
+            .login-wrapper {
+                grid-template-columns: 1fr;
+                max-width: 500px;
+            }
+
+            .login-branding {
+                display: none;
+            }
+
+            .login-form-section {
+                padding: 50px 40px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+
+            .login-wrapper {
+                border-radius: 20px;
+            }
+
+            .login-form-section {
+                padding: 40px 24px;
+            }
+
+            .form-title {
+                font-size: 26px;
+            }
+
+            .form-input {
+                padding: 14px 18px 14px 48px;
+            }
+
+            .submit-btn {
+                padding: 14px 20px;
+            }
+        }
+
+        /* Loading State */
+        .submit-btn.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .submit-btn.loading::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Animated Background Shapes -->
+<div class="bg-shape shape-1"></div>
+<div class="bg-shape shape-2"></div>
+<div class="bg-shape shape-3"></div>
+
+<div class="login-wrapper">
+    <!-- Left Side - Branding -->
+    <div class="login-branding">
+        <div class="branding-content">
+            <img src="{% static 'img/logo_color.png' %}" alt="Nexteons" class="brand-logo">
+            <h1 class="branding-title">Nexteons HRMS</h1>
+            <p class="branding-subtitle">
+                Streamline your workforce management with our comprehensive HR solution
+            </p>
+            
+            <div class="feature-list">
+                <div class="feature-item">
+                    <i class="ri-shield-check-line"></i>
+                    <span>Enterprise-grade security</span>
+                </div>
+                <div class="feature-item">
+                    <i class="ri-time-line"></i>
+                    <span>Real-time attendance tracking</span>
+                </div>
+                <div class="feature-item">
+                    <i class="ri-file-list-3-line"></i>
+                    <span>Automated payroll processing</span>
+                </div>
+                <div class="feature-item">
+                    <i class="ri-team-line"></i>
+                    <span>Complete employee management</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side - Login Form -->
+    <div class="login-form-section">
+        <div class="form-header">
+            <h2 class="form-title">Welcome Back</h2>
+            <p class="form-subtitle">Sign in to access your dashboard</p>
+        </div>
+
+        {% if form.errors %}
+        <div class="alert alert-error">
+            <i class="ri-error-warning-fill"></i>
+            <span>Invalid credentials. Please check your username and password.</span>
+        </div>
+        {% endif %}
+
+        <form method="post" id="loginForm">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label class="form-label">Employee ID / Username</label>
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        name="username" 
+                        class="form-input" 
+                        placeholder="Enter your employee ID" 
+                        required 
+                        autofocus
+                        autocomplete="username"
+                    >
+                    <i class="ri-user-3-line input-icon"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Secure Password</label>
+                <div class="input-wrapper">
+                    <input 
+                        type="password" 
+                        name="password" 
+                        class="form-input" 
+                        placeholder="Enter your password" 
+                        required
+                        autocomplete="current-password"
+                        id="passwordInput"
+                    >
+                    <i class="ri-eye-off-line password-toggle" id="togglePassword" title="Show password" style="display: none;"></i>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <span>Sign In to Dashboard</span>
+                <i class="ri-arrow-right-line"></i>
+            </button>
+        </form>
+
+        <div class="login-footer">
+            &copy; {% now "Y" %} <strong>Nexteons</strong>. All rights reserved.
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle Password Visibility
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#passwordInput');
+
+    if (togglePassword && password) {
+        // Show/hide eye icon based on password input
+        password.addEventListener('input', function() {
+            if (this.value.length > 0) {
+                togglePassword.style.display = 'block';
+            } else {
+                togglePassword.style.display = 'none';
+            }
+        });
+
+        togglePassword.addEventListener('click', function (e) {
+            // toggle the type attribute
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            // toggle the eye slash icon
+            this.classList.toggle('ri-eye-line');
+            this.classList.toggle('ri-eye-off-line');
+        });
+    }
+
+    // Add loading state on form submit
+    document.getElementById('loginForm').addEventListener('submit', function() {
+        const btn = document.getElementById('submitBtn');
+        btn.classList.add('loading');
+        btn.innerHTML = '<span>Signing in...</span>';
+    });
+
+    // Add focus effect to username input icon only
+    const usernameInput = document.querySelector('input[name="username"]');
+    if (usernameInput) {
+        const usernameIcon = usernameInput.parentElement.querySelector('.input-icon');
+        if (usernameIcon) {
+            usernameInput.addEventListener('focus', function() {
+                usernameIcon.style.color = '#2563EB';
+            });
+            
+            usernameInput.addEventListener('blur', function() {
+                if (!this.value) {
+                    usernameIcon.style.color = '#94A3B8';
+                }
+            });
+        }
+    }
+</script>
+
+</body>
+</html>

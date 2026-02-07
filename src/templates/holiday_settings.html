@@ -1,0 +1,131 @@
+{% extends 'base_modern.html' %} 
+{% block title %}Holiday Settings - Nexteons HR{% endblock %} 
+{% block header_title %}Holiday Calendar{% endblock %} 
+
+{% block content %}
+<div class="flex-1" style="width: 100%; animation: fadeIn 0.4s ease-out; display: flex; flex-direction: column;">
+    <div class="card full-height-card" style="border: none; background: white; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-md);">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: none; padding: 32px 32px 16px 32px;">
+            <div>
+                <h3 class="card-title" style="font-size: 24px; font-weight: 800; color: #1e293b; margin-bottom: 8px;">Public Holidays Calendar</h3>
+                <p class="card-subtitle" style="font-size: 14px; color: var(--gray-500); margin: 0;">Manage holidays for leave and attendance calculations across the organization</p>
+            </div>
+            <a href="{% url 'system_admin' %}" class="btn btn-outline" style="border-radius: 10px; font-weight: 600; font-size: 13.5px; border-color: #e2e8f0;">
+                <i class="ri-arrow-left-line"></i> Back to Admin
+            </a>
+        </div>
+        
+        <!-- Add Holiday Form Section -->
+        <div style="padding: 0 32px 32px 32px;">
+            <div style="background: #f8fafc; padding: 24px; border-radius: 16px; border: 1px solid #f1f5f9; margin-bottom: 32px;">
+                <h4 style="font-size: 15px; font-weight: 700; color: #334155; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 28px; height: 28px; background: rgba(37, 99, 235, 0.1); color: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="ri-add-line"></i>
+                    </div>
+                    Add New Holiday
+                </h4>
+                <form action="{% url 'public_holiday_add' %}" method="post" style="display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 20px; align-items: end;">
+                    {% csrf_token %}
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: block;">Holiday Name</label>
+                        {{ holiday_form.name }}
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: block;">Holiday Date</label>
+                        {{ holiday_form.date }}
+                    </div>
+                    <div style="padding-bottom: 12px;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #475569;">
+                            {{ holiday_form.is_recurring }} 
+                            <span>Recurring Yearly</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="height: 46px; border-radius: 12px; padding: 0 24px; font-weight: 700;">
+                        Add Holiday
+                    </button>
+                </form>
+            </div>
+
+            <!-- Holidays List Table -->
+            <div class="card-body-scroll" style="background: white; border-top: 1px solid #f1f5f9;">
+                <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                    <thead style="background: #fdfdfd;">
+                        <tr>
+                            <th style="padding: 16px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9;">Date & Day</th>
+                            <th style="padding: 16px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9;">Holiday Name</th>
+                            <th style="padding: 16px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9;">Type</th>
+                            <th style="padding: 16px 24px; text-align: right; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for holiday in holidays %}
+                        <tr style="transition: background 0.2s;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
+                            <td style="padding: 18px 24px; border-bottom: 1px solid #f1f5f9;">
+                                <div style="font-weight: 700; color: #1e293b; font-size: 14.5px;">{{ holiday.date|date:"F d, Y" }}</div>
+                                <div style="font-size: 12px; color: #64748b; font-weight: 500;">{{ holiday.date|date:"l" }}</div>
+                            </td>
+                            <td style="padding: 18px 24px; border-bottom: 1px solid #f1f5f9;">
+                                <div style="font-weight: 700; color: #334155;">{{ holiday.name }}</div>
+                            </td>
+                            <td style="padding: 18px 24px; border-bottom: 1px solid #f1f5f9;">
+                                {% if holiday.is_recurring %}
+                                <span style="background: #e0f2fe; color: #0369a1; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="ri-refresh-line" style="font-size: 12px;"></i> Recurring
+                                </span>
+                                {% else %}
+                                <span style="background: #f1f5f9; color: #475569; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="ri-calendar-event-line" style="font-size: 12px;"></i> One-time
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 18px 24px; border-bottom: 1px solid #f1f5f9; text-align: right;">
+                                <form action="{% url 'public_holiday_delete' holiday.id %}" method="post" style="display: inline-block;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn" style="padding: 8px; background: #fff1f2; color: #e11d48; border: none; border-radius: 8px; transition: all 0.2s;" title="Remove Holiday" onclick="return confirm('Remove this holiday?')">
+                                        <i class="ri-delete-bin-line"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 80px 32px;">
+                                <div style="width: 80px; height: 80px; background: #f8fafc; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #cbd5e1;">
+                                    <i class="ri-calendar-event-line" style="font-size: 32px;"></i>
+                                </div>
+                                <h4 style="font-size: 18px; font-weight: 800; color: #334155; margin-bottom: 8px;">No Holidays Configured</h4>
+                                <p style="color: #94a3b8; font-size: 14px; font-weight: 500;">Add your first public holiday using the form above.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.form-group input {
+    width: 100%;
+    height: 46px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+}
+</style>
+{% endblock %}

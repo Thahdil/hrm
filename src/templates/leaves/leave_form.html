@@ -1,0 +1,481 @@
+{% extends 'base_modern.html' %}
+{% block title %}Request Leave - Nexteons HR{% endblock %}
+{% block header_title %}Request Leave{% endblock %}
+
+{% block content %}
+<div class="form-page-container" style="padding-bottom: 0; animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);">
+    <div class="glass-card" style="max-width: 100%; margin: 0 auto; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.12); border-radius: 16px; background: rgba(255, 255, 255, 0.98); border: 1px solid rgba(255, 255, 255, 0.2);">
+        
+        <!-- Ultra-Slim Branded Header -->
+        <div style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); padding: 12px 25px; color: white; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08; font-size: 80px; transform: rotate(15deg);">
+                <i class="ri-calendar-event-fill"></i>
+            </div>
+            <div style="position: relative; z-index: 1; display: flex; align-items: center; gap: 15px;">
+                <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 2px 10px; border-radius: 99px; font-size: 9px; font-weight: 700; backdrop-filter: blur(4px);">
+                    <i class="ri-lock-2-line"></i> SECURE LEAVE PORTAL
+                </div>
+                <h2 style="margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em;">Apply for Leave</h2>
+            </div>
+        </div>
+
+        <div style="padding: 15px 25px;">
+            <div style="display: grid; grid-template-columns: 1fr 280px; gap: 20px; align-items: start;">
+                
+                <!-- Left Column: Primary Form Information -->
+                <div>
+                    <form method="post" class="modern-form">
+                        {% csrf_token %}
+                        <div class="form-grid-layout" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                            {% for field in form %}
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 5px; {% if field.name == 'reason' or field.name == 'assigned_manager' %}grid-column: span 3;{% endif %}">
+                                <label for="{{ field.id_for_label }}" style="font-size: 12px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;">
+                                    {{ field.label }}
+                                    {% if field.field.disabled %}
+                                    <span style="background: var(--primary-light); color: white; padding: 2px 8px; border-radius: 6px; font-size: 9px; letter-spacing: 0;">SYSTEM ASSIGNED</span>
+                                    {% endif %}
+                                </label>
+                                <div class="input-wrapper" style="position: relative;">
+                                    {% if field.name == 'assigned_manager' and field.field.disabled %}
+                                        <input type="text" 
+                                               value="{% if field.field.initial %}{{ field.field.initial.full_name|default:field.field.initial.username|upper }}{% else %}NOT ASSIGNED - CONTACT HR{% endif %}" 
+                                               readonly 
+                                               class="form-input" 
+                                               style="background: #f8fafc; cursor: not-allowed; border: 2px solid {% if field.field.initial %}#e2e8f0{% else %}#fee2e2{% endif %} !important; border-radius: 12px; padding: 11px 44px 11px 16px; width: 100%; color: {% if field.field.initial %}#64748b{% else %}#ef4444{% endif %}; font-weight: 700; font-size: 13.5px;">
+                                        {% if field.field.initial %}
+                                            <i class="ri-lock-2-line" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 18px;"></i>
+                                        {% else %}
+                                            <i class="ri-error-warning-line" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: #ef4444; font-size: 18px;"></i>
+                                        {% endif %}
+                                    {% else %}
+                                        {{ field }}
+                                        {% if field.name == 'leave_type' %}
+                                        <i class="ri-list-settings-line" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 18px;"></i>
+                                        {% elif 'date' in field.name %}
+                                        <i class="ri-calendar-2-fill" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 18px;"></i>
+                                        {% elif field.name == 'reason' %}
+                                        <i class="ri-message-3-line" style="position: absolute; right: 18px; top: 22px; color: var(--primary); font-size: 18px;"></i>
+                                        {% elif field.name == 'assigned_manager' %}
+                                        <i class="ri-admin-line" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 18px;"></i>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                {% if field.help_text %}
+                                <span style="color: var(--gray-400); font-size: 12px; display: flex; align-items: center; gap: 6px; padding-left: 4px;">
+                                    <i class="ri-question-line" style="color: var(--primary);"></i> {{ field.help_text }}
+                                </span>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                <span style="color: var(--error); font-size: 12px; font-weight: 700; padding-left: 4px; margin-top: 4px;">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endfor %}
+
+                            <!-- Advanced Duration Information -->
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 5px; grid-column: span 3;">
+                                <label style="font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.08em;">
+                                    Final Calculated Scope
+                                </label>
+                                <div style="position: relative;">
+                                    <input 
+                                        type="text" 
+                                        id="leaveDaysDisplay" 
+                                        readonly 
+                                        placeholder="Calculating based on selected window..."
+                                        style="padding: 8px 15px; border: 2px solid var(--gray-100); border-radius: 10px; font-family: inherit; width: 100%; background: #fafafa; cursor: not-allowed; font-weight: 800; color: var(--primary); font-size: 13px; letter-spacing: -0.01em;"
+                                    >
+                                    <div style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--primary-light); color: white; width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="ri-time-fill" style="font-size: 14px;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end; align-items: center;">
+                            <a href="{% url 'leave_list' %}" class="premium-button secondary" style="text-decoration: none; padding: 8px 20px; font-size: 12px; border-radius: 10px;">
+                                <span>Discard</span>
+                            </a>
+                            <button type="submit" class="premium-button primary" style="padding: 8px 25px; font-size: 12px; border-radius: 10px;">
+                                <span>Submit Request</span>
+                                <i class="ri-arrow-right-line"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right Column: Metadata & Leave Quota Summary -->
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Approval Hierarchy Card -->
+                    {% if request.user.managers.exists %}
+                    <div style="background: rgba(37, 99, 235, 0.03); padding: 12px 15px; border-radius: 14px; border: 1px solid rgba(37, 99, 235, 0.08);">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <div style="width: 28px; height: 28px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--primary); box-shadow: 0 4px 8px -2px rgba(0,0,0,0.05);">
+                                <i class="ri-shield-user-fill" style="font-size: 16px;"></i>
+                            </div>
+                            <h4 style="margin: 0; font-size: 10px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em;">Approver</h4>
+                        </div>
+                        <div style="font-size: 12px; color: var(--gray-700); line-height: 1.4;">
+                            {% with managers=request.user.managers.all %}
+                                {% if managers.count == 1 %}
+                                    <strong style="color: var(--gray-900); font-weight: 700;">{{ managers.first.full_name|default:managers.first.username|upper }}</strong>
+                                {% else %}
+                                    <strong style="color: var(--gray-900); font-weight: 700;">Select manager</strong> in form.
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Live Quota Balance Card -->
+                    {% if leave_balances %}
+                    <div style="background: rgba(16, 185, 129, 0.03); padding: 12px 15px; border-radius: 14px; border: 1px solid rgba(16, 185, 129, 0.08);">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <div style="width: 28px; height: 28px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--success); box-shadow: 0 4px 8px -2px rgba(0,0,0,0.05);">
+                                <i class="ri-pie-chart-2-fill" style="font-size: 16px;"></i>
+                            </div>
+                            <h4 style="margin: 0; font-size: 10px; font-weight: 800; color: var(--success); text-transform: uppercase; letter-spacing: 0.05em;">Quota Summary</h4>
+                        </div>
+                        <div style="display: grid; gap: 8px;">
+                            {% for leave_type_id, balance in leave_balances.items %}
+                            <div style="background: white; padding: 8px 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(0,0,0,0.02);">
+                                <div>
+                                    <div style="font-weight: 800; font-size: 11px; color: var(--gray-900);">
+                                        {% for lt in form.leave_type.field.queryset %}
+                                            {% if lt.id == leave_type_id %}{{ lt.name }}{% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <div style="font-size: 9px; color: var(--gray-400); font-weight: 600;">Used: {{ balance.used }}d</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 15px; font-weight: 900; color: var(--success); letter-spacing: -0.02em;">{{ balance.remaining }}</div>
+                                    <div style="font-size: 8px; color: var(--success); font-weight: 800; text-transform: uppercase;">Days</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modern-form select,
+    .modern-form input:not([type="checkbox"]),
+    .modern-form textarea {
+        appearance: none;
+        padding: 8px 35px 8px 12px !important;
+        border: 2px solid #f1f5f9 !important;
+        border-radius: 10px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease !important;
+        width: 100%;
+        background: #fff !important;
+        color: #1e293b !important;
+    }
+
+    .modern-form textarea {
+        min-height: 60px;
+        padding-right: 12px !important;
+    }
+
+    .modern-form select:focus,
+    .modern-form input:focus,
+    .modern-form textarea:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+        outline: none !important;
+        transform: translateY(-1px);
+    }
+
+    /* Hide default date picker icon and make entire field clickable */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        background: transparent;
+        bottom: 0;
+        color: transparent;
+        cursor: pointer;
+        height: auto;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: auto;
+        z-index: 2;
+    }
+
+    .ri-calendar-2-fill,
+    .ri-list-settings-line,
+    .ri-message-3-line,
+    .ri-admin-line,
+    .ri-hourglass-fill {
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .premium-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 14px 28px;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 14px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        border: none;
+    }
+
+    .premium-button.primary {
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        color: white;
+        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+    }
+
+    .premium-button.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.4);
+    }
+
+    .premium-button.secondary {
+        background: #f8fafc;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+    }
+
+    .premium-button.secondary:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+    }
+
+    @media (max-width: 850px) {
+        .glass-card > div:last-child {
+            grid-template-columns: 1fr !important;
+        }
+        .form-grid-layout {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const typeSelect = document.querySelector('#id_leave_type');
+        const startInput = document.querySelector('#id_start_date');
+        const endInput = document.querySelector('#id_end_date');
+        const leaveDaysDisplay = document.querySelector('#leaveDaysDisplay');
+        const submitButton = document.querySelector('button[type="submit"]');
+
+        if (!typeSelect || !startInput || !endInput) return;
+        
+        // --- 1. Inject Duration Field dynamicallly ---
+        // Find the start date container
+        const startContainer = startInput.closest('.form-group');
+        const durationWrapper = document.createElement('div');
+        durationWrapper.className = 'form-group';
+        durationWrapper.id = 'durationContainer';
+        durationWrapper.style.display = 'flex';
+        durationWrapper.style.flexDirection = 'column';
+        durationWrapper.style.gap = '10px';
+        
+        durationWrapper.innerHTML = `
+            <label style="font-size: 12px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;">
+                Duration (Days)
+            </label>
+            <div class="input-wrapper" style="position: relative;">
+                <input type="number" id="manualDuration" min="1" value="1" class="form-input" style="padding: 13px 44px 13px 16px; border: 2px solid #f1f5f9; border-radius: 14px; width: 100%;">
+                <i class="ri-hourglass-fill" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 18px;"></i>
+            </div>
+        `;
+        
+        // Insert AFTER start date container
+        startContainer.parentNode.insertBefore(durationWrapper, startContainer.nextSibling);
+        
+        const durationInput = document.getElementById('manualDuration');
+        
+        // Set End Date to Readonly globally as requested
+        endInput.readOnly = true;
+        endInput.style.backgroundColor = 'var(--gray-100)';
+        endInput.style.cursor = 'not-allowed';
+        const endContainer = endInput.closest('.form-group');
+
+        // Configuration passed from view
+        const typeConfig = {{ type_config|safe }};
+        const leaveBalances = {{ leave_balances|safe }};
+        
+        // Use the duration input from now on
+        
+        // Create warning element
+        const warningDiv = document.createElement('div');
+        warningDiv.id = 'balanceWarning';
+        // Styled for top placement: added margin-bottom and shadow for premium feel
+        warningDiv.style.cssText = 'display: none; background: #FEF2F2; padding: 20px; border-radius: 16px; border-left: 6px solid #EF4444; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.08);';
+        
+        // Insert at the very top of the form for immediate visibility
+        const form = document.querySelector('.modern-form');
+        form.prepend(warningDiv);
+
+        function checkBalance() {
+            const selectedTypeId = typeSelect.value;
+            // Use manual duration value
+            const requestedDays = parseInt(durationInput.value) || 0;
+            
+            if (selectedTypeId && requestedDays > 0 && leaveBalances[selectedTypeId]) {
+                const balance = leaveBalances[selectedTypeId];
+                const remaining = balance.remaining;
+                
+                if (requestedDays > remaining) {
+                    warningDiv.innerHTML = `
+                        <div style="display: flex; align-items: start; gap: 12px;">
+                            <i class="ri-error-warning-line" style="color: var(--error); font-size: 24px; margin-top: 2px;"></i>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: var(--gray-900); margin-bottom: 4px;">
+                                    Insufficient Leave Balance
+                                </div>
+                                <div style="font-size: 14px; color: var(--gray-700);">
+                                    You are requesting <strong>${requestedDays} days</strong> but only have <strong>${remaining} days</strong> remaining. 
+                                    Please reduce your request or select a different leave type.
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    warningDiv.style.display = 'block';
+                    submitButton.disabled = true;
+                    submitButton.style.opacity = '0.5';
+                    submitButton.style.cursor = 'not-allowed';
+                } else {
+                    warningDiv.style.display = 'none';
+                    submitButton.disabled = false;
+                    submitButton.style.opacity = '1';
+                    submitButton.style.cursor = 'pointer';
+                }
+            } else {
+                warningDiv.style.display = 'none';
+                submitButton.disabled = false;
+                submitButton.style.opacity = '1';
+                submitButton.style.cursor = 'pointer';
+            }
+        }
+
+        // Core Calculation Logic: Start + Duration -> End
+        function calculateFromDuration() {
+            const duration = parseInt(durationInput.value) || 0;
+            
+            if (!startInput.value || duration <= 0) {
+                endInput.value = '';
+                leaveDaysDisplay.value = '';
+                return;
+            }
+            
+            const parts = startInput.value.split('-');
+            const d = new Date(parts[0], parts[1]-1, parts[2]); 
+            
+            // Calc End Date
+            d.setDate(d.getDate() + (duration - 1));
+             
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const calculatedEnd = `${yyyy}-${mm}-${dd}`;
+            
+            endInput.value = calculatedEnd;
+            
+            // Format for display
+            const niceStart = new Date(startInput.value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const niceEnd = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            if (duration === 1) {
+                leaveDaysDisplay.value = `${duration} Day • ${niceStart}`;
+            } else {
+                leaveDaysDisplay.value = `${duration} Days • ${niceStart} to ${niceEnd}`;
+            }
+            
+            checkBalance();
+        }
+
+        function getMaxDysForType(lowerText) {
+            if (lowerText.includes('annual leave')) return 30;
+            if (lowerText.includes('maternity leave')) return 60;
+            return 999; // Default max
+        }
+
+        function handleLeaveTypeChange() {
+            const selectedId = typeSelect.value;
+            const selectedText = typeSelect.options[typeSelect.selectedIndex].text;
+            const lowerText = selectedText.toLowerCase();
+            
+            let fixedDur = typeConfig[selectedId] || 0;
+            let maxDays = 999;
+
+            // SPECIAL RULES
+            if (lowerText.includes('normal leave')) {
+                fixedDur = 1;
+                // Hide duration input for Normal Leave
+                durationWrapper.style.display = 'none';
+                durationInput.value = 1;
+            } 
+            else if (lowerText.includes('annual leave')) {
+                fixedDur = 0; // Manual
+                maxDays = 30;
+                durationWrapper.style.display = 'flex';
+            } 
+            else if (lowerText.includes('maternity leave')) {
+                fixedDur = 0; // Manual
+                maxDays = 60;
+                durationWrapper.style.display = 'flex';
+            }
+            else {
+                // Other types (Sick, etc) - Default to manual
+                durationWrapper.style.display = 'flex';
+            }
+            
+            // If fixed duration exists and is > 0 (and not overridden above like Annual/Maternity)
+            if (fixedDur > 0) {
+                 durationInput.value = fixedDur;
+                 durationInput.readOnly = true;
+                 durationWrapper.style.display = 'none'; // Optional: hide if fixed? Or show readonly? Let's hide for simplicity if it's 1 day.
+                 if (fixedDur > 1) {
+                     durationWrapper.style.display = 'flex'; // Show if fixed package > 1
+                 }
+            } else {
+                 durationInput.readOnly = false;
+                 // Set Max
+                 durationInput.max = maxDays;
+            }
+            
+            // Validate current duration against new max
+            if (parseInt(durationInput.value) > maxDays) {
+                durationInput.value = maxDays;
+            }
+            
+            calculateFromDuration();
+        }
+
+        typeSelect.addEventListener('change', handleLeaveTypeChange);
+        startInput.addEventListener('change', calculateFromDuration);
+        
+        durationInput.addEventListener('input', function() {
+            const selectedText = typeSelect.options[typeSelect.selectedIndex].text;
+            const lowerText = selectedText.toLowerCase();
+            const max = getMaxDysForType(lowerText);
+            
+            let val = parseInt(this.value);
+            if (val > max) {
+                alert(`Maximum allowed duration for ${selectedText} is ${max} days.`);
+                this.value = max;
+            }
+            calculateFromDuration();
+        });
+        
+        // Initial init
+        handleLeaveTypeChange();
+    });
+</script>
+{% endblock %}

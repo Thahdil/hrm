@@ -1,0 +1,448 @@
+{% extends 'base_modern.html' %}
+
+{% block title %}Attendance - Nexteons HR{% endblock %}
+{% block header_title %}Attendance Logs{% endblock %}
+
+{% block content %}
+<div class="flex-1" style="width: 100%; animation: fadeIn 0.4s ease-out; display: flex; flex-direction: column;">
+    <div class="card full-height-card" style="border: none; background: white; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-md);">
+        <!-- Premium Header -->
+        <div style="padding: 20px 32px 16px 32px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--gray-100); flex-shrink: 0;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                    <div style="width: 36px; height: 36px; background: rgba(37, 99, 235, 0.1); color: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                        <i class="ri-fingerprint-line"></i>
+                    </div>
+                    <h1 style="font-size: 20px; font-weight: 800; color: #1e293b; margin: 0; letter-spacing: -0.02em;">Daily Attendance Logs</h1>
+                </div>
+                <p style="font-size: 12.5px; color: var(--gray-500); margin: 0; font-weight: 500;">
+                    <span style="color: var(--primary); font-weight: 700;">{{ logs|length }}</span> biometric records synchronized
+                </p>
+            </div>
+
+            {% if user.is_staff or user.role == 'ADMIN' or user.role == 'HR_MANAGER' or user.role == 'CEO' %}
+            <div style="display: flex; gap: 12px;">
+                <a href="{% url 'attendance_manual_entry' %}" class="btn btn-outline" style="border-radius: 10px; font-weight: 600; font-size: 13.5px; border-color: #e2e8f0;">
+                    <i class="ri-add-line"></i> Manual Punch
+                </a>
+                <a href="{% url 'attendance_import' %}" class="btn btn-outline" style="border-radius: 10px; font-weight: 600; font-size: 13.5px; border-color: #e2e8f0;">
+                    <i class="ri-upload-cloud-2-line"></i> Import Logs
+                </a>
+                <form action="{% url 'clear_attendance_logs' %}" method="post" onsubmit="return confirm('Clear ALL attendance logs?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn" style="background: #fff1f2; color: #e11d48; border-radius: 10px; font-weight: 700; font-size: 13.5px; padding: 10px 16px; border: 1px solid #fee2e2;">
+                        <i class="ri-delete-bin-line"></i> Clear All
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Integrated Filter Bar -->
+        <div style="padding: 16px 32px; background: #fafafa; border-bottom: 1px solid var(--gray-100);">
+            <form method="get" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+                {% if user.is_staff or user.role == 'ADMIN' or user.role == 'HR_MANAGER' or user.role == 'CEO' %}
+                <div style="flex-grow: 1; max-width: 400px;">
+                    <label style="font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Search Employee</label>
+                    <div style="position: relative;">
+                        <i class="ri-search-line" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 18px;"></i>
+                        <input type="text" name="search" value="{{ search_query }}" placeholder="Type name or Employee ID..." autocomplete="off"
+                               style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid #e2e8f0; padding-left: 40px; font-size: 13px; font-weight:500; transition: all 0.2s;"
+                               onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 4px rgba(37,99,235,0.08)'"
+                               onblur="setTimeout(() => { this.style.borderColor='#e2e8f0'; this.style.boxShadow='none' }, 200)">
+                    </div>
+                </div>
+                {% endif %}
+
+                <div style="min-width: 160px;">
+                    <label style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">Status</label>
+                    <select name="status" style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid #e2e8f0; padding: 0 12px; font-size: 13px; font-weight: 600; cursor: pointer; appearance: none; background: white url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M5%207.5L10%2012.5L15%207.5%22%20stroke%3D%22%2364748B%22%20stroke-width%3D%221.66667%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E') no-repeat right 10px center; background-size: 16px;">
+                        <option value="">All Statuses</option>
+                        <option value="present" {% if status_filter == 'present' %}selected{% endif %}>Present Only</option>
+                        <option value="absent" {% if status_filter == 'absent' %}selected{% endif %}>Absent Only</option>
+                        <option value="weeklyoff" {% if status_filter == 'weeklyoff' %}selected{% endif %}>Weekly Off</option>
+                        <option value="holiday" {% if status_filter == 'holiday' %}selected{% endif %}>Holiday</option>
+                    </select>
+                </div>
+
+                <div style="min-width: 160px;">
+                    <label style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">Target Date</label>
+                    <input type="date" name="date" value="{{ selected_date|default:'' }}" 
+                           style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid #e2e8f0; padding: 0 12px; font-size: 13px; font-weight: 600;">
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button type="submit" class="btn btn-primary" style="height: 38px; border-radius: 10px; padding: 0 20px; font-weight: 700; gap: 8px; font-size: 13px;">
+                        <i class="ri-filter-fill"></i> Filter
+                    </button>
+                    {% if search_query or status_filter or selected_date %}
+                    <a href="{% url 'attendance_list' %}" class="btn" style="height: 38px; border-radius: 10px; background: white; border: 1px solid #e2e8f0; color: #64748b; font-weight: 600; display: flex; align-items: center; padding: 0 12px; font-size: 13px;">
+                        Reset
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <div class="card-body-scroll">
+            <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                <thead style="background: #fdfdfd; position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 var(--gray-100);">
+                    <tr>
+                        <th style="padding: 16px 32px; text-align: left; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Employee</th>
+                        <th style="padding: 16px 20px; text-align: left; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Work Date</th>
+                        <th style="padding: 16px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Total Duration</th>
+                        <th style="padding: 16px 20px; text-align: left; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Shortfall</th>
+                        <th style="padding: 16px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Compliance</th>
+                        <th style="padding: 16px 32px; text-align: right; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Day Status</th>
+                    </tr>
+                </thead>
+                <tbody style="background: white;">
+                    {% for log in logs %}
+                    <tr style="transition: all 0.25s ease;" onmouseover="this.style.background='#f8fafc'; this.style.transform='scale(1.002)';" onmouseout="this.style.background='white'; this.style.transform='scale(1)';">
+                        <td style="padding: 10px 32px; border-bottom: 1px solid #f1f5f9;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color: white;
+                                    background: var(--primary); box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2); flex-shrink: 0; aspect-ratio: 1/1;">
+                                    {{ log.employee.full_name|default:log.employee.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: #334155; font-size: 13.5px;">{{ log.employee.full_name|default:log.employee.username|upper }}</div>
+                                    <div style="font-size: 10.5px; color: #94a3b8; font-family: monospace; font-weight: 700;">
+                                        {% if log.employee.employee_id %}{{ log.employee.employee_id }}{% else %}EMP-{{ log.employee.pk|stringformat:"03d" }}{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding: 10px 20px; border-bottom: 1px solid #f1f5f9;">
+                            <div style="font-weight: 700; color: #475569; font-size: 13px;">{{ log.date|date:"D, d M Y" }}</div>
+                            <div style="font-size: 10.5px; color: #94a3b8; font-weight: 600;">{{ log.date|date:"l" }}</div>
+                        </td>
+                        <td style="padding: 10px 20px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                            <div style="font-weight: 800; color: var(--primary); font-size: 13.5px; letter-spacing: -0.01em;">
+                                {{ log.hours_str }}
+                            </div>
+                        </td>
+                        <td style="padding: 10px 20px; border-bottom: 1px solid #f1f5f9;">
+                            {% if log.shortfall_minutes > 0 %}
+                                <div style="display: inline-flex; align-items: center; gap: 4px; color: #ef4444; font-weight: 700; font-size: 12px; background: #fef2f2; padding: 2px 8px; border-radius: 4px; border: 1px solid #fee2e2;">
+                                    <i class="ri-time-line"></i> {{ log.shortfall_str }}
+                                </div>
+                            {% else %}
+                                {% if log.status == 'Present' or log.status == 'HalfDay' %}
+                                    <span style="color: #059669; font-size: 11px; font-weight: 700;">Full Shift Done</span>
+                                {% else %}
+                                    <span style="color: #cbd5e1; font-weight: 800; font-size: 12px;">--</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td style="padding: 10px 20px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                            {% if log.status == 'Present' or log.status == 'HalfDay' %}
+                                {% if log.is_compliant %}
+                                <div style="display: inline-flex; align-items: center; gap: 5px; background: #ecfdf5; color: #059669; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid #d1fae5;">
+                                    <i class="ri-checkbox-circle-fill" style="font-size: 12px;"></i> COMPLIANT
+                                </div>
+                                {% else %}
+                                    {% if not log.is_absent %}
+                                    <div style="display: inline-flex; align-items: center; gap: 5px; background: #fffcf0; color: #ca8a04; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid #fef3c7;">
+                                        <i class="ri-error-warning-fill" style="font-size: 12px;"></i> SHORT HOURS
+                                    </div>
+                                    {% else %}
+                                    <span style="color: #cbd5e1; font-weight: 800; font-size: 12px;">--</span>
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                <span style="color: #cbd5e1; font-weight: 800; font-size: 12px;">--</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 10px 32px; text-align: right; border-bottom: 1px solid #f1f5f9;">
+                            {% if log.status == 'Present' %}
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: #ecfdf5; color: #059669; padding: 4px 14px; border-radius: 20px; font-size: 10px; font-weight: 900; border: 1px solid #d1fae5;">
+                                <i class="ri-checkbox-circle-fill" style="font-size: 12px;"></i> PRESENT
+                            </div>
+                            {% elif log.status == 'Absent' or log.is_absent %}
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: #fff1f2; color: #be123c; padding: 4px 14px; border-radius: 20px; font-size: 10px; font-weight: 900; border: 1px solid #ffe4e6;">
+                                <i class="ri-close-circle-fill" style="font-size: 12px;"></i> ABSENT
+                            </div>
+                            {% elif log.status == 'WeeklyOff' %}
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: #f8fafc; color: #64748b; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid #e2e8f0;">
+                                <i class="ri-calendar-event-line" style="font-size: 12px;"></i> WEEKLY OFF
+                            </div>
+                            {% elif log.status == 'Holiday' or log.is_holiday %}
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: #f0f9ff; color: #0369a1; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid #e0f2fe;">
+                                <i class="ri-sun-fill" style="font-size: 12px;"></i> HOLIDAY
+                            </div>
+                            {% elif log.status == 'HalfDay' %}
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: #fffbeb; color: #92400e; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid #fef3c7;">
+                                <i class="ri-time-line" style="font-size: 12px;"></i> HALF DAY
+                            </div>
+                            {% elif log.status == 'DISPUTED' %}
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: #fff1f2; color: #e11d48; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800;">
+                                <i class="ri-error-warning-fill" style="font-size: 12px;"></i> DISPUTED
+                            </div>
+                            {% else %}
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: #f8fafc; color: #64748b; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800;">
+                                {{ log.status|upper }}
+                            </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="padding: 100px 32px; text-align: center;">
+                            <div style="width: 80px; height: 80px; background: #f8fafc; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #cbd5e1;">
+                                <i class="ri-fingerprint-line" style="font-size: 40px;"></i>
+                            </div>
+                            <h3 style="font-size: 18px; font-weight: 800; color: #334155; margin-bottom: 8px;">No Attendance Records</h3>
+                            <p style="color: #94a3b8; font-size: 14px; font-weight:500;">Try broadening your filter criteria or import new records.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<style>
+.autocomplete-container {
+    position: relative;
+}
+
+.autocomplete-suggestions {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    max-height: 320px;
+    overflow-y: auto;
+    z-index: 9999;
+    display: none;
+    padding: 6px;
+}
+
+.autocomplete-suggestions.active {
+    display: block;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.autocomplete-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.selected {
+    background: #f1f5f9;
+}
+
+.autocomplete-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.autocomplete-info {
+    flex: 1;
+}
+
+.autocomplete-name {
+    font-weight: 600;
+    color: var(--gray-900);
+    font-size: 14px;
+}
+
+.autocomplete-id {
+    font-size: 12px;
+    color: var(--gray-500);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.autocomplete-loading {
+    padding: 12px 16px;
+    text-align: center;
+    color: var(--gray-500);
+    font-size: 14px;
+}
+
+.autocomplete-no-results {
+    padding: 20px 16px;
+    text-align: center;
+    color: var(--gray-400);
+    font-size: 14px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('input[name="search"]');
+    if (!searchInput) return;
+
+    // Create autocomplete container
+    const container = document.createElement('div');
+    container.className = 'autocomplete-suggestions';
+    searchInput.parentElement.style.position = 'relative';
+    searchInput.parentElement.appendChild(container);
+
+    let selectedIndex = -1;
+    let suggestions = [];
+    let debounceTimer;
+
+    // Fetch suggestions
+    function fetchSuggestions(query) {
+        if (query.length < 1) {
+            container.classList.remove('active');
+            return;
+        }
+
+        // Show loading
+        container.innerHTML = '<div class="autocomplete-loading"><i class="ri-loader-4-line" style="animation: spin 1s linear infinite;"></i> Searching...</div>';
+        container.classList.add('active');
+
+        fetch(`{% url 'employee_autocomplete' %}?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                suggestions = data.suggestions || [];
+                renderSuggestions(suggestions);
+            })
+            .catch(error => {
+                console.error('Error fetching suggestions:', error);
+                container.classList.remove('active');
+            });
+    }
+
+    // Render suggestions
+    function renderSuggestions(items) {
+        if (items.length === 0) {
+            container.innerHTML = '<div class="autocomplete-no-results"><i class="ri-user-search-line"></i> No employees found</div>';
+            container.classList.add('active');
+            return;
+        }
+
+        container.innerHTML = items.map((item, index) => {
+            const initial = (item.name || 'U').charAt(0).toUpperCase();
+            const displayId = item.employee_id || `EMP-${String(item.id).padStart(3, '0')}`;
+            return `
+                <div class="autocomplete-item" data-index="${index}" data-value="${item.display}">
+                    <div class="autocomplete-avatar">${initial}</div>
+                    <div class="autocomplete-info">
+                        <div class="autocomplete-name">${item.name}</div>
+                        <div class="autocomplete-id">${displayId}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.classList.add('active');
+
+        // Add click handlers
+        container.querySelectorAll('.autocomplete-item').forEach(item => {
+            item.addEventListener('click', function() {
+                searchInput.value = this.dataset.value;
+                container.classList.remove('active');
+                selectedIndex = -1;
+            });
+        });
+    }
+
+    // Input event with debounce
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            fetchSuggestions(this.value.trim());
+        }, 300);
+    });
+
+    // Keyboard navigation
+    searchInput.addEventListener('keydown', function(e) {
+        const items = container.querySelectorAll('.autocomplete-item');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            updateSelection(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, -1);
+            updateSelection(items);
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+            e.preventDefault();
+            items[selectedIndex].click();
+        } else if (e.key === 'Escape') {
+            container.classList.remove('active');
+            selectedIndex = -1;
+        }
+    });
+
+    // Update selection highlight
+    function updateSelection(items) {
+        items.forEach((item, index) => {
+            if (index === selectedIndex) {
+                item.classList.add('selected');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !container.contains(e.target)) {
+            container.classList.remove('active');
+            selectedIndex = -1;
+        }
+    });
+
+    // Focus event
+    searchInput.addEventListener('focus', function() {
+        if (this.value.trim().length >= 1 && suggestions.length > 0) {
+            container.classList.add('active');
+        }
+    });
+});
+
+// Spin animation for loading icon
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

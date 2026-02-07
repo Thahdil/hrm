@@ -1,0 +1,293 @@
+{% extends 'base_modern.html' %}
+{% load humanize %}
+
+{% block title %}Leave Management - Nexteons HRMS{% endblock %}
+{% block header_title %}Leave Management{% endblock %}
+{% block page_subtitle %}{% if is_admin %}Manage and approve employee leave requests.{% else %}Track your leave balances and history.{% endif %}{% endblock %}
+
+{% block content %}
+<div class="flex-1" style="width: 100%; display: flex; flex-direction: column;">
+    <!-- Leave Balances (Employees Only) -->
+    {% if not is_admin and balances %}
+    <div class="stats-grid" style="margin-bottom: var(--spacing-lg);">
+        {% for balance in balances %}
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon" style="background: rgba(37, 99, 235, 0.1); color: var(--primary);">
+                    <i class="ri-calendar-event-line"></i>
+                </div>
+                <div class="stat-change {% if balance.remaining > 5 %}positive{% else %}negative{% endif %}">
+                    {{ balance.total_entitlement|floatformat:0 }} Total
+                </div>
+            </div>
+            <div class="stat-value">{{ balance.remaining|floatformat:0 }}</div>
+            <div class="stat-label">{{ balance.leave_type.name }} Remaining</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Leave Requests List -->
+    <div class="card full-height-card flex-1" style="padding: 0; overflow: hidden; border: none; box-shadow: var(--shadow-md);">
+        <div class="card-header" style="flex-direction: column; gap: 24px; padding: 32px; border-bottom: 1px solid var(--gray-100); margin-bottom: 0; flex-shrink: 0;">
+            <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 class="card-title" style="font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em;">Leave History</h3>
+                    <p class="card-subtitle" style="font-weight: 500; color: var(--gray-500);">Manage and track your leave requests</p>
+                </div>
+                
+                {% if not is_admin %}
+                <a href="{% url 'leave_add' %}" class="btn btn-primary" style="border-radius: 12px; font-weight: 700; padding: 12px 24px;">
+                    <i class="ri-add-line"></i> New Request
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Filter Toolbar -->
+            <div class="filter-toolbar" style="display: flex; gap: 16px; align-items: center; width: 100%;">
+                <!-- Search -->
+                <div style="position: relative; flex: 1; max-width: 300px;">
+                    <i class="ri-search-line" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
+                    <input type="text" id="searchInput" placeholder="Search by employee..." 
+                           style="width: 100%; padding: 10px 12px 10px 40px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 14px;">
+                </div>
+
+                <!-- Status Filter -->
+                <div style="width: 200px;">
+                    <div style="position: relative;">
+                         <i class="ri-filter-3-line" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
+                        <select id="statusFilter" style="width: 100%; padding: 10px 12px 10px 40px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 14px; background: white; appearance: none; cursor: pointer;">
+                            <option value="">All Statuses</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="APPROVED">Approved</option>
+                            <option value="REJECTED">Rejected</option>
+                            <option value="CANCELLED">Cancelled</option>
+                        </select>
+                        <i class="ri-arrow-down-s-line" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400); pointer-events: none;"></i>
+                    </div>
+                </div>
+
+                <!-- Date Range -->
+                <div style="width: 240px;">
+                    <div style="position: relative;">
+                        <i class="ri-calendar-line" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
+                        <input type="month" id="monthFilter" value="{% now 'Y-m' %}" style="width: 100%; padding: 10px 12px 10px 40px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 14px; background: white;">
+                    </div>
+                </div>
+
+                <button id="resetFilters" class="btn btn-outline" style="padding: 10px 16px; border: 1px solid var(--gray-300); border-radius: 8px; color: var(--gray-600); font-weight: 600; background: white;">
+                    Reset
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body-scroll">
+            <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                <thead>
+                    <tr style="background: #fafafa;">
+                        <th style="padding: 16px 32px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100); width: 200px;">EMPLOYEE</th>
+                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">LEAVE TYPE</th>
+                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">DURATION</th>
+                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">DATES</th>
+                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">REASON</th>
+                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">PROCESSED BY</th>
+                        <th style="padding: 16px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">STATUS</th>
+                        <th style="padding: 16px 32px; text-align: right; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody style="background: white;">
+                    {% for leave in leaves %}
+                    <tr style="transition: all 0.25s ease;">
+                        <td style="padding: 16px 32px; border-bottom: 1px solid #f1f5f9;">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <div style="width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: white; background: var(--primary); box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2); flex-shrink: 0; aspect-ratio: 1/1;">
+                                    {{ leave.employee.full_name|default:leave.employee.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: #334155; font-size: 14.5px;">{{ leave.employee.full_name|default:leave.employee.username|upper }}</div>
+                                    <div style="font-size: 11px; color: #94a3b8; font-weight: 600;">{{ leave.employee.get_department_display|default:"Engineering" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <td style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9;">
+                            <span style="display: inline-block; padding: 6px 14px; background: #eff6ff; color: #2563eb; border-radius: 8px; font-size: 12px; font-weight: 700;">{{ leave.leave_type.name }}</span>
+                        </td>
+                        
+                        <td style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9;">
+                            <span style="font-weight: 800; color: #1e293b; font-size: 14px;">{{ leave.duration_days }} days</span>
+                        </td>
+                        
+                        <td style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9;">
+                            <div style="font-weight: 700; color: #475569; font-size: 13.5px;">{{ leave.start_date|date:"d M Y" }}</div>
+                            <div style="font-size: 11px; color: #94a3b8; font-weight: 600;">to {{ leave.end_date|date:"d M Y" }}</div>
+                        </td>
+
+                        <td style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 13.5px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ leave.reason }}">
+                            {{ leave.reason|truncatechars:40|default:"--" }}
+                        </td>
+
+                        <td style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9;">
+                            {% if leave.approved_by %}
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 24px; height: 24px; border-radius: 6px; background: #f1f5f9; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800;">
+                                        {{ leave.approved_by.full_name|default:leave.approved_by.username|slice:":1"|upper }}
+                                    </div>
+                                    <span style="font-size: 13px; color: #334155; font-weight: 700;">{{ leave.approved_by.full_name|default:leave.approved_by.username|upper }}</span>
+                                </div>
+                            {% else %}
+                                <span style="font-size: 12px; color: #cbd5e1; font-weight: 600; font-style: italic;">Awaiting action</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                            {% if leave.status == 'PENDING' %}
+                                <span style="display: inline-flex; align-items: center; gap: 6px; background: #fffcf0; color: #ca8a04; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;">
+                                    <i class="ri-history-line"></i> PENDING
+                                </span>
+                            {% elif leave.status == 'APPROVED' %}
+                                <span style="display: inline-flex; align-items: center; gap: 6px; background: #f0fdf4; color: #16a34a; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;">
+                                    <i class="ri-checkbox-circle-fill"></i> APPROVED
+                                </span>
+                            {% elif leave.status == 'REJECTED' %}
+                                <span style="display: inline-flex; align-items: center; gap: 6px; background: #fef2f2; color: #dc2626; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;">
+                                    <i class="ri-close-circle-fill"></i> REJECTED
+                                </span>
+                            {% else %}
+                                <span style="display: inline-flex; align-items: center; padding: 6px 12px; background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 11px; font-weight: 800;">
+                                    {{ leave.status|upper }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        
+                        <td style="padding: 16px 32px; text-align: right; border-bottom: 1px solid #f1f5f9;">
+                            <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                                {% if leave.status == 'PENDING' and is_admin %}
+                                <form method="POST" action="{% url 'leave_approve' leave.pk %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" style="width: 32px; height: 32px; border-radius: 8px; background: #f0fdf4; border: none; color: #16a34a; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Approve" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
+                                        <i class="ri-check-line" style="font-size: 18px; font-weight: bold;"></i>
+                                    </button>
+                                </form>
+                                <form method="POST" action="{% url 'leave_approve' leave.pk %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" style="width: 32px; height: 32px; border-radius: 8px; background: #fef2f2; border: none; color: #dc2626; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Reject" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
+                                        <i class="ri-close-line" style="font-size: 18px; font-weight: bold;"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                
+                                {% if leave.status == 'CANCELLED' and leave.employee == request.user %}
+                                <form method="POST" action="{% url 'leave_delete' leave.pk %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" style="width: 32px; height: 32px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Delete">
+                                        <i class="ri-delete-bin-line"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="padding: 100px 32px; text-align: center;">
+                            <div style="width: 80px; height: 80px; background: #f8fafc; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #cbd5e1;">
+                                <i class="ri-calendar-event-line" style="font-size: 40px;"></i>
+                            </div>
+                            <h3 style="font-size: 18px; font-weight: 800; color: #334155; margin-bottom: 8px;">No Leave Requests Found</h3>
+                            <p style="color: #94a3b8; font-size: 14px; font-weight: 500;">Start by creating a new request or adjust your filters.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const monthFilter = document.getElementById('monthFilter');
+        const resetBtn = document.getElementById('resetFilters');
+        const tableRows = document.querySelectorAll('tbody tr:not(:has(td[colspan]))'); // Exclude empty state
+
+        function filterTable() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const statusTerm = statusFilter.value.toUpperCase();
+            const dateTerm = monthFilter.value; // YYYY-MM format
+
+            let visibleCount = 0;
+
+            tableRows.forEach(row => {
+                // Get data from columns
+                const employeeName = row.querySelector('td:nth-child(1) div:nth-child(2) div:first-child')?.textContent.toLowerCase().trim() || '';
+                const leaveStatus = row.querySelector('td:nth-child(7) span')?.textContent.trim().toUpperCase() || '';
+                
+                // Date parsing
+                const dateText = row.querySelector('td:nth-child(4) div:first-child')?.textContent.trim() || '';
+                let rowMonth = '';
+                if (dateText) {
+                    const dateObj = new Date(dateText);
+                    if (!isNaN(dateObj)) {
+                        const year = dateObj.getFullYear();
+                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                        rowMonth = `${year}-${month}`;
+                    }
+                }
+
+                // Check matches (Starts With for search)
+                const matchesSearch = searchTerm === '' || employeeName.startsWith(searchTerm);
+                const matchesStatus = statusTerm === '' || leaveStatus.includes(statusTerm);
+                const matchesDate = dateTerm === '' || rowMonth === dateTerm;
+
+                if (matchesSearch && matchesStatus && matchesDate) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Handle Empty State
+            const emptyRow = document.querySelector('tbody tr:has(td[colspan])');
+            if (visibleCount === 0) {
+                if (emptyRow) emptyRow.style.display = '';
+            } else {
+                if (emptyRow) emptyRow.style.display = 'none';
+            }
+        }
+
+        // Event Listeners
+        searchInput.addEventListener('input', filterTable);
+        statusFilter.addEventListener('change', filterTable);
+        monthFilter.addEventListener('change', filterTable);
+
+        // Keydown Handling
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                filterTable();
+                return false;
+            }
+            if (e.key === 'Escape') {
+                this.value = '';
+                filterTable();
+                this.blur();
+            }
+        });
+
+        resetBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            statusFilter.value = '';
+            monthFilter.value = ''; 
+            filterTable();
+        });
+    });
+</script>
+{% endblock %}

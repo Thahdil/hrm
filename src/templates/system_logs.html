@@ -1,0 +1,189 @@
+{% extends 'base_modern.html' %}
+
+{% block title %}Audit Trail - Nexteons HR{% endblock %}
+{% block header_title %}Audit Trail & Logs{% endblock %}
+
+{% block content %}
+<div class="flex-1" style="width: 100%; display: flex; flex-direction: column;">
+    <!-- Page Header -->
+    <div style="margin-bottom: 24px;">
+        <h3 class="section-title">System Audit Trail</h3>
+        <p style="color: var(--gray-500); font-size: 0.875rem; margin-top: 4px;">
+            Comprehensive tracking of all actions performed in the system with change history.
+        </p>
+    </div>
+
+    <!-- Filters Card -->
+    <div class="section-wrapper" style="margin-bottom: 24px;">
+        <form method="get" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: end;">
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.875rem; color: var(--gray-700);">Module</label>
+                <select name="module" class="form-select" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-family: var(--font-sans); font-size: 0.875rem; background: white;">
+                    <option value="">All Modules</option>
+                    {% for value, label in modules %}
+                    <option value="{{ value }}" {% if selected_module == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.875rem; color: var(--gray-700);">Action</label>
+                <select name="action" class="form-select" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-family: var(--font-sans); font-size: 0.875rem; background: white;">
+                    <option value="">All Actions</option>
+                    {% for value, label in actions %}
+                    <option value="{{ value }}" {% if selected_action == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">
+                    <i class="ri-filter-3-line"></i> Filter
+                </button>
+                <a href="{% url 'system_logs' %}" class="btn btn-outline" style="padding: 10px 20px;">Clear</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Audit Table Card -->
+    <div class="section-wrapper full-height-card flex-1" style="overflow: hidden;">
+        <div class="card-body-scroll">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--gray-200); position: sticky; top: 0; z-index: 10; background: var(--gray-50);">
+                        <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600); white-space: nowrap;">Time</th>
+                        <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">User</th>
+                        <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">Module</th>
+                        <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">Action</th>
+                        <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">Object</th>
+                        <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">Changes</th>
+                        <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600); white-space: nowrap;">IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr style="border-bottom: 1px solid var(--gray-100); transition: background-color 0.15s ease;" onmouseover="this.style.backgroundColor='var(--gray-50)'" onmouseout="this.style.backgroundColor='transparent'">
+                        <td style="padding: 16px 12px; color: var(--gray-600); font-size: 0.875rem; white-space: nowrap;">
+                            {{ log.timestamp|date:"M d, H:i" }}
+                        </td>
+                        <td style="padding: 16px 12px; font-weight: 500; font-size: 0.875rem; color: var(--gray-900);">
+                            {{ log.user.full_name|default:log.user.username|default:"System" }}
+                        </td>
+                        <td style="padding: 16px 12px;">
+                            <span style="display: inline-block; padding: 4px 10px; border-radius: var(--radius); font-size: 0.75rem; font-weight: 600; background: var(--info-light); color: var(--primary-dark);">
+                                {{ log.get_module_display }}
+                            </span>
+                        </td>
+                        <td style="padding: 16px 12px;">
+                            {% if log.action == 'CREATE' %}
+                            <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="ri-add-circle-line"></i> Created
+                            </span>
+                            {% elif log.action == 'UPDATE' %}
+                            <span class="badge badge-warning" style="display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="ri-edit-line"></i> Updated
+                            </span>
+                            {% elif log.action == 'DELETE' %}
+                            <span class="badge badge-error" style="display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="ri-delete-bin-line"></i> Deleted
+                            </span>
+                            {% elif log.action == 'LOGIN' %}
+                            <span class="badge badge-info" style="display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="ri-login-box-line"></i> Login
+                            </span>
+                            {% elif log.action == 'LOGOUT' %}
+                            <span class="badge" style="display: inline-flex; align-items: center; gap: 4px; background: var(--gray-100); color: var(--gray-700);">
+                                <i class="ri-logout-box-line"></i> Logout
+                            </span>
+                            {% elif log.action == 'APPROVE' %}
+                            <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="ri-checkbox-circle-line"></i> Approved
+                            </span>
+                            {% elif log.action == 'REJECT' %}
+                            <span class="badge badge-error" style="display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="ri-close-circle-line"></i> Rejected
+                            </span>
+                            {% elif log.action == 'EXPORT' %}
+                            <span class="badge" style="display: inline-flex; align-items: center; gap: 4px; background: #F3E8FF; color: #7C3AED;">
+                                <i class="ri-download-line"></i> Export
+                            </span>
+                            {% elif log.action == 'IMPORT' %}
+                            <span class="badge" style="display: inline-flex; align-items: center; gap: 4px; background: #F3E8FF; color: #7C3AED;">
+                                <i class="ri-upload-line"></i> Import
+                            </span>
+                            {% else %}
+                            <span class="badge" style="background: var(--gray-100); color: var(--gray-700);">{{ log.get_action_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 16px 12px;">
+                            <div style="font-weight: 500; font-size: 0.875rem; color: var(--gray-900);">{{ log.object_repr|default:"-"|truncatewords:10 }}</div>
+                            {% if log.content_type %}
+                            <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 2px;">{{ log.content_type }}</div>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 16px 12px; max-width: 300px;">
+                            {% if log.changes %}
+                            <details style="cursor: pointer;">
+                                <summary style="color: var(--primary); font-weight: 500; font-size: 0.875rem; list-style: none; display: flex; align-items: center; gap: 4px;">
+                                    <i class="ri-eye-line"></i> View Changes
+                                </summary>
+                                <div style="margin-top: 12px; padding: 12px; background: var(--gray-50); border-radius: var(--radius); font-size: 0.8rem; font-family: var(--font-mono); max-height: 200px; overflow-y: auto; border: 1px solid var(--gray-200);">
+                                    {% for field, change in log.changes.items %}
+                                    <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-200);">
+                                        <strong style="color: var(--gray-700);">{{ field }}:</strong><br>
+                                        {% if change.old %}
+                                        <span style="color: var(--error); display: block; margin-top: 4px;">- {{ change.old }}</span>
+                                        {% endif %}
+                                        {% if change.new %}
+                                        <span style="color: var(--success); display: block; margin-top: 4px;">+ {{ change.new }}</span>
+                                        {% endif %}
+                                        {% if change.new_values %}
+                                        <span style="color: var(--info); display: block; margin-top: 4px;">{{ change }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </details>
+                            {% else %}
+                            <span style="color: var(--gray-400);">-</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 16px 12px; font-size: 0.8rem; color: var(--gray-600); font-family: var(--font-mono);">
+                            {{ log.ip_address|default:"-" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="padding: 80px 20px;">
+                            <div style="text-align: center; background: linear-gradient(135deg, #EFF6FF 0%, #F0F9FF 100%); border-radius: var(--radius-md); padding: 48px;">
+                                <div style="width: 80px; height: 80px; margin: 0 auto 24px; background: white; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md);">
+                                    <i class="ri-file-list-3-line" style="font-size: 40px; color: var(--primary);"></i>
+                                </div>
+                                <h4 style="font-size: 1.25rem; font-weight: 600; color: var(--gray-900); margin-bottom: 8px;">No audit logs found</h4>
+                                <p style="font-size: 0.875rem; color: var(--gray-600); max-width: 400px; margin: 0 auto;">
+                                    Logs will appear here as users perform actions in the system. All activities are automatically tracked for security and compliance.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Info Box Card -->
+    <div class="section-wrapper" style="margin-top: 24px; background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1px solid var(--success-light);">
+        <div style="display: flex; align-items: start; gap: 16px;">
+            <div style="flex-shrink: 0; width: 40px; height: 40px; background: var(--success); border-radius: var(--radius); display: flex; align-items: center; justify-content: center;">
+                <i class="ri-shield-check-line" style="font-size: 20px; color: white;"></i>
+            </div>
+            <div style="flex: 1;">
+                <h4 style="font-weight: 600; color: #065F46; margin-bottom: 8px; font-size: 1rem;">Comprehensive Audit Logging Active</h4>
+                <p style="font-size: 0.875rem; margin: 0; color: #047857; line-height: 1.6;">
+                    All system actions are automatically tracked including logins, data modifications, approvals, and exports. 
+                    Changes show old and new values for compliance. Logs are retained indefinitely for security and regulatory purposes.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

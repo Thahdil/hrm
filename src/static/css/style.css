@@ -1,0 +1,301 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* Nexteons Brand Colors */
+    --brand-blue: #0072bc;
+    /* Approximate from logo */
+    --brand-orange: #f7941d;
+    /* Approximate from logo */
+    --brand-dark: #1a1a1a;
+
+    --primary: var(--brand-blue);
+    --primary-dark: #005a9e;
+    --secondary: var(--brand-orange);
+
+    --surface: #ffffff;
+    --background: #f8f9fa;
+    --text-primary: #2d3436;
+    --text-secondary: #636e72;
+    --border: #dfe6e9;
+
+    /* Clean Sidebar */
+    --sidebar-bg: #ffffff;
+    --sidebar-text: #636e72;
+    --sidebar-text-active: var(--brand-blue);
+    --sidebar-border: #ececec;
+
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.02);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --radius: 8px;
+    /* Sharper corners for corporate feel */
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    /* Modern, geometric sans similar to logo */
+    background-color: var(--background);
+    color: var(--text-primary);
+    line-height: 1.6;
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    position: fixed;
+    height: 100vh;
+    border-right: 1px solid var(--sidebar-border);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+.brand {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    /* Logo Container */
+}
+
+.brand img {
+    height: 40px;
+    /* Adjust based on actual logo ratio */
+    width: auto;
+}
+
+.nav-links {
+    padding: 10px 16px;
+    list-style: none;
+    flex: 1;
+}
+
+.nav-item {
+    margin-bottom: 4px;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    border-radius: var(--radius);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    gap: 12px;
+    font-size: 0.95rem;
+}
+
+.nav-link:hover {
+    background-color: #f0f7ff;
+    /* Light blue tint */
+    color: var(--brand-blue);
+}
+
+.nav-link.active {
+    background-color: #e6f2ff;
+    color: var(--brand-blue);
+    font-weight: 600;
+}
+
+.nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 4px;
+    height: 24px;
+    background: var(--brand-blue);
+    border-radius: 0 4px 4px 0;
+}
+
+.nav-link i {
+    font-size: 1.25rem;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    margin-left: 260px;
+    display: flex;
+    flex-direction: column;
+}
+
+.top-header {
+    height: 80px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    /* No border bottom, using shadow instead for floating effect or clean blend */
+}
+
+.header-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--brand-dark);
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 12px;
+    background: var(--background);
+    border-radius: 30px;
+    cursor: pointer;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    background: var(--brand-orange);
+    /* Pop color */
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+/* Dashboard Grid */
+.content-wrapper {
+    padding: 32px;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(0, 114, 188, 0.1);
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--brand-blue);
+    /* Default accent */
+}
+
+.stat-card:nth-child(2)::after {
+    background: var(--brand-orange);
+}
+
+.stat-card:nth-child(3)::after {
+    background: #10ac84;
+}
+
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.stat-icon {
+    width: 42px;
+    height: 42px;
+    background-color: #f1f2f6;
+    color: var(--text-secondary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.stat-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #95a5a6;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--brand-dark);
+}
+
+.section-wrapper {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow-sm);
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--brand-dark);
+    border-left: 4px solid var(--brand-orange);
+    padding-left: 12px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background-color: white;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+}
+
+.btn:hover {
+    background-color: #f8f9fa;
+    border-color: #b2bec3;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--brand-blue) 0%, #005a9e 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 114, 188, 0.2);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px rgba(0, 114, 188, 0.3);
+}

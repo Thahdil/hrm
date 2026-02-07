@@ -1,0 +1,41 @@
+{% extends 'base_modern.html' %}
+{% block title %}Import Attendance - Nexteons HR{% endblock %}
+{% block header_title %}Import Biometric Logs{% endblock %}
+
+{% block content %}
+<div class="section-wrapper" style="width: 100%; max-width: 800px; margin: 0 auto;">
+    <div
+        style="background-color: #f1f5f9; padding: 16px; border-radius: 8px; margin-bottom: 24px; font-size: 0.9rem; color: var(--text-secondary);">
+        <strong>Instructions:</strong> Upload a <strong>CSV</strong> or <strong>Excel (.xlsx)</strong> file.
+        <br><br>
+        <strong>Excel Format:</strong> Columns must include:
+        <br>
+        <code>Att. Date, InTime, OutTime, Status, Emp Code</code> (or <code>Employee Name</code>)
+        <br><br>
+        <strong>CSV Format:</strong>
+        <code>EmployeeEmail, Date, InTime, OutTime</code>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+            <label style="font-weight: 500;">Select File (CSV or Excel)</label>
+            {{ form.file }}
+        </div>
+
+        <div style="display: flex; gap: 16px;">
+            <button type="submit" class="btn btn-primary">Start Import</button>
+            <a href="{% url 'attendance_list' %}" class="btn">Cancel</a>
+        </div>
+    </form>
+</div>
+<style>
+    .form-input-file {
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        width: 100%;
+        background: white;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'base_modern.html' %}
+
+{% block title %}Manual Attendance Entry - Nexteons HRMS{% endblock %}
+{% block header_title %}Manual Attendance Entry{% endblock %}
+{% block page_subtitle %}Log attendance manually for employees.{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="card-header">
+        <div>
+            <h3 class="card-title">New Entry</h3>
+            <p class="card-subtitle">Fill in the details below</p>
+        </div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+        <div style="padding: 12px; background: var(--error-light); color: var(--error); border-radius: 8px; margin-bottom: 20px;">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label class="form-label">Employee</label>
+            {{ form.employee }}
+            {% if form.employee.errors %}
+            <div style="color: var(--error); font-size: 12px; margin-top: 4px;">{{ form.employee.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Date</label>
+            {{ form.date }}
+            {% if form.date.errors %}
+            <div style="color: var(--error); font-size: 12px; margin-top: 4px;">{{ form.date.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Status</label>
+            {{ form.status }}
+            {% if form.status.errors %}
+            <div style="color: var(--error); font-size: 12px; margin-top: 4px;">{{ form.status.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                <label class="form-label">Check-in Time</label>
+                {{ form.check_in }}
+                {% if form.check_in.errors %}
+                <div style="color: var(--error); font-size: 12px; margin-top: 4px;">{{ form.check_in.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Check-out Time</label>
+                {{ form.check_out }}
+                {% if form.check_out.errors %}
+                <div style="color: var(--error); font-size: 12px; margin-top: 4px;">{{ form.check_out.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Remarks / Justification</label>
+            {{ form.remarks }}
+            {% if form.remarks.errors %}
+            <div style="color: var(--error); font-size: 12px; margin-top: 4px;">{{ form.remarks.errors.0 }}</div>
+            {% endif %}
+            <div style="font-size: 12px; color: var(--gray-500); margin-top: 4px;">Reason for manual entry (e.g. WFH, Forgot Punch)</div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <a href="{% url 'attendance_list' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Entry</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

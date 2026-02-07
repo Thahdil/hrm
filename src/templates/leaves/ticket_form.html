@@ -1,0 +1,40 @@
+{% extends 'base_modern.html' %}
+{% block title %}Request Ticket - Nexteons HR{% endblock %}
+{% block header_title %}Request Annual Ticket{% endblock %}
+
+{% block content %}
+<div class="section-wrapper" style="max-width: 600px; margin: 0 auto;">
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: grid; gap: 20px;">
+            {% for field in form %}
+            <div
+                style="display: flex; flex-direction: column; gap: 8px; {% if field.name == 'is_encashment' %}flex-direction: row; align-items: center;{% endif %}">
+                <label for="{{ field.id_for_label }}" style="font-weight: 500;">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}
+                <span style="color: #ef4444; font-size: 0.85rem;">{{ error }}</span>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        <div style="margin-top: 32px; display: flex; gap: 16px;">
+            <button type="submit" class="btn btn-primary">Submit Request</button>
+            <a href="{% url 'ticket_list' %}" class="btn">Cancel</a>
+        </div>
+    </form>
+</div>
+<style>
+    .form-input {
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        width: 100%;
+    }
+
+    .form-checkbox {
+        width: 18px;
+        height: 18px;
+    }
+</style>
+{% endblock %}

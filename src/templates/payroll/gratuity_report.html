@@ -1,0 +1,103 @@
+{% extends 'base_modern.html' %}
+{% load humanize %}
+
+{% block title %}Gratuity Liability Report - Nexteons HR{% endblock %}
+{% block header_title %}Gratuity Liability Report{% endblock %}
+
+{% block content %}
+<div class="section-wrapper">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+            <h3 class="section-title">End of Service Benefits (EOSB)</h3>
+            <p style="color: var(--text-secondary); margin: 0;">Calculated as of {{ today|date:"F d, Y" }}</p>
+        </div>
+        <button onclick="window.print()" class="btn btn-outline" style="min-width: 120px;">
+            <i class="ri-printer-line"></i> Print
+        </button>
+    </div>
+
+    <!-- Summary Card -->
+    <div
+        style="background: #f8fafc; padding: 24px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 32px; text-align: center;">
+        <div
+            style="font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
+            Total Accrued Liability</div>
+        <div style="font-size: 3rem; font-weight: 700; color: #1e293b; margin: 8px 0;">
+            {{ currency_symbol }} {{ total_liability|floatformat:2|intcomma }}
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary);">
+            Based on Payment of Gratuity Act, 1972 (15/26 days per year of service)
+        </div>
+    </div>
+
+    <!-- Details Table -->
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="text-align: left; background-color: #f1f5f9;">
+                <th style="padding: 16px; font-weight: 600; color: #475569; border-bottom: 2px solid var(--border);">
+                    Employee</th>
+                <th style="padding: 16px; font-weight: 600; color: #475569; border-bottom: 2px solid var(--border);">
+                    Login ID</th>
+                <th style="padding: 16px; font-weight: 600; color: #475569; border-bottom: 2px solid var(--border);">
+                    Joining Date</th>
+                <th style="padding: 16px; font-weight: 600; color: #475569; border-bottom: 2px solid var(--border);">
+                    Tenure (Years)</th>
+                <th style="padding: 16px; font-weight: 600; color: #475569; border-bottom: 2px solid var(--border);">
+                    Daily Basic</th>
+                <th
+                    style="padding: 16px; font-weight: 600; color: #475569; border-bottom: 2px solid var(--border); text-align: right;">
+                    Accrued Gratuity ({{ currency_code }})</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in report_data %}
+            <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 16px;">
+                    <div style="font-weight: 600; color: #1e293b;">{{ item.employee.full_name }}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ item.employee.designation }}</div>
+                </td>
+                <td style="padding: 16px;">
+                    <span
+                        style="background-color: #e0f2fe; color: #0284c7; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-family: monospace; font-weight: 500;">
+                        {{ item.employee.user.username }}
+                    </span>
+                </td>
+                <td style="padding: 16px; color: #475569;">{{ item.joining_date|date:"Y-m-d" }}</td>
+                <td style="padding: 16px; color: #475569;">{{ item.years_service }}</td>
+                <td style="padding: 16px; color: #475569;">{{ item.daily_basic|floatformat:2 }}</td>
+                <td style="padding: 16px; font-weight: 600; text-align: right; color: #0f172a;">
+                    {{ item.gratuity_amount|floatformat:2|intcomma }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="padding: 40px; text-align: center; color: var(--text-secondary);">
+                    No eligible employees found.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<style>
+    @media print {
+
+        header,
+        aside,
+        .btn {
+            display: none !important;
+        }
+
+        main {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .section-wrapper {
+            box-shadow: none !important;
+            border: none !important;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,323 @@
+{% extends 'base_modern.html' %}
+
+{% block title %}My Profile - Nexteons HR{% endblock %}
+{% block header_title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="profile-page-container" style="display: flex; flex-direction: column; min-height: 0; flex: 1; animation: fadeIn 0.8s ease-out; padding-top: 8px;">
+    <div class="glass-card" style="width: 100%; display: flex; flex-direction: column; min-height: 0; flex: 1; overflow: hidden; box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.1); border-radius: 24px; background: rgba(255, 255, 255, 0.98);">
+        <!-- Profile Banner/Header -->
+        <div class="profile-banner" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); height: 70px; position: relative; flex-shrink: 0;">
+            <div style="position: absolute; bottom: -30px; left: 32px; display: flex; align-items: flex-end; gap: 16px;">
+                <div class="profile-avatar-container" style="width: 70px; height: 70px; background: white; border-radius: 14px; padding: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                    <div style="width: 100%; height: 100%; background: #eff6ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                        <i class="ri-user-3-fill" style="font-size: 32px;"></i>
+                    </div>
+                </div>
+                <div style="padding-bottom: 2px;">
+                    <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">{{ employee.full_name|upper }}</h2>
+                    <div style="display: flex; gap: 6px; margin-top: 2px;">
+                        <span class="badge" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); font-size: 9px; padding: 2px 8px;">{{ employee.designation }}</span>
+                        <span class="badge" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); font-size: 9px; padding: 2px 8px;">{{ employee.department }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="padding: 45px 32px 16px; display: grid; grid-template-columns: 280px 1fr; gap: 32px; flex: 1; min-height: 0; overflow-y: auto;" class="custom-scroll">
+            <!-- Left Column: Summary Stats -->
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="info-card" style="background: var(--gray-50); padding: 18px; border-radius: 16px; border: 1px solid var(--gray-100);">
+                    <h4 style="margin: 0 0 12px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.1em;">Work Information</h4>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div class="detail-item">
+                            <i class="ri-calendar-event-line" style="width: 32px; height: 32px; font-size: 16px;"></i>
+                            <div>
+                                <label style="font-size: 10px;">Joining Date</label>
+                                <span style="font-size: 13px;">{{ employee.date_of_joining|date:"d M Y"|default:"Not set" }}</span>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <i class="ri-fingerprint-line" style="width: 32px; height: 32px; font-size: 16px;"></i>
+                            <div>
+                                <label style="font-size: 10px;">Aadhaar Number</label>
+                                <span style="font-size: 13px;">{{ employee.aadhaar_number|default:"Not provided" }}</span>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <i class="ri-id-card-line" style="width: 32px; height: 32px; font-size: 16px;"></i>
+                            <div>
+                                <label style="font-size: 10px;">PAN card Number</label>
+                                <span style="font-size: 13px;">{{ employee.pan_number|default:"Not provided" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-card" style="background: rgba(37, 99, 235, 0.03); padding: 16px; border-radius: 16px; border: 1px solid rgba(37, 99, 235, 0.1);">
+                    <h4 style="margin: 0 0 8px; font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase;">System Status</h4>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 6px; height: 6px; background: #10b981; border-radius: 50%;"></div>
+                        <span style="font-size: 13px; font-weight: 700; color: #065f46;">Active Employee</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Form -->
+            <div class="form-container">
+                <form method="post" class="modern-form">
+                    {% csrf_token %}
+                    
+                    <h3 style="margin: 0 0 20px; font-size: 16px; font-weight: 800; color: var(--gray-900); display: flex; align-items: center; gap: 10px;">
+                        <i class="ri-user-settings-line" style="color: var(--primary);"></i> Personal & Contact Details
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <div class="input-wrapper">
+                                <i class="ri-user-line"></i>
+                                <input type="text" name="full_name" value="{{ employee.full_name }}" placeholder="Your full name">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Username</label>
+                            <div class="input-wrapper">
+                                <i class="ri-at-line"></i>
+                                <input type="text" name="username" value="{{ employee.username }}" placeholder="Login username">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <div class="input-wrapper">
+                                <i class="ri-phone-line"></i>
+                                <input type="text" name="phone_number" value="{{ employee.phone_number }}" placeholder="+91 0000 000000">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <div class="input-wrapper">
+                                <i class="ri-mail-line"></i>
+                                <input type="email" name="email" value="{{ employee.email }}" placeholder="work@company.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <div class="input-wrapper">
+                                <i class="ri-cake-2-line"></i>
+                                <input type="date" name="date_of_birth" value="{{ employee.date_of_birth|date:'Y-m-d' }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <div class="input-wrapper">
+                                <i class="ri-user-smile-line"></i>
+                                <select name="gender">
+                                    <option value="Male" {% if employee.gender == "Male" %}selected{% endif %}>Male</option>
+                                    <option value="Female" {% if employee.gender == "Female" %}selected{% endif %}>Female</option>
+                                    <option value="Other" {% if employee.gender == "Other" %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
+                        <div class="form-group">
+                            <label>Designation</label>
+                            <div class="input-wrapper">
+                                <i class="ri-briefcase-line"></i>
+                                <select name="designation">
+                                    {% for val, label in designation_choices %}
+                                        <option value="{{ val }}" {% if employee.designation == val %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Residential Address</label>
+                            <div class="input-wrapper">
+                                <i class="ri-map-pin-line"></i>
+                                <input type="text" name="address" value="{{ employee.address }}" placeholder="City, Country" style="height: 38px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 24px 0 16px; font-size: 16px; font-weight: 800; color: var(--gray-900); display: flex; align-items: center; gap: 10px;">
+                        <i class="ri-bank-card-line" style="color: var(--primary);"></i> Banking Information
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                        <div class="form-group">
+                            <label>Bank Account Number</label>
+                            <div class="input-wrapper">
+                                <i class="ri-bank-line"></i>
+                                <input type="text" name="iban" value="{{ employee.iban|default:'' }}" placeholder="Account number">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Bank IFSC Code</label>
+                            <div class="input-wrapper">
+                                <i class="ri-shield-check-line"></i>
+                                <input type="text" name="ifsc_code" value="{{ employee.ifsc_code|default:'' }}" placeholder="IFSC Code">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--gray-100);">
+                        <button type="submit" class="premium-button primary" style="min-width: 180px; padding: 10px 24px; height: 42px;">
+                            <span>Update Profile</span>
+                            <i class="ri-checkbox-circle-fill"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .badge {
+        padding: 4px 12px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .detail-item {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .detail-item i {
+        width: 36px;
+        height: 36px;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gray-500);
+        font-size: 18px;
+    }
+
+    .detail-item label {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--gray-400);
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
+
+    .detail-item span {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--gray-800);
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--gray-700);
+    }
+
+    .input-wrapper {
+        position: relative;
+    }
+
+    .input-wrapper i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-400);
+        font-size: 18px;
+        pointer-events: none;
+    }
+
+    .modern-form input,
+    .modern-form select,
+    .modern-form textarea {
+        width: 100%;
+        padding: 9px 16px 9px 44px;
+        border: 1px solid var(--gray-200);
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--gray-900);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        background: white;
+        appearance: none;
+        height: 38px;
+    }
+
+    .modern-form textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .modern-form input:focus,
+    .modern-form select:focus,
+    .modern-form textarea:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        outline: none;
+        transform: translateY(-1px);
+    }
+
+    .premium-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 16px 32px;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 14px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        border: none;
+    }
+
+    .premium-button.primary {
+        background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
+        color: white;
+        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+    }
+
+    .premium-button.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.4);
+    }
+
+    @media (max-width: 850px) {
+        .glass-card > div:last-child {
+            grid-template-columns: 1fr !important;
+        }
+        .profile-banner {
+            height: 120px;
+        }
+        .profile-avatar-container {
+            width: 100px !important;
+            height: 100px !important;
+        }
+    }
+</style>
+{% endblock %}

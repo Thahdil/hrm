@@ -1,0 +1,136 @@
+{% extends 'base_modern.html' %}
+
+{% block title %}Manage Leave Request - Nexteons HR{% endblock %}
+{% block header_title %}Leave Request Details{% endblock %}
+
+{% block content %}
+<div class="section-wrapper" style="max-width: 800px; margin: 0 auto;">
+    <!-- Status Banner -->
+    <div
+        style="margin-bottom: 24px; padding: 16px; border-radius: 8px; background: {% if leave.status == 'APPROVED' %}#dcfce7{% elif leave.status == 'REJECTED' %}#fee2e2{% else %}#fef3c7{% endif %};">
+        <div
+            style="font-weight: 600; color: {% if leave.status == 'APPROVED' %}#166534{% elif leave.status == 'REJECTED' %}#991b1b{% else %}#92400e{% endif %}; display: flex; align-items: center; gap: 8px;">
+            {% if leave.status == 'APPROVED' %}
+                <i class="ri-checkbox-circle-line"></i>
+            {% elif leave.status == 'REJECTED' %}
+                <i class="ri-close-circle-line"></i>
+            {% else %}
+                <i class="ri-time-line"></i>
+            {% endif %}
+            {{ leave.get_status_display }}
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+        <!-- Request Details -->
+        <div>
+            <h4
+                style="margin-bottom: 16px; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                Request Info</h4>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary);">Employee</label>
+                <div style="font-weight: 600; font-size: 1.1rem;">{{ leave.employee.full_name }}</div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary);">Leave Type</label>
+                <div>{{ leave.leave_type.name }}</div>
+            </div>
+
+            <div style="margin-bottom: 12px; display: flex; gap: 24px;">
+                <div>
+                    <label style="display: block; font-size: 0.85rem; color: var(--text-secondary);">From</label>
+                    <div style="font-weight: 500;">{{ leave.start_date }}</div>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; color: var(--text-secondary);">To</label>
+                    <div style="font-weight: 500;">{{ leave.end_date }}</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary);">Duration</label>
+                <div style="font-weight: 500;">{{ leave.duration_days }} Days</div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary);">Assigned Manager</label>
+                <div style="font-weight: 500;">{{ leave.assigned_manager.full_name|default:leave.assigned_manager.username|default:"Not Assigned" }}</div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary);">Reason</label>
+                <div style="background: #f8fafc; padding: 12px; border-radius: 6px; font-size: 0.95rem;">
+                    {{ leave.reason|default:"No reason provided." }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div>
+            <h4
+                style="margin-bottom: 16px; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                Workflow Actions</h4>
+
+            {% if user.is_staff or user.is_admin or user.is_hr or user.is_ceo or user.is_project_manager %}
+            {% if leave.status == 'PENDING' or leave.status == 'MGR_APPROVED' %}
+            <div
+                style="background: white; padding: 20px; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <form method="post" action="{% url 'leave_approve' leave.id %}">
+                    {% csrf_token %}
+                    <div style="margin-bottom: 16px;">
+                        <label style="font-weight: 500; display: block; margin-bottom: 8px;">Manager Comment</label>
+                        <textarea name="manager_comment" rows="3" class="form-control"
+                            style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px;"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <button type="submit" name="action" value="approve" class="btn"
+                            style="background: #10b981; color: white; border: none; flex: 1;">
+                            <i class="ri-checkbox-circle-line"></i> Approve
+                        </button>
+                        <button type="submit" name="action" value="reject" class="btn"
+                            style="background: #ef4444; color: white; border: none; flex: 1;">
+                            <i class="ri-close-circle-line"></i> Reject
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% else %}
+            <div
+                style="padding: 20px; text-align: center; color: var(--text-secondary); background: #f8fafc; border-radius: 8px;">
+                This request has clear been processed. <br>
+                <strong>Decided by:</strong> {{ leave.approved_by.username|default:"System" }}
+            </div>
+            {% endif %}
+            {% else %}
+            <!-- For Employees -->
+            <!-- For Employees -->
+            {% if leave.status == 'PENDING' %}
+            <div style="background: white; padding: 20px; border: 1px solid var(--border); border-radius: 8px;">
+                <p style="margin-bottom: 16px; color: var(--text-secondary);">You can cancel this request while it is
+                    still pending.</p>
+                <form method="post" action="{% url 'leave_approve' leave.id %}">
+                    <!-- Reusing action endpoint for simplicity or create cancel endpoint -->
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="cancel" class="btn"
+                        style="background: #64748b; color: white; width: 100%;">
+                        Cancel Request
+                    </button>
+                </form>
+            </div>
+            {% else %}
+            <div style="padding: 20px; text-align: center; color: var(--text-secondary);">
+                No actions available.
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="margin-top: 32px; border-top: 1px solid var(--border); padding-top: 16px;">
+        <a href="{% url 'leave_list' %}" class="btn">
+            <i class="ri-arrow-left-line"></i> Back to List
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+Django==5.0.1
+cryptography==41.0.7
+pandas
+openpyxl
+xlrd
+lxml
+html5lib

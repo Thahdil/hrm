@@ -1,0 +1,93 @@
+{% extends 'base_modern.html' %}
+
+{% block title %}Documents - Nexteons HR{% endblock %}
+{% block header_title %}Document Vault{% endblock %}
+
+{% block content %}
+<div class="flex-1" style="width: 100%; display: flex; flex-direction: column;">
+    <!-- Page Header -->
+    <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div>
+            <h3 class="section-title">Secure Document Vault</h3>
+            <p style="color: var(--gray-500); font-size: 0.875rem; margin-top: 4px;">
+                Manage and monitor expiring official employee documents.
+            </p>
+        </div>
+        <a href="{% url 'document_upload' %}" class="btn btn-primary" style="padding: 10px 24px;">
+            <i class="ri-file-upload-line"></i> Upload New Document
+        </a>
+    </div>
+
+    <!-- Main Table Card -->
+    <div class="section-wrapper full-height-card flex-1" style="padding: 0; overflow: hidden;">
+        <div class="card-body-scroll">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--gray-50); border-bottom: 2px solid var(--gray-200); position: sticky; top: 0; z-index: 10;">
+                        <th style="padding: 16px 24px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">Employee</th>
+                        <th style="padding: 16px 24px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">Document Type</th>
+                        <th style="padding: 16px 24px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">Expiry Date</th>
+                        <th style="padding: 16px 24px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">Status</th>
+                        <th style="padding: 16px 24px; text-align: right; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in documents %}
+                    <tr style="border-bottom: 1px solid var(--gray-100); transition: background-color 0.15s ease;" onmouseover="this.style.backgroundColor='var(--gray-50)'" onmouseout="this.style.backgroundColor='transparent'">
+                        <td style="padding: 16px 24px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div class="user-avatar" style="width: 36px; height: 36px; font-size: 14px; background: var(--primary); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; box-shadow: 0 4px 8px rgba(37, 99, 235, 0.15); flex-shrink: 0; aspect-ratio: 1/1;">
+                                    {{ doc.employee.full_name|slice:":1"|upper }}
+                                </div>
+                                <span style="font-weight: 600; color: var(--gray-900);">{{ doc.employee.full_name }}</span>
+                            </div>
+                        </td>
+                        <td style="padding: 16px 24px;">
+                            <span style="font-weight: 500; color: var(--gray-700);">{{ doc.get_document_type_display }}</span>
+                        </td>
+                        <td style="padding: 16px 24px; color: var(--gray-600); font-weight: 500;">
+                            {{ doc.expiry_date|date:"M d, Y"|default:"<span style='color:var(--gray-400)'>No Expiry</span>"|safe }}
+                        </td>
+                        <td style="padding: 16px 24px;">
+                            {% if doc.is_expired %}
+                                <span class="badge badge-error" style="display: inline-flex; align-items: center; gap: 4px; background-color: #FEE2E2; color: #991B1B;">
+                                    <i class="ri-close-circle-line"></i> Expired
+                                </span>
+                            {% elif doc.is_expiring_soon %}
+                                <span class="badge badge-warning" style="display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="ri-error-warning-line"></i> Expiring Soon
+                                </span>
+                            {% else %}
+                                <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="ri-checkbox-circle-line"></i> Valid
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 16px 24px; text-align: right;">
+                            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                <a href="{{ doc.file.url }}?action=view" target="_blank" class="btn btn-outline" style="padding: 6px 16px; font-size: 13px;" title="View document">
+                                    <i class="ri-eye-line"></i> View
+                                </a>
+                                <a href="{{ doc.file.url }}?action=download" download class="btn btn-primary" style="padding: 6px 16px; font-size: 13px;" title="Download document">
+                                    <i class="ri-download-2-line"></i> Download
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="padding: 64px 24px; text-align: center;">
+                            <div style="color: var(--gray-400); margin-bottom: 16px;">
+                                <i class="ri-file-search-line" style="font-size: 48px;"></i>
+                            </div>
+                            <h4 style="color: var(--gray-900); font-weight: 600;">No documents found</h4>
+                            <p style="color: var(--gray-500); font-size: 0.875rem;">Upload employee documents to get started.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends 'base_modern.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Dashboard - Nexteons HRMS{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
+{% block main_class %}viewport-fill{% endblock %}
+{% block page_subtitle %}Welcome back, {{ user.full_name|default:user.username|upper }}. Here's what's happening today.{% endblock %}
+
+{% block content %}
+<div style="flex: 1; display: flex; flex-direction: column; gap: 16px; padding-bottom: 24px; min-height: 0;">
+    <!-- Compact Stats Row -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; flex-shrink: 0;">
+        <div class="stat-card" style="padding: 14px 18px; border-radius: 16px; border: 1px solid #e2e8f0; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Total Workforce</div>
+                    <div style="font-size: 32px; font-weight: 800; color: #1e293b; line-height: 1;">{{ total_employees }}</div>
+                    <div style="font-size: 11px; color: var(--success); font-weight: 700; margin-top: 8px; display: flex; align-items: center; gap: 4px;">
+                        <i class="ri-arrow-up-circle-fill"></i> +{{ new_emp_percentage }}%
+                    </div>
+                </div>
+                <div style="width: 44px; height: 44px; background: #eff6ff; color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                    <i class="ri-group-fill"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card" style="padding: 14px 18px; border-radius: 16px; border: 1px solid #e2e8f0; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Live Attendance</div>
+                    <div style="font-size: 32px; font-weight: 800; color: #1e293b; line-height: 1;">{{ active_today_count|default:"0" }}</div>
+                    <div style="font-size: 11px; color: #10b981; font-weight: 700; margin-top: 8px; display: flex; align-items: center; gap: 4px;">
+                        <i class="ri-checkbox-circle-fill"></i> {{ attendance_rate }}% Rate
+                    </div>
+                </div>
+                <div style="width: 44px; height: 44px; background: #ecfdf5; color: #10b981; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                    <i class="ri-fingerprint-fill"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card" style="padding: 14px 18px; border-radius: 16px; border: 1px solid #e2e8f0; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">On Leave</div>
+                    <div style="font-size: 32px; font-weight: 800; color: #1e293b; line-height: 1;">{{ on_leave_count|default:"0" }}</div>
+                    <div style="font-size: 11px; color: #f59e0b; font-weight: 700; margin-top: 8px;">
+                        <span style="background: #fffbeb; padding: 2px 8px; border-radius: 4px;">{{ pending_approvals_count }} Pending</span>
+                    </div>
+                </div>
+                <div style="width: 44px; height: 44px; background: #fffbe6; color: #f59e0b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                    <i class="ri-user-unfollow-fill"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card" style="padding: 14px 18px; border-radius: 16px; border: 1px solid #e2e8f0; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Graturity Liability</div>
+                    <div style="font-size: 24px; font-weight: 800; color: #1e293b; line-height: 1; margin-top: 6px;">₹ {{ total_gratuity_liability|floatformat:2|intcomma }}</div>
+                    <div style="font-size: 11px; color: #8b5cf6; font-weight: 700; margin-top: 8px;">
+                        Total Accrued
+                    </div>
+                </div>
+                <div style="width: 44px; height: 44px; background: #f5f3ff; color: #8b5cf6; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                    <i class="ri-wallet-3-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 360px; gap: 16px; flex: 1; min-height: 0;">
+        <!-- Left: Activity Container -->
+        <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0;">
+            <div class="card" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; border-radius: 20px; border: 1px solid #e2e8f0; background: white;">
+                <div style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #fdfdfd;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i class="ri-flashlight-line" style="color: var(--primary); font-size: 16px;"></i>
+                        <h3 style="margin: 0; font-size: 14px; font-weight: 800; color: #1e293b; letter-spacing: -0.01em;">Recent Activity Log</h3>
+                    </div>
+                    <a href="{% url 'system_logs' %}" style="color: var(--primary); font-size: 11px; text-decoration: none; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; background: #eff6ff; padding: 4px 10px; border-radius: 6px;">Full History</a>
+                </div>
+                <!-- Scrollable activity -->
+                <div style="flex: 1; overflow-y: auto; padding: 0 20px;" class="custom-scroll">
+                    {% for activity in recent_activities %}
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f8fafc; transition: all 0.2s;">
+                        <div style="width: 32px; height: 32px; font-size: 12px; flex-shrink: 0; background: #f1f5f9; color: #475569; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; border: 1px solid #e2e8f0;">
+                            {{ activity.user.full_name|default:activity.user.username|default:"S"|slice:":1"|upper }}
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 12.5px; color: #334155; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;">
+                                <strong style="color: #1e293b;">{{ activity.user.full_name|default:activity.user.username }}</strong> {{ activity.description|striptags }}
+                            </div>
+                            <div style="font-size: 10px; color: #94a3b8; font-weight: 600; margin-top: 1px;">
+                                <i class="ri-time-line" style="font-size: 9px;"></i> {{ activity.timestamp|timesince }} ago
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.4;">
+                        <i class="ri-history-line" style="font-size: 48px; margin-bottom: 12px;"></i>
+                        <span style="font-size: 14px; font-weight: 600;">System logs are clear</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right: Actions & Timeline -->
+        <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0;">
+            <!-- Actions -->
+            <div class="card" style="padding: 16px 20px; border-radius: 20px; border: 1px solid #e2e8f0; background: white; flex-shrink: 0;">
+                <h3 style="margin: 0 0 16px; font-size: 11px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em;">Operations Hub</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <a href="{% url 'employee_add' %}" class="action-tile" style="text-decoration: none; padding: 12px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <div style="width: 32px; height: 32px; background: #eff6ff; color: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                            <i class="ri-user-add-line"></i>
+                        </div>
+                        <span style="font-size: 11px; font-weight: 700; color: #475569;">Add Employee</span>
+                    </a>
+                    <a href="{% url 'attendance_list' %}" class="action-tile" style="text-decoration: none; padding: 12px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <div style="width: 32px; height: 32px; background: #ecfdf5; color: #10b981; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                            <i class="ri-fingerprint-line"></i>
+                        </div>
+                        <span style="font-size: 11px; font-weight: 700; color: #475569;">Attendance</span>
+                    </a>
+                    <a href="{% url 'payroll_list' %}" class="action-tile" style="text-decoration: none; padding: 12px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <div style="width: 32px; height: 32px; background: #fffbeb; color: #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                            <i class="ri-bank-card-line"></i>
+                        </div>
+                        <span style="font-size: 11px; font-weight: 700; color: #475569;">Payroll</span>
+                    </a>
+                    <a href="{% url 'document_list' %}" class="action-tile" style="text-decoration: none; padding: 12px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <div style="width: 32px; height: 32px; background: #f5f3ff; color: #8b5cf6; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                            <i class="ri-shield-keyhole-line"></i>
+                        </div>
+                        <span style="font-size: 11px; font-weight: 700; color: #475569;">Vault</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Holidays Timeline -->
+            <div class="card" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; border-radius: 20px; border: 1px solid #e2e8f0; background: white;">
+                <div style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 8px; background: #fdfdfd;">
+                    <i class="ri-calendar-event-fill" style="color: #f59e0b; font-size: 16px;"></i>
+                    <h3 style="margin: 0; font-size: 11px; font-weight: 900; color: #1e293b; text-transform: uppercase; letter-spacing: 0.05em;">Upcoming Holidays</h3>
+                </div>
+                <div style="flex: 1; overflow-y: auto; padding: 12px 16px;" class="custom-scroll">
+                    {% if upcoming_holidays %}
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                        {% for holiday in upcoming_holidays %}
+                            <div style="display: flex; gap: 12px; align-items: center; padding-bottom: 10px; border-bottom: 1px dashed #f1f5f9;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid #e2e8f0; flex-shrink: 0;">
+                                    <span style="font-size: 12px; font-weight: 900; color: var(--primary); line-height: 1;">{{ holiday.date|date:"d" }}</span>
+                                    <span style="font-size: 8px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">{{ holiday.date|date:"M" }}</span>
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 1px;">{{ holiday.name }}</div>
+                                    <div style="font-size: 10px; color: #94a3b8; font-weight: 600;">{{ holiday.date|date:"l" }}</div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3;">
+                            <i class="ri-calendar-line" style="font-size: 24px; margin-bottom: 4px;"></i>
+                            <span style="font-size: 11px; font-weight: 600;">No upcoming dates</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+    
+    .action-tile:hover {
+        background: white !important;
+        border-color: var(--primary) !important;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+    }
+    .action-tile:hover i { color: var(--primary-dark) !important; }
+</style>
+{% endblock %}
