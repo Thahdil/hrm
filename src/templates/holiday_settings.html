@@ -3,9 +3,9 @@
 {% block header_title %}Holiday Calendar{% endblock %} 
 
 {% block content %}
-<div class="flex-1" style="width: 100%; animation: fadeIn 0.4s ease-out; display: flex; flex-direction: column;">
-    <div class="card full-height-card" style="border: none; background: white; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-md);">
-        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: none; padding: 32px 32px 16px 32px;">
+<div class="flex-1" style="height: 100%; display: flex; flex-direction: column; overflow: hidden; animation: fadeIn 0.4s ease-out; padding-bottom: 24px;">
+    <div class="card full-height-card" style="flex: 1; display: flex; flex-direction: column; border: none; background: white; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-md);">
+        <div class="card-header" style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; border-bottom: none; padding: 24px 24px 16px 24px;">
             <div>
                 <h3 class="card-title" style="font-size: 24px; font-weight: 800; color: #1e293b; margin-bottom: 8px;">Public Holidays Calendar</h3>
                 <p class="card-subtitle" style="font-size: 14px; color: var(--gray-500); margin: 0;">Manage holidays for leave and attendance calculations across the organization</p>
@@ -16,8 +16,8 @@
         </div>
         
         <!-- Add Holiday Form Section -->
-        <div style="padding: 0 32px 32px 32px;">
-            <div style="background: #f8fafc; padding: 24px; border-radius: 16px; border: 1px solid #f1f5f9; margin-bottom: 32px;">
+        <div style="flex-shrink: 0; padding: 0 24px 24px 24px;">
+            <div style="background: #f8fafc; padding: 24px; border-radius: 16px; border: 1px solid #f1f5f9;">
                 <h4 style="font-size: 15px; font-weight: 700; color: #334155; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
                     <div style="width: 28px; height: 28px; background: rgba(37, 99, 235, 0.1); color: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                         <i class="ri-add-line"></i>
@@ -45,19 +45,20 @@
                     </button>
                 </form>
             </div>
+        </div>
 
-            <!-- Holidays List Table -->
-            <div class="card-body-scroll" style="background: white; border-top: 1px solid #f1f5f9;">
-                <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
-                    <thead style="background: #fdfdfd;">
-                        <tr>
-                            <th style="padding: 16px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9;">Date & Day</th>
-                            <th style="padding: 16px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9;">Holiday Name</th>
-                            <th style="padding: 16px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9;">Type</th>
-                            <th style="padding: 16px 24px; text-align: right; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+        <!-- Holidays List Table -->
+        <div class="card-body-scroll custom-scroll" style="flex: 1; overflow-y: auto; background: white; border-top: 1px solid #f1f5f9;">
+            <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 #e2e8f0;">
+                    <tr>
+                        <th style="width: 300px; padding: 18px 24px; text-align: left; font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">Date & Day</th>
+                        <th style="padding: 18px 24px; text-align: left; font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">Holiday Name</th>
+                        <th style="width: 1%; white-space: nowrap; padding: 18px 24px; text-align: left; font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">Type</th>
+                        <th style="width: 1%; white-space: nowrap; padding: 18px 24px; text-align: right; font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
                         {% for holiday in holidays %}
                         <tr style="transition: background 0.2s;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
                             <td style="padding: 18px 24px; border-bottom: 1px solid #f1f5f9;">
@@ -127,5 +128,11 @@
     border-color: var(--primary);
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
 }
+
+.custom-scroll::-webkit-scrollbar { width: 3px; height: 3px; }
+.custom-scroll::-webkit-scrollbar-track { background: transparent; }
+.custom-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; transition: background 0.2s; }
+.custom-scroll:hover::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); }
+.custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 </style>
 {% endblock %}

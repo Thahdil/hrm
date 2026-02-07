@@ -413,7 +413,13 @@ def dashboard(request):
         
         # Simple attendance rate for current month
         days_in_month = today.day
-        attendance_rate = int((attendance_count / days_in_month * 100) if days_in_month > 0 else 0)
+        # Average Attendance for ALL Employees (Requested Feature)
+        total_present_logs = AttendanceLog.objects.filter(
+            date__month=today.month,
+            date__year=today.year,
+            status__in=['Present', 'HalfDay']
+        ).count()
+        avg_daily_attendance = int(total_present_logs / days_in_month) if days_in_month > 0 else 0
 
         # Upcoming Holidays
         from .models import PublicHoliday
@@ -422,11 +428,12 @@ def dashboard(request):
         context = {
             'employee': employee,
             'attendance_count': attendance_count,
-            'attendance_rate': attendance_rate,
             'pending_leaves_count': pending_leaves_count,
             'total_leave_used': total_leave_used,
             'recent_leaves': recent_leaves,
             'leave_balances': leave_balances,
-            'upcoming_holidays': upcoming_holidays
+            'leave_balances': leave_balances,
+            'upcoming_holidays': upcoming_holidays,
+            'avg_daily_attendance': avg_daily_attendance,
         }
         return render(request, 'dashboard_ess.html', context)

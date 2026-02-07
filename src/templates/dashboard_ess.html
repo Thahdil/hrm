@@ -44,10 +44,10 @@
         <div class="stat-card" style="padding: 18px; border-radius: 20px; border: 1px solid #e2e8f0; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <div style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Efficiency Rate</div>
-                    <div style="font-size: 32px; font-weight: 800; color: #1e293b; line-height: 1;">{{ attendance_rate }}%</div>
+                    <div style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Avg. Daily Attendance</div>
+                    <div style="font-size: 32px; font-weight: 800; color: #1e293b; line-height: 1;">{{ avg_daily_attendance }}</div>
                     <div style="font-size: 11px; color: #8b5cf6; font-weight: 700; margin-top: 8px;">
-                        Month-to-Date
+                        Employees
                     </div>
                 </div>
                 <div style="width: 44px; height: 44px; background: #f5f3ff; color: #8b5cf6; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
@@ -74,8 +74,59 @@
 
     <!-- Main Grid -->
     <div style="display: grid; grid-template-columns: 1fr 360px; gap: 24px; flex: 1; min-height: 0;">
-        <!-- Left: Balances & History -->
+        <!-- Recent Requests -->
         <div style="display: flex; flex-direction: column; gap: 20px; min-height: 0;">
+            
+            <!-- DETAILS: Leave Balances -->
+            <div class="card" style="padding: 24px; border-radius: 24px; border: 1px solid #e2e8f0; background: white;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+                    <div style="width: 32px; height: 32px; background: #eff6ff; color: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                        <i class="ri-calendar-check-line"></i>
+                    </div>
+                    <h3 style="margin: 0; font-size: 15px; font-weight: 800; color: #1e293b;">My Leave Balances</h3>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+                    {% for balance in leave_balances %}
+                    <div style="padding: 16px; border-radius: 16px; border: 1px solid #f1f5f9; background: #f8fafc;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <div style="width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px;
+                                    {% if 'SICK' in balance.name|upper %}background: #fef2f2; color: #ef4444;
+                                    {% elif 'NORMAL' in balance.name|upper or 'CASUAL' in balance.name|upper %}background: #ecfeff; color: #06b6d4;
+                                    {% else %}background: #eff6ff; color: #3b82f6;{% endif %}">
+                                    {% if 'SICK' in balance.name|upper %}<i class="ri-pulse-line"></i>
+                                    {% elif 'NORMAL' in balance.name|upper or 'CASUAL' in balance.name|upper %}<i class="ri-information-line"></i>
+                                    {% else %}<i class="ri-calendar-line"></i>{% endif %}
+                                </div>
+                                <div>
+                                    <div style="font-size: 11px; font-weight: 800; color: #1e293b; text-transform: uppercase; line-height: 1.2;">{{ balance.name }}</div>
+                                    {% if balance.code %}<div style="font-size: 9px; font-weight: 700; color: #94a3b8;">{{ balance.code }}</div>{% endif %}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 18px; font-weight: 800; color: #1e293b; line-height: 1;">{{ balance.remaining|floatformat:0 }}</div>
+                                <div style="font-size: 8px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Days Left</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress Bar (Shows Used %) -->
+                        <div style="height: 4px; width: 100%; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin-bottom: 8px;">
+                            <div style="height: 100%; border-radius: 2px; width: {{ balance.percentage }}%;
+                                {% if 'SICK' in balance.name|upper %}background: #ef4444;
+                                {% elif 'NORMAL' in balance.name|upper or 'CASUAL' in balance.name|upper %}background: #06b6d4;
+                                {% else %}background: #3b82f6;{% endif %}">
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: 600; color: #64748b; font-family: monospace;">
+                            <span>USED: {{ balance.used|floatformat:1 }}</span>
+                            <span>TOTAL: {{ balance.total|floatformat:0 }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
 
             <!-- Recent Requests -->
             <div class="card" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; border-radius: 24px; border: 1px solid #e2e8f0; background: white;">
