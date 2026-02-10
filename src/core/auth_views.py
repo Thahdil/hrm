@@ -2,6 +2,11 @@ from django.contrib.auth.views import LoginView, LogoutView
 from core.models import AuditLog
 
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
+
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
 class CustomLoginView(LoginView):
     """Custom login view with audit logging"""
     template_name = 'login.html'

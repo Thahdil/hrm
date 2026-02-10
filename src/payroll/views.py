@@ -378,9 +378,119 @@ def payroll_batch_void(request, pk):
         
     batch = get_object_or_404(PayrollBatch, pk=pk)
     
+    
     if request.method == 'POST':
         batch.status = PayrollBatch.Status.VOID
         batch.save()
         messages.warning(request, f"Payroll batch for {batch.month|date:'F Y'} has been voided.")
         
     return redirect('payroll_list')
+
+@login_required
+def payslip_detail(request, pk):
+    from django.shortcuts import get_object_or_404
+    from .models import PayrollEntry
+    entry = get_object_or_404(PayrollEntry, pk=pk)
+    
+    # Check permissions: Own or Admin
+    if request.user != entry.employee and not (request.user.is_superuser or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO'])):
+        messages.error(request, "Permission denied.")
+        return redirect('dashboard')
+        
+    return render(request, 'payroll/payslip.html', {'entry': entry})
+
+@login_required
+def manage_overtime(request):
+    """
+    Manager view to approve overtime minutes.
+    Shows worked hours, calculated extra time, and approved OT field.
+    """
+    if not (request.user.is_superuser or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO'])):
+        messages.error(request, "Permission denied.")
+        return redirect('dashboard')
+    
+    from datetime import datetime, date
+    from django.db.models import Q
+    from django.utils import timezone
+    
+    # 1. Date Filter
+    month_str = request.GET.get('month', timezone.now().strftime('%Y-%m'))
+    try:
+        year, month = map(int, month_str.split('-'))
+        start_date = date(year, month, 1)
+    except ValueError:
+        start_date = timezone.now().date().replace(day=1)
+        month_str = start_date.strftime('%Y-%m')
+
+    # 2. Base Query
+    logs = AttendanceLog.objects.filter(
+        date__year=start_date.year, 
+        date__month=start_date.month
+    ).select_related('employee').order_by('-date', 'employee__full_name')
+
+    # Calculate Total OT ( Approved )
+    from django.db.models import Sum
+    total_approved_ot = logs.aggregate(Sum('approved_overtime_minutes'))['approved_overtime_minutes__sum'] or 0
+    total_ot_hours = round(total_approved_ot / 60, 1)
+    
+    # 3. Search Filter
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        # Search by name or ID
+        logs = logs.filter(
+            Q(employee__full_name__icontains=search_query) |
+            Q(employee__username__icontains=search_query) |
+            Q(employee__employee_id__icontains=search_query)
+        )
+
+    # 4. Handle POST (Bulk Update via Checkboxes)
+    if request.method == "POST":
+        visible_log_ids = request.POST.getlist('log_ids')
+        checked_ids = set()
+        
+        # Collect checked IDs
+        for key in request.POST.keys():
+            if key.startswith('ot_check_'):
+                try:
+                    log_id = int(key.replace('ot_check_', ''))
+                    checked_ids.add(log_id)
+                except ValueError:
+                    continue
+        
+        updated_count = 0
+        if visible_log_ids:
+            # Fetch logs that are candidates for update (not locked)
+            logs_to_update = AttendanceLog.objects.filter(id__in=visible_log_ids, is_locked=False)
+            
+            for log in logs_to_update:
+                is_checked = log.id in checked_ids
+                
+                # Default: 0
+                new_approved_minutes = 0
+                
+                if is_checked:
+                    # If checked, set to calculated extra time
+                    # Rule: OT is time worked beyond 8 hours (480 mins)
+                    extra_minutes = max(0, log.total_work_minutes - 480)
+                    new_approved_minutes = extra_minutes
+                
+                if log.approved_overtime_minutes != new_approved_minutes:
+                    log.approved_overtime_minutes = new_approved_minutes
+                    log.save(update_fields=['approved_overtime_minutes'])
+                    updated_count += 1
+        
+        if updated_count > 0:
+            messages.success(request, f"Successfully updated overtime for {updated_count} records.")
+        else:
+            messages.info(request, "No changes detected.")
+            
+        return redirect(f"{request.path}?month={month_str}&search={search_query}")
+
+    return render(request, 'payroll/manage_ot.html', {
+        'logs': logs,
+        'selected_month': month_str,
+        'search_query': search_query,
+        'total_ot_hours': total_ot_hours,
+        'total_staff': logs.values('employee').distinct().count()
+    })
+

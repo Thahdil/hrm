@@ -16,10 +16,19 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = [
-    'http://127.0.0.1:8000',
-    'http://localhost:8000',
-]
+# Local Development Security Settings
+# Disable secure cookies for HTTP
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+
+# Ensure standard cookie behavior
+CSRF_COOKIE_HTTPONLY = False
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_NAME = 'csrftoken' # Standard name
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_PATH = '/'
+
+
 
 
 # Application definition

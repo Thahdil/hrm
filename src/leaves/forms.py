@@ -94,7 +94,7 @@ class LeaveRequestForm(forms.ModelForm):
 class LeaveTypeForm(forms.ModelForm):
     class Meta:
         model = LeaveType
-        fields = ['name', 'code', 'days_entitlement', 'duration_days', 'eligibility_gender', 'min_service_days', 'is_paid', 'is_carry_forward']
+        fields = ['name', 'code', 'days_entitlement', 'duration_days', 'eligibility_gender', 'min_service_days', 'is_paid', 'is_carry_forward', 'reset_monthly', 'allow_unlimited', 'hidden_unless_used']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-input'}),
             'code': forms.TextInput(attrs={'class': 'form-input'}),
@@ -104,6 +104,9 @@ class LeaveTypeForm(forms.ModelForm):
             'min_service_days': forms.NumberInput(attrs={'class': 'form-input'}),
             'is_paid': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
             'is_carry_forward': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+            'reset_monthly': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+            'allow_unlimited': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+            'hidden_unless_used': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
         }
     
     def __init__(self, *args, **kwargs):

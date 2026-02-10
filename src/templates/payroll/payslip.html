@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+    <div class="flex justify-between items-center mb-6 no-print">
+        <a href="javascript:history.back()" class="text-gray-500 hover:text-gray-700">
+            <i class="fas fa-arrow-left mr-2"></i> Back
+        </a>
+        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow">
+            <i class="fas fa-print mr-2"></i> Print / Save as PDF
+        </button>
+    </div>
+
+    <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 print:shadow-none print:border-0">
+        <!-- Header -->
+        <div class="flex justify-between border-b pb-6 mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">PAYSLIP</h1>
+                <p class="text-gray-600">{{ entry.batch.month|date:"F Y" }}</p>
+            </div>
+            <div class="text-right">
+                <h2 class="text-xl font-bold text-gray-900">Nexteons</h2>
+                <p class="text-sm text-gray-500">Confidential</p>
+            </div>
+        </div>
+
+        <!-- Employee Info -->
+        <div class="grid grid-cols-2 gap-8 mb-8">
+            <div>
+                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Employee Details</h3>
+                <div class="text-gray-900 space-y-1">
+                    <p><span class="font-medium">Name:</span> {{ entry.employee.full_name }}</p>
+                    <p><span class="font-medium">ID:</span> {{ entry.employee.employee_id|default:entry.employee.username }}</p>
+                    <p><span class="font-medium">Designation:</span> {{ entry.employee.get_designation_display }}</p>
+                    <p><span class="font-medium">Department:</span> {{ entry.employee.get_department_display }}</p>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Payment Details</h3>
+                <div class="text-gray-900 space-y-1">
+                    <p><span class="font-medium">Bank Account:</span> {{ entry.iban|default:"Not Available" }}</p>
+                    <p><span class="font-medium">Days Worked:</span> {{ entry.days_worked }}</p>
+                    <p><span class="font-medium">Days Absent:</span> {{ entry.days_absent }}</p>
+                    <p><span class="font-medium">Full/Half Days:</span> {{ entry.total_full_days }} / {{ entry.total_half_days }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Earnings Table -->
+        <div class="mb-8">
+            <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Earnings</h3>
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-gray-500 text-sm">
+                        <th class="pb-2">Description</th>
+                        <th class="pb-2 text-right">Amount (AED)</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-800">
+                    <tr class="border-b border-gray-100">
+                        <td class="py-2">Basic Salary</td>
+                        <td class="py-2 text-right">{{ entry.basic_salary|floatform:2|intcomma }}</td>
+                    </tr>
+                    <tr class="border-b border-gray-100">
+                        <td class="py-2">Allowances</td>
+                        <td class="py-2 text-right">{{ entry.allowances|floatform:2|intcomma }}</td>
+                    </tr>
+                    <!-- Derived Base Pay display if needed, but standard breakdown usually shows Basic + Allowances -->
+                    
+                    {% if entry.ot_pay > 0 %}
+                    <tr class="border-b border-gray-100">
+                        <td class="py-2">Overtime Pay ({{ entry.approved_ot_minutes }} mins)</td>
+                        <td class="py-2 text-right">{{ entry.ot_pay|floatform:2|intcomma }}</td>
+                    </tr>
+                    {% endif %}
+                    
+                    {% if entry.variable_pay > 0 %}
+                    <tr class="border-b border-gray-100">
+                        <td class="py-2">Variable Pay / Bonus</td>
+                        <td class="py-2 text-right">{{ entry.variable_pay|floatform:2|intcomma }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+                <tfoot>
+                    <tr class="font-bold text-gray-900">
+                        <td class="pt-4">Total Gross Salary</td>
+                        <td class="pt-4 text-right">{{ entry.gross_salary|floatform:2|intcomma }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Deductions Table -->
+        <div class="mb-8">
+            <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Deductions</h3>
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-gray-500 text-sm">
+                        <th class="pb-2">Description</th>
+                        <th class="pb-2 text-right">Amount (AED)</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-800">
+                    {% for ded in entry.breakdown_deductions.all %}
+                    <tr class="border-b border-gray-100">
+                        <td class="py-2">{{ ded.component.name }} {% if ded.is_waived %}(Waived){% endif %}</td>
+                        <td class="py-2 text-right text-red-600">-{{ ded.amount|floatform:2|intcomma }}</td>
+                    </tr>
+                    {% empty %}
+                    {% if entry.days_absent > 0 %}
+                     <tr class="border-b border-gray-100">
+                        <td class="py-2">Absent Days Deduction ({{ entry.days_absent }})</td>
+                        <td class="py-2 text-right text-red-600">-{{ entry.deductions|floatform:2|intcomma }}</td> <!-- Simplification if detailed breakdown missing -->
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td class="py-2 text-gray-500 italic">No deductions</td>
+                        <td class="py-2 text-right">-</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Fallback if breakdown empty but total deduction exists (Legacy/Correction) -->
+                    {% if not entry.breakdown_deductions.exists and entry.deductions > 0 %}
+                     <tr class="border-b border-gray-100">
+                        <td class="py-2">Total Deductions (Unspecified)</td>
+                        <td class="py-2 text-right text-red-600">-{{ entry.deductions|floatform:2|intcomma }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+                <tfoot>
+                    <tr class="font-bold text-gray-900">
+                        <td class="pt-4">Total Deductions</td>
+                        <td class="pt-4 text-right text-red-600">-{{ entry.deductions|floatform:2|intcomma }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Net Pay -->
+        <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+            <div class="flex justify-between items-center text-xl font-bold text-gray-900">
+                <span>Net Payable Amount</span>
+                <span>AED {{ entry.net_salary|floatform:2|intcomma }}</span>
+            </div>
+            <p class="text-sm text-gray-500 mt-2 text-right">Transfer Date: {{ entry.updated_at|date:"d M, Y" }}</p>
+        </div>
+
+        <div class="mt-12 text-center text-xs text-gray-400">
+            <p>This is a system generated payslip.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    @media print {
+        .no-print { display: none !important; }
+        body { background-color: white; }
+        .shadow-lg { box-shadow: none !important; }
+        .border { border: 1px solid #ddd !important; }
+    }
+</style>
+{% endblock %}

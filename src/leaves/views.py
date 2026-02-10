@@ -9,6 +9,7 @@ from django.db.models import Q
 
 @login_required
 def leave_list(request):
+    from django.db import models
     user = request.user
     is_admin = user.is_staff or user.is_admin() or user.is_hr() or user.is_ceo() or user.is_project_manager()
     
@@ -27,40 +28,76 @@ def leave_list(request):
             valid_types = valid_types.filter(Q(eligibility_gender='ALL') | Q(eligibility_gender=user.gender))
 
         for lt in valid_types:
-            is_fixed_monthly = (lt.accrual_frequency == 'MONTHLY' and (lt.duration_days == 1 or 'Sick' in lt.name or 'Normal' in lt.name))
+            total_quota = lt.days_entitlement
+            used = 0.0
             
-            if is_fixed_monthly:
-                total_quota = 1.0
-                used = LeaveRequest.objects.filter(
-                    employee=user,
-                    leave_type=lt,
-                    status=LeaveRequest.Status.APPROVED,
-                    start_date__month=today.month,
-                    start_date__year=today.year
-                ).count()
-                
-                balances.append({
-                    'leave_type': lt,
-                    'total_entitlement': total_quota,
-                    'remaining': max(0, total_quota - float(used))
-                })
-            else:
-                total_quota = lt.days_entitlement
-                if lt.accrual_frequency == 'MONTHLY':
-                    total_quota = (lt.days_entitlement / 12) * today.month
-
-                balance_obj, created = LeaveBalance.objects.get_or_create(
-                    employee=user,
-                    leave_type=lt,
-                    year=current_year,
-                    defaults={'total_entitlement': total_quota, 'days_used': 0}
-                )
-                
-                if not created and balance_obj.total_entitlement != total_quota:
+            if lt.accrual_frequency == 'MONTHLY':
+                if lt.reset_monthly:
+                     # MONTHLY RESET: 1/12th entitlement, non-cumulative
+                     total_quota = (lt.days_entitlement / 12)
+                     
+                     # Check usage THIS MONTH only
+                     requests_this_month = LeaveRequest.objects.filter(
+                        employee=user,
+                        leave_type=lt,
+                        status__in=['APPROVED', 'HR_PROCESSED'],
+                        start_date__month=today.month,
+                        start_date__year=today.year
+                     )
+                     used_this_month = sum(r.duration_days for r in requests_this_month)
+                     
+                     # Add pending requests to "Used" so Balance decrements correctly
+                     pending_requests = LeaveRequest.objects.filter(
+                        employee=user,
+                        leave_type=lt,
+                        status='PENDING',
+                        start_date__month=today.month,
+                        start_date__year=today.year
+                     )
+                     pending_this_month = sum(r.duration_days for r in pending_requests)
+                     
+                     used = float(used_this_month) + float(pending_this_month)
+                else:
+                    # MONTHLY ACCRUAL: Prorate based on COMPLETED months
+                    # (e.g. In Feb (Month 2), you have completed Jan -> 1 day accrued)
+                    total_quota = (lt.days_entitlement / 12) * max(0, today.month - 1)
+            
+            # For Annual/Other, quota is already total_entitlement. 
+            # We don't need to recalculate usage here because 'days_used' in DB is primary source,
+            # UNLESS it's a dynamic types which we just calculated.
+            
+            # Actually, to be consistent with leave_create, we should probably update the DB entry 
+            # for Monthly types to reflect current status, then read from it.
+            
+            balance_obj, created = LeaveBalance.objects.get_or_create(
+                employee=user,
+                leave_type=lt,
+                year=current_year,
+                defaults={'total_entitlement': total_quota, 'days_used': used}
+            )
+            
+            # Sync Logic
+            should_save = False
+            if lt.accrual_frequency == 'MONTHLY':
+                # Always update entitlement for monthly to keep it current
+                if balance_obj.total_entitlement != total_quota:
                     balance_obj.total_entitlement = total_quota
-                    balance_obj.save()
-                    
+                    should_save = True
+                
+                if lt.reset_monthly:
+                    # Always sync usage for reset types
+                    if float(balance_obj.days_used) != float(used):
+                        balance_obj.days_used = used
+                        should_save = True
+            
+            # HIDDEN CHECK: If configured to hide unless used, and usage is zero, skip display
+            if lt.hidden_unless_used and float(balance_obj.days_used) <= 0:
+                pass # Don't add to balances list
+            else:
                 balances.append(balance_obj)
+            
+            if should_save:
+                balance_obj.save()
 
 
     # Permission Logic
@@ -96,7 +133,8 @@ def leave_list(request):
 def leave_create(request):
     # Eligibility Logic
     from django.utils import timezone
-    from django.db.models import Q
+    from django.db import models
+    from django.db.models import Q, Sum
     from .models import LeaveBalance
     from datetime import date
     
@@ -120,50 +158,81 @@ def leave_create(request):
     # 3. Get Leave Balances for current year
     leave_balances = {}
     for lt in valid_types:
-        # Check if it's a non-accumulative monthly type
-        is_fixed_monthly = (lt.accrual_frequency == 'MONTHLY' and (lt.duration_days == 1 or 'Sick' in lt.name or 'Normal' in lt.name))
+        total_quota = lt.days_entitlement
+        used = 0.0
         
-        if is_fixed_monthly:
-            total_quota = 1.0
-            # Check usage THIS MONTH from requests
-            used_this_month = LeaveRequest.objects.filter(
-                employee=request.user,
-                leave_type=lt,
-                status__in=['PENDING', 'APPROVED', 'MGR_APPROVED', 'HR_PROCESSED'], # Include pending to prevent double booking
-                start_date__month=today.month,
-                start_date__year=today.year
-            ).count()
-            used = float(used_this_month)
+        if lt.accrual_frequency == 'MONTHLY':
+            if lt.reset_monthly:
+                # MONTHLY RESET: Allow 1/12th entitlement every month. Unused does NOT carry over.
+                total_quota = (lt.days_entitlement / 12)
+                
+                # Check usage THIS MONTH only
+                requests_this_month = LeaveRequest.objects.filter(
+                    employee=request.user,
+                    leave_type=lt,
+                    status__in=['APPROVED', 'HR_PROCESSED'],
+                    start_date__month=today.month,
+                    start_date__year=today.year
+                )
+                used_this_month = sum(r.duration_days for r in requests_this_month)
+                
+                used = float(used_this_month)
+                
+                # Check Pending separately to prevent double booking in UI (optional but good)
+                pending_requests = LeaveRequest.objects.filter(
+                    employee=request.user,
+                    leave_type=lt,
+                    status='PENDING',
+                    start_date__month=today.month,
+                    start_date__year=today.year
+                )
+                pending_this_month = sum(r.duration_days for r in pending_requests)
+                
+                # We count pending against "Used" for validation/blocking purposes
+                # This ensures they can't submit multiple requests exceeding the monthly quota
+                used += float(pending_this_month)
+                
+            else:
+                # ACCUMULATING MONTHLY: Prorate based on COMPLETED months
+                total_quota = (lt.days_entitlement / 12) * max(0, today.month - 1)
+                
+                # Sync Used Days from Approved/Processed requests for the YEAR
+                approved_requests = LeaveRequest.objects.filter(
+                    employee=request.user,
+                    leave_type=lt,
+                    status__in=['APPROVED', 'HR_PROCESSED'],
+                    start_date__year=current_year
+                )
+                used = sum(float(r.duration_days) for r in approved_requests) or 0.0
         else:
-            # Standard accrual or annual logic
-            total_quota = lt.days_entitlement
-            if lt.accrual_frequency == 'MONTHLY':
-                total_quota = (lt.days_entitlement / 12) * today.month
-
-            # Sync Used Days from Approved/Processed requests for the year to ensure accuracy
+            # ANNUAL / OTHER: Full Entitlement Upfront
             approved_requests = LeaveRequest.objects.filter(
                 employee=request.user,
                 leave_type=lt,
                 status__in=['APPROVED', 'HR_PROCESSED'],
                 start_date__year=current_year
             )
-            actual_used = sum(float(r.duration_days) for r in approved_requests) or 0.0
+            used = sum(float(r.duration_days) for r in approved_requests) or 0.0
+            
 
-            balance, created = LeaveBalance.objects.get_or_create(
-                employee=request.user,
-                leave_type=lt,
-                year=current_year,
-                defaults={'total_entitlement': total_quota, 'days_used': actual_used}
-            )
-            
-            if not created:
-                if balance.total_entitlement != total_quota or float(balance.days_used) != float(actual_used):
-                    balance.total_entitlement = total_quota
-                    balance.days_used = actual_used
-                    balance.save()
-            
-            used = float(balance.days_used)
-            total_quota = float(balance.total_entitlement)
+        balance, created = LeaveBalance.objects.get_or_create(
+            employee=request.user,
+            leave_type=lt,
+            year=current_year,
+            defaults={'total_entitlement': total_quota, 'days_used': used}
+        )
+        
+        # Update if changed (Dynamic calculation)
+        if balance.total_entitlement != total_quota or float(balance.days_used) != float(used):
+             # Only update if it's a dynamic type (Monthly)
+             # Annual types usually get decremented on approval, but here we are recalculating "Used".
+             # This "Recalculate on View" approach ensures consistency.
+             balance.total_entitlement = total_quota
+             balance.days_used = used
+             balance.save()
+        
+        used = float(balance.days_used)
+        total_quota = float(balance.total_entitlement)
 
         leave_balances[lt.id] = {
             'total': total_quota,
@@ -185,17 +254,22 @@ def leave_create(request):
             leave_type_id = leave.leave_type.id
             
             if leave_type_id in leave_balances:
-                remaining = leave_balances[leave_type_id]['remaining']
-                if requested_days > remaining:
-                    messages.error(
-                        request, 
-                        f"Insufficient leave balance. You requested {requested_days} days but only have {remaining} days remaining for {leave.leave_type.name}."
-                    )
-                    return render(request, 'leaves/leave_form.html', {
-                        'form': form,
-                        'type_config': json.dumps({lt.id: (lt.duration_days or 0) for lt in valid_types}),
-                        'leave_balances': leave_balances
-                    })
+                if leave.leave_type.allow_unlimited:
+                    pass
+                else:
+                    remaining = leave_balances[leave_type_id]['remaining']
+                    if requested_days > remaining:
+                        messages.error(
+                            request, 
+                            f"Insufficient leave balance. You requested {requested_days} days but only have {remaining} days remaining for {leave.leave_type.name}."
+                        )
+                        return render(request, 'leaves/leave_form.html', {
+                            'form': form,
+                            'type_config': json.dumps({lt.id: (lt.duration_days or 0) for lt in valid_types}),
+                            'unlimited_types': json.dumps([lt.id for lt in valid_types if lt.allow_unlimited]),
+                            'unlimited_types_list': [lt.id for lt in valid_types if lt.allow_unlimited],
+                            'leave_balances': leave_balances
+                        })
             
             leave.save()
             
@@ -224,6 +298,8 @@ def leave_create(request):
     return render(request, 'leaves/leave_form.html', {
         'form': form, 
         'type_config': json.dumps(type_config),
+        'unlimited_types': json.dumps([lt.id for lt in valid_types if lt.allow_unlimited]),
+        'unlimited_types_list': [lt.id for lt in valid_types if lt.allow_unlimited],
         'leave_balances': leave_balances
     })
 
@@ -344,21 +420,15 @@ def leave_approve(request, pk):
                     return redirect('leave_detail', pk=pk)
                 
                 # Deduction Logic
-                is_fixed_monthly = (
-                    leave.leave_type.accrual_frequency == 'MONTHLY' and 
-                    (leave.leave_type.duration_days == 1 or 'Sick' in leave.leave_type.name or 'Normal' in leave.leave_type.name)
+                from .models import LeaveBalance
+                balance, created = LeaveBalance.objects.get_or_create(
+                    employee=leave.employee,
+                    leave_type=leave.leave_type,
+                    year=leave.start_date.year,
+                    defaults={'total_entitlement': leave.leave_type.days_entitlement, 'days_used': 0}
                 )
-
-                if not is_fixed_monthly:
-                    from .models import LeaveBalance
-                    balance, created = LeaveBalance.objects.get_or_create(
-                        employee=leave.employee,
-                        leave_type=leave.leave_type,
-                        year=leave.start_date.year,
-                        defaults={'total_entitlement': leave.leave_type.days_entitlement, 'days_used': 0}
-                    )
-                    balance.days_used = float(balance.days_used) + float(leave.duration_days)
-                    balance.save()
+                balance.days_used = float(balance.days_used) + float(leave.duration_days)
+                balance.save()
 
                 leave.status = LeaveRequest.Status.APPROVED
                 leave.approved_by = request.user 
@@ -403,23 +473,17 @@ def leave_approve(request, pk):
              if can_reject:
                 # Reversal Logic (If transitioning from APPROVED to REJECTED)
                 if leave.status == LeaveRequest.Status.APPROVED:
-                    is_fixed_monthly = (
-                        leave.leave_type.accrual_frequency == 'MONTHLY' and 
-                        (leave.leave_type.duration_days == 1 or 'Sick' in leave.leave_type.name or 'Normal' in leave.leave_type.name)
-                    )
-                    
-                    if not is_fixed_monthly:
-                        from .models import LeaveBalance
-                        try:
-                            balance = LeaveBalance.objects.get(
-                                employee=leave.employee,
-                                leave_type=leave.leave_type,
-                                year=leave.start_date.year
-                            )
-                            balance.days_used = max(0.0, float(balance.days_used) - float(leave.duration_days))
-                            balance.save()
-                        except LeaveBalance.DoesNotExist:
-                            pass
+                    from .models import LeaveBalance
+                    try:
+                        balance = LeaveBalance.objects.get(
+                            employee=leave.employee,
+                            leave_type=leave.leave_type,
+                            year=leave.start_date.year
+                        )
+                        balance.days_used = max(0.0, float(balance.days_used) - float(leave.duration_days))
+                        balance.save()
+                    except LeaveBalance.DoesNotExist:
+                        pass
 
                 leave.status = LeaveRequest.Status.REJECTED
                 leave.approved_by = request.user
@@ -444,23 +508,17 @@ def leave_approve(request, pk):
             if leave.employee == request.user or request.user.is_superuser:
                 # Reversal Logic (If transitioning from APPROVED to CANCELLED)
                 if leave.status == LeaveRequest.Status.APPROVED:
-                    is_fixed_monthly = (
-                        leave.leave_type.accrual_frequency == 'MONTHLY' and 
-                        (leave.leave_type.duration_days == 1 or 'Sick' in leave.leave_type.name or 'Normal' in leave.leave_type.name)
-                    )
-                    
-                    if not is_fixed_monthly:
-                        from .models import LeaveBalance
-                        try:
-                            balance = LeaveBalance.objects.get(
-                                employee=leave.employee,
-                                leave_type=leave.leave_type,
-                                year=leave.start_date.year
-                            )
-                            balance.days_used = max(0.0, float(balance.days_used) - float(leave.duration_days))
-                            balance.save()
-                        except LeaveBalance.DoesNotExist:
-                            pass
+                    from .models import LeaveBalance
+                    try:
+                        balance = LeaveBalance.objects.get(
+                            employee=leave.employee,
+                            leave_type=leave.leave_type,
+                            year=leave.start_date.year
+                        )
+                        balance.days_used = max(0.0, float(balance.days_used) - float(leave.duration_days))
+                        balance.save()
+                    except LeaveBalance.DoesNotExist:
+                        pass
 
                 leave.status = LeaveRequest.Status.CANCELLED
                 leave.save()
@@ -597,3 +655,27 @@ def leave_type_restore(request, pk):
         messages.success(request, f"Leave policy '{ltype.name}' has been restored.")
         return redirect('leave_settings')
     return redirect('leave_settings')
+from django.http import JsonResponse
+from .models import LeaveRequest
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def check_updates(request):
+    """
+    API endpoint for checking updates to leave requests.
+    Returns the latest status of requests involving the current user.
+    """
+    user = request.user
+    
+    # Return status of the user's recent requests (last 20 for coverage)
+    recent_leaves = LeaveRequest.objects.filter(employee=user).order_by('-created_at')[:20]
+    
+    data = []
+    for leave in recent_leaves:
+        data.append({
+            'id': leave.id,
+            'status': leave.status,
+            'updated_at': leave.updated_at.isoformat() if leave.updated_at else ''
+        })
+        
+    return JsonResponse({'requests': data})

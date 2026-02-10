@@ -597,13 +597,16 @@ class PayrollService:
     def calculate_payroll(batch: PayrollBatch):
         """
         Calculates net salary for all active employees for the batch month.
-        Deducts salary for:
-        1. Absent days (Full day deduction)
-        2. Short work hours (Pro-rata deduction if < 8 hours/day)
-        3. Unpaid Leave (Full day deduction)
+        1. Capture daily attendance and hours
+        2. Convert to Day Status (Full/Half/Absent)
+        3. Calculate Base Pay using counts
+        4. Add Approved OT
+        5. Apply Deductions (Statutory/Company)
+        6. Freeze Attendance
         """
         from core.models import CompanySettings
         from leaves.models import LeaveRequest
+        from .models import DeductionComponent, EmployeeDeduction, PayrollDeduction
         import calendar
         
         settings = CompanySettings.load()
@@ -616,27 +619,38 @@ class PayrollService:
         
         _, num_days = calendar.monthrange(month_start.year, month_start.month)
         month_end = month_start.replace(day=num_days)
+        
+        # Clear existing entries for this batch if re-running (Draft only)
+        if batch.status == PayrollBatch.Status.DRAFT:
+             batch.entries.all().delete()
 
         for emp in employees:
             basic = emp.salary_basic
             allowance = emp.salary_allowance
             
-            total_missing_minutes = 0
-            absent_days_count = 0
+            # Counters
+            total_full_days = 0
+            total_half_days = 0
+            total_absent_days = Decimal('0.0')
+            approved_ot_minutes = 0
             
-            # Iterate through every day of the month to check compliance
+            # Iterate through every day of the month
             for d in range(1, num_days + 1):
                 check_date = month_start.replace(day=d)
                 
-                # 1. Is it a future date? (Skip deduction, assume present for forecast)
+                # Future date check
                 if check_date > timezone.now().date():
                     continue
 
-                # 2. Is it a holiday/weekend? (No deduction if not working)
-                if settings.is_holiday(check_date):
-                    continue
+                # Fetch Attendance Log
+                log, _ = AttendanceLog.objects.get_or_create(employee=emp, date=check_date)
                 
-                # 3. Check for Leaves first (Approved leaves override attendance)
+                # FREEZE ATTENDANCE
+                if not log.is_locked:
+                    log.is_locked = True
+                    log.save(update_fields=['is_locked'])
+
+                # 1. Check Leaves (Approved leaves override attendance)
                 leave = LeaveRequest.objects.filter(
                     employee=emp,
                     status=LeaveRequest.Status.APPROVED,
@@ -644,56 +658,124 @@ class PayrollService:
                     end_date__gte=check_date
                 ).first()
                 
+                is_weekend_holiday = settings.is_holiday(check_date)
+                
+                # Determine Day Status based on User Rules
+                # Rules: >= 7 hrs = FULL, 4-6.99 = HALF, < 4 = ABSENT
+                
+                day_status = "FULL" # Default assumption for Holiday/WeekOff
+                
                 if leave:
                     if leave.leave_type.code == 'UNP': # Unpaid
-                        total_missing_minutes += minutes_per_day
-                        absent_days_count += 1
-                    # Paid leaves (Annual/Sick) have 0 deduction
-                    continue
+                        day_status = "ABSENT"
+                    else:
+                        day_status = "FULL" # Paid Leave
                 
-                # 4. Check Attendance
-                log = AttendanceLog.objects.filter(employee=emp, date=check_date).first()
+                elif is_weekend_holiday:
+                    # If worked on holiday? 
+                    if log.total_work_minutes > 0:
+                         # Paid for holiday + Work pay? 
+                         # For now, treat as FULL day. OT handles extra pay.
+                         day_status = "FULL"
+                    else:
+                         day_status = "FULL"
                 
-                if not log or log.is_absent or log.status in ['Absent', 'A']:
-                    # No work performed on a workday
-                    total_missing_minutes += minutes_per_day
-                    absent_days_count += 1
-                elif not log.is_compliant:
-                    # Short work hours - deduct the deficit
-                    deficit = minutes_per_day - log.total_work_minutes
-                    if deficit > 0:
-                        total_missing_minutes += deficit
+                else:
+                    # Normal Work Day - STRICT LOGIC
+                    mins = log.total_work_minutes
+                    if mins >= 420: # 7 hours
+                        day_status = "FULL"
+                    elif mins >= 240: # 4 hours
+                        day_status = "HALF"
+                    else:
+                        day_status = "ABSENT"
+                
+                # Aggregation
+                if day_status == "FULL":
+                    total_full_days += 1
+                elif day_status == "HALF":
+                    total_half_days += 1
+                else:
+                    total_absent_days += Decimal('1.0')
+                
+                # OT Calculation (Step 4 & 7)
+                # "Overtime is added only if manager-approved"
+                approved_ot_minutes += log.approved_overtime_minutes
+
+            # Calculate Pay Days (Standard 30 - Absent - 0.5*Half)
+            # Actually, User said: "Calculate base pay using FULL and HALF day counts"
+            # If we strictly follow "Pay for what you work":
+            # PayDays = FullDays + (0.5 * HalfDays) + Holidays + WeekOffs...
+            # But we iterated explicitly. Note: total_full_days INCLUDES Holidays/WeekOffs if not absent.
             
-            # 4. Financial Calculation
-            # Minute Rate = (Monthly Total / 30 days) / 480 minutes
-            daily_rate = (basic + allowance) / days_in_basis
-            minute_rate = daily_rate / Decimal(str(minutes_per_day))
+            payable_days = Decimal(total_full_days) + (Decimal(total_half_days) * Decimal('0.5'))
             
-            deductions = minute_rate * Decimal(total_missing_minutes)
-            net = (basic + allowance) - deductions
+            # Cap at 30? Or allow 31? HRMS usually normalizes to 30.
+            # If we normalized denominator to 30, we should stick to it.
+            # However, if num_days is 31, and they worked 31, they get 30/30 or 31/30?
+            # Standard Practice: Salary / 30 * PayableDays.
             
-            # Ensure net doesn't go below floor
-            net = max(net, Decimal('0.00'))
+            gross_monthly = basic + allowance
+            daily_rate = gross_monthly / days_in_basis
             
-            # Days Calculation:
-            # We base it on 30 days standard (or actual days if you prefer strict calendar)
-            # HRMS typically uses 30 as basis for salary, but attendance log is actual.
-            # Let's use: Days Worked = 30 - Unpaid Leave Days - Absent Days
-            # Note: Short minutes are financial deductions but shouldn't reduce "Days Worked" count significantly unless it's a full day loss.
-            # However, for simplicity and clarity:
-            # effective_days = 30 - (total_missing_minutes / 480)
+            base_pay = daily_rate * payable_days
             
-            effective_absent_days = round(total_missing_minutes / minutes_per_day, 1)
-            effective_worked_days = float(days_in_basis) - effective_absent_days
+            # OT Pay
+            # Formula: (Gross / 30 / 8 / 60) * OT_Minutes * 1.0 (Standard)
+            ot_rate_per_min = daily_rate / Decimal('480')
+            ot_pay = ot_rate_per_min * Decimal(approved_ot_minutes)
             
-            PayrollEntry.objects.create(
+            # Gross Entitlement
+            gross_earnings = base_pay + ot_pay
+            
+            # Deductions (Step 8 & 9)
+            total_deduction_amount = Decimal('0.00')
+            payroll_entry = PayrollEntry.objects.create(
                 batch=batch,
                 employee=emp,
                 basic_salary=basic,
                 allowances=allowance,
-                deductions=round(deductions, 2),
-                net_salary=round(net, 2),
-                days_worked=round(effective_worked_days),
-                days_absent=round(effective_absent_days),
+                days_worked=total_full_days + total_half_days, 
+                days_absent=int(total_absent_days),
+                total_full_days = total_full_days,
+                total_half_days = total_half_days,
+                total_absent_days = total_absent_days,
+                approved_ot_minutes=approved_ot_minutes,
+                base_pay=round(base_pay, 2),
+                ot_pay=round(ot_pay, 2),
+                gross_salary=round(gross_earnings, 2),
+                deductions=0,
+                net_salary=0, 
                 iban=emp.iban or ""
             )
+            
+            # Fetch Recurring Deductions
+            recurring = EmployeeDeduction.objects.filter(employee=emp, is_active=True)
+            
+            for ded in recurring:
+                calc_amount = ded.amount
+                if ded.percentage > 0:
+                    calc_amount = (basic * ded.percentage) / 100
+                
+                # Create Breakdown
+                PayrollDeduction.objects.create(
+                    payroll_entry=payroll_entry,
+                    component=ded.component,
+                    amount=calc_amount,
+                    approved_amount=calc_amount, # Default to calculated
+                    is_waived=False
+                )
+                total_deduction_amount += calc_amount
+
+            # Net Pay
+            net_pay = gross_earnings - total_deduction_amount
+            payroll_entry.deductions = round(total_deduction_amount, 2)
+            payroll_entry.net_salary = round(net_pay, 2)
+            
+            # Map temp fields to model fields (handling mismatch in naming if any)
+            payroll_entry.total_full_days = total_full_days
+            payroll_entry.total_half_days = total_half_days
+            payroll_entry.total_absent_days = total_absent_days
+            
+            payroll_entry.save()
+

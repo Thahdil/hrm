@@ -15,4 +15,6 @@ urlpatterns = [
     path('api/employee-autocomplete/', views.employee_autocomplete, name='employee_autocomplete'),
     path('batches/delete/<int:pk>/', views.payroll_batch_delete, name='payroll_batch_delete'),
     path('batches/void/<int:pk>/', views.payroll_batch_void, name='payroll_batch_void'),
+    path('payslips/<int:pk>/', views.payslip_detail, name='payslip_detail'),
+    path('manage-ot/', views.manage_overtime, name='manage_overtime'),
 ]

@@ -144,11 +144,16 @@
                                             {% if lt.id == leave_type_id %}{{ lt.name }}{% endif %}
                                         {% endfor %}
                                     </div>
-                                    <div style="font-size: 9px; color: var(--gray-400); font-weight: 600;">Used: {{ balance.used }}d</div>
+                                    <div style="font-size: 9px; color: var(--gray-400); font-weight: 600;">Used: {{ balance.used|floatformat:0 }}d</div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="font-size: 15px; font-weight: 900; color: var(--success); letter-spacing: -0.02em;">{{ balance.remaining }}</div>
-                                    <div style="font-size: 8px; color: var(--success); font-weight: 800; text-transform: uppercase;">Days</div>
+                                    {% if leave_type_id in unlimited_types_list %}
+                                        <div style="font-size: 15px; font-weight: 900; color: var(--gray-400); letter-spacing: -0.02em;">∞</div>
+                                        <div style="font-size: 8px; color: var(--gray-400); font-weight: 800; text-transform: uppercase;">Unlimited</div>
+                                    {% else %}
+                                        <div style="font-size: 15px; font-weight: 900; color: var(--success); letter-spacing: -0.02em;">{{ balance.remaining|floatformat:0 }}</div>
+                                        <div style="font-size: 8px; color: var(--success); font-weight: 800; text-transform: uppercase;">Days</div>
+                                    {% endif %}
                                 </div>
                             </div>
                             {% endfor %}
@@ -309,6 +314,7 @@
         // Configuration passed from view
         const typeConfig = {{ type_config|safe }};
         const leaveBalances = {{ leave_balances|safe }};
+        const unlimitedTypes = {{ unlimited_types|safe }};
         
         // Use the duration input from now on
         
@@ -331,6 +337,15 @@
                 const balance = leaveBalances[selectedTypeId];
                 const remaining = balance.remaining;
                 
+                if (unlimitedTypes.includes(parseInt(selectedTypeId))) {
+                    // Skip validation for unlimited types
+                    warningDiv.style.display = 'none';
+                    submitButton.disabled = false;
+                    submitButton.style.opacity = '1';
+                    submitButton.style.cursor = 'pointer';
+                    return;
+                }
+
                 if (requestedDays > remaining) {
                     warningDiv.innerHTML = `
                         <div style="display: flex; align-items: start; gap: 12px;">
@@ -400,59 +415,29 @@
             checkBalance();
         }
 
-        function getMaxDysForType(lowerText) {
-            if (lowerText.includes('annual leave')) return 30;
-            if (lowerText.includes('maternity leave')) return 60;
-            return 999; // Default max
-        }
-
         function handleLeaveTypeChange() {
             const selectedId = typeSelect.value;
-            const selectedText = typeSelect.options[typeSelect.selectedIndex].text;
-            const lowerText = selectedText.toLowerCase();
-            
+            // Get fixed duration from server config
             let fixedDur = typeConfig[selectedId] || 0;
-            let maxDays = 999;
 
-            // SPECIAL RULES
-            if (lowerText.includes('normal leave')) {
-                fixedDur = 1;
-                // Hide duration input for Normal Leave
-                durationWrapper.style.display = 'none';
-                durationInput.value = 1;
-            } 
-            else if (lowerText.includes('annual leave')) {
-                fixedDur = 0; // Manual
-                maxDays = 30;
-                durationWrapper.style.display = 'flex';
-            } 
-            else if (lowerText.includes('maternity leave')) {
-                fixedDur = 0; // Manual
-                maxDays = 60;
-                durationWrapper.style.display = 'flex';
-            }
-            else {
-                // Other types (Sick, etc) - Default to manual
-                durationWrapper.style.display = 'flex';
-            }
-            
-            // If fixed duration exists and is > 0 (and not overridden above like Annual/Maternity)
+            // If fixed duration is configured (e.g. 1 day for mandatory types)
             if (fixedDur > 0) {
                  durationInput.value = fixedDur;
                  durationInput.readOnly = true;
-                 durationWrapper.style.display = 'none'; // Optional: hide if fixed? Or show readonly? Let's hide for simplicity if it's 1 day.
+                 // Hide if it's 1 day fixed (cleaner UI), show if it's a package > 1
                  if (fixedDur > 1) {
-                     durationWrapper.style.display = 'flex'; // Show if fixed package > 1
+                     durationWrapper.style.display = 'flex';
+                 } else {
+                     durationWrapper.style.display = 'none';
                  }
             } else {
+                 // Manual duration entry
                  durationInput.readOnly = false;
-                 // Set Max
-                 durationInput.max = maxDays;
-            }
-            
-            // Validate current duration against new max
-            if (parseInt(durationInput.value) > maxDays) {
-                durationInput.value = maxDays;
+                 durationInput.removeAttribute('max'); // No artificial limit
+                 durationWrapper.style.display = 'flex';
+                 
+                 // Default to 1 if coming from a fixed type
+                 if (durationInput.value < 1) durationInput.value = 1;
             }
             
             calculateFromDuration();
@@ -462,15 +447,6 @@
         startInput.addEventListener('change', calculateFromDuration);
         
         durationInput.addEventListener('input', function() {
-            const selectedText = typeSelect.options[typeSelect.selectedIndex].text;
-            const lowerText = selectedText.toLowerCase();
-            const max = getMaxDysForType(lowerText);
-            
-            let val = parseInt(this.value);
-            if (val > max) {
-                alert(`Maximum allowed duration for ${selectedText} is ${max} days.`);
-                this.value = max;
-            }
             calculateFromDuration();
         });
         

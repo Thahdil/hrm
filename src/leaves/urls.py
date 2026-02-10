@@ -15,4 +15,7 @@ urlpatterns = [
     path('settings/<int:pk>/edit/', views.leave_type_edit, name='leave_type_edit'),
     path('settings/<int:pk>/delete/', views.leave_type_delete, name='leave_type_delete'),
     path('settings/<int:pk>/restore/', views.leave_type_restore, name='leave_type_restore'),
+    
+    # API for live updates
+    path('api/check-updates/', views.check_updates, name='api_check_updates'),
 ]

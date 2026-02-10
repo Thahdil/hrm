@@ -16,12 +16,20 @@
                 <div class="stat-icon" style="background: rgba(37, 99, 235, 0.1); color: var(--primary);">
                     <i class="ri-calendar-event-line"></i>
                 </div>
+                {% if not balance.leave_type.allow_unlimited %}
                 <div class="stat-change {% if balance.remaining > 5 %}positive{% else %}negative{% endif %}">
                     {{ balance.total_entitlement|floatformat:0 }} Total
                 </div>
+                {% endif %}
             </div>
-            <div class="stat-value">{{ balance.remaining|floatformat:0 }}</div>
-            <div class="stat-label">{{ balance.leave_type.name }} Remaining</div>
+            
+            {% if balance.leave_type.allow_unlimited %}
+                <div class="stat-value">{{ balance.days_used|floatformat:0 }}</div>
+                <div class="stat-label">{{ balance.leave_type.name }} Used</div>
+            {% else %}
+                <div class="stat-value">{{ balance.remaining|floatformat:0 }}</div>
+                <div class="stat-label">{{ balance.leave_type.name }} Remaining</div>
+            {% endif %}
         </div>
         {% endfor %}
     </div>
@@ -46,11 +54,7 @@
             <!-- Filter Toolbar -->
             <div class="filter-toolbar" style="display: flex; gap: 16px; align-items: center; width: 100%;">
                 <!-- Search -->
-                <div style="position: relative; flex: 1; max-width: 300px;">
-                    <i class="ri-search-line" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
-                    <input type="text" id="searchInput" placeholder="Search by employee..." 
-                           style="width: 100%; padding: 10px 12px 10px 40px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 14px;">
-                </div>
+
 
                 <!-- Status Filter -->
                 <div style="width: 200px;">
@@ -211,14 +215,12 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('searchInput');
         const statusFilter = document.getElementById('statusFilter');
         const monthFilter = document.getElementById('monthFilter');
         const resetBtn = document.getElementById('resetFilters');
         const tableRows = document.querySelectorAll('tbody tr:not(:has(td[colspan]))'); // Exclude empty state
 
         function filterTable() {
-            const searchTerm = searchInput.value.toLowerCase().trim();
             const statusTerm = statusFilter.value.toUpperCase();
             const dateTerm = monthFilter.value; // YYYY-MM format
 
@@ -226,7 +228,6 @@
 
             tableRows.forEach(row => {
                 // Get data from columns
-                const employeeName = row.querySelector('td:nth-child(1) div:nth-child(2) div:first-child')?.textContent.toLowerCase().trim() || '';
                 const leaveStatus = row.querySelector('td:nth-child(7) span')?.textContent.trim().toUpperCase() || '';
                 
                 // Date parsing
@@ -241,12 +242,11 @@
                     }
                 }
 
-                // Check matches (Starts With for search)
-                const matchesSearch = searchTerm === '' || employeeName.startsWith(searchTerm);
+                // Check matches
                 const matchesStatus = statusTerm === '' || leaveStatus.includes(statusTerm);
                 const matchesDate = dateTerm === '' || rowMonth === dateTerm;
 
-                if (matchesSearch && matchesStatus && matchesDate) {
+                if (matchesStatus && matchesDate) {
                     row.style.display = '';
                     visibleCount++;
                 } else {
@@ -264,30 +264,47 @@
         }
 
         // Event Listeners
-        searchInput.addEventListener('input', filterTable);
         statusFilter.addEventListener('change', filterTable);
         monthFilter.addEventListener('change', filterTable);
 
-        // Keydown Handling
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                filterTable();
-                return false;
-            }
-            if (e.key === 'Escape') {
-                this.value = '';
-                filterTable();
-                this.blur();
-            }
-        });
-
         resetBtn.addEventListener('click', function() {
-            searchInput.value = '';
             statusFilter.value = '';
             monthFilter.value = ''; 
             filterTable();
         });
+
+        // --- Live Updates Logic ---
+        function checkForUpdates() {
+            fetch("{% url 'api_check_updates' %}")
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.requests) {
+                        // Create a unique hash of the current state
+                        const currentHash = JSON.stringify(data.requests.map(r => ({id: r.id, status: r.status})));
+                        const lastHash = localStorage.getItem('leave_requests_hash');
+                        
+                        // Compare with stored hash
+                        if (lastHash && lastHash !== currentHash) {
+                             console.log("Leave data changed, reloading...");
+                             location.reload(); 
+                        }
+                        
+                        // Store new hash
+                        localStorage.setItem('leave_requests_hash', currentHash);
+                    }
+                })
+                .catch(err => console.error("Update check failed", err));
+        }
+
+        // Poll every 5 seconds
+        setInterval(checkForUpdates, 5000);
+        
+        // Initial check to prime the hash
+        checkForUpdates();
+
     });
 </script>
 {% endblock %}

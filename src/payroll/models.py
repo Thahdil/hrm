@@ -12,6 +12,10 @@ class AttendanceLog(models.Model):
     total_work_minutes = models.IntegerField(default=0, help_text="Total minutes worked")
     is_compliant = models.BooleanField(default=False, help_text="True if > 8 hours (480 mins)")
     
+    # Payroll & OT
+    approved_overtime_minutes = models.IntegerField(default=0, help_text="Manager approved OT minutes")
+    is_locked = models.BooleanField(default=False, help_text="If true, attendance cannot be modified by sync/manual edits")
+    
     # Audit
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -247,7 +251,16 @@ class AttendanceLog(models.Model):
         # Priority 3: Fallback (usually for Absent or unknown statuses)
         else:
              self.is_compliant = self.total_work_minutes >= threshold
-             
+        
+        # Lock check
+        if self.pk:
+            old = AttendanceLog.objects.filter(pk=self.pk).first()
+            if old and old.is_locked:
+                # Allow only approved_overtime_minutes update or admin override? 
+                # For now, if locked, prevent changes unless explicitly handled.
+                # But since this is a method, we assume caller checks.
+                pass 
+
         super().save(*args, **kwargs)
 
         if self.entry_type == self.EntryType.MANUAL and self.pk:
@@ -395,13 +408,23 @@ class PayrollEntry(models.Model):
     # Financials
     basic_salary = models.DecimalField(max_digits=10, decimal_places=2)
     allowances = models.DecimalField(max_digits=10, decimal_places=2)
-    variable_pay = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Overtime, Commissions, Bonuses")
+    
+    # Calculated Components
+    gross_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    base_pay = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Pro-rated Basic + Allowances")
+    ot_pay = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    variable_pay = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Commissions, Bonuses")
+    
     deductions = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     net_salary = models.DecimalField(max_digits=10, decimal_places=2)
     
     # Attendance Stats
     days_worked = models.IntegerField(default=30)
     days_absent = models.IntegerField(default=0)
+    total_full_days = models.IntegerField(default=0)
+    total_half_days = models.IntegerField(default=0)
+    total_absent_days = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+    approved_ot_minutes = models.IntegerField(default=0)
 
     # WPS Info
     iban = models.CharField(max_length=34) # Decrypted storage for SIF generation or keep valid chars
@@ -419,3 +442,25 @@ class PayrollEntry(models.Model):
 
     def __str__(self):
         return f"{self.employee.full_name} - {self.net_salary}"
+
+class DeductionComponent(models.Model):
+    name = models.CharField(max_length=100)
+    is_statutory = models.BooleanField(default=False, help_text="If true, cannot be waived")
+    is_recurring = models.BooleanField(default=True)
+    
+    def __str__(self): return self.name
+
+class EmployeeDeduction(models.Model):
+    employee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recurring_deductions')
+    component = models.ForeignKey(DeductionComponent, on_delete=models.PROTECT)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="If > 0, calculated as % of Basic")
+    is_active = models.BooleanField(default=True)
+
+class PayrollDeduction(models.Model):
+    payroll_entry = models.ForeignKey(PayrollEntry, on_delete=models.CASCADE, related_name='breakdown_deductions')
+    component = models.ForeignKey(DeductionComponent, on_delete=models.PROTECT)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    is_waived = models.BooleanField(default=False)
+    approved_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+

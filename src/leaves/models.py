@@ -13,6 +13,13 @@ class LeaveType(models.Model):
     
     # New Duration Logic
     duration_days = models.IntegerField(null=True, blank=True, help_text="Fixed duration in days. Set to 1 for 'Normal Day', 30 for 'Annual', or Leave Empty for Manual.")
+    
+    # New Field for "Use it or Lose it" Monthly
+    reset_monthly = models.BooleanField(default=False, help_text="If checked, the leave balance resets every month (Non-cumulative)")
+    
+    # New Fields for unlimited/emergency leave
+    allow_unlimited = models.BooleanField(default=False, help_text="Skip entitlement / balance check (e.g. for Unpaid/Emergency Leave).")
+    hidden_unless_used = models.BooleanField(default=False, help_text="Hide from dashboard unless the user has used it.")
 
     ACCRUAL_CHOICES = [
         ('ANNUAL', 'Annual (Upfront)'),

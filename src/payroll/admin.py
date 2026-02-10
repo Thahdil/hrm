@@ -4,7 +4,7 @@ from django.urls import path
 from django.http import HttpResponse
 from django.utils import timezone
 from django import forms
-from .models import PayrollBatch, PayrollEntry, AttendanceLog
+from .models import PayrollBatch, PayrollEntry, AttendanceLog, DeductionComponent, EmployeeDeduction, PayrollDeduction
 from .services import BankTransferService, PayrollService
 
 class CsvImportForm(forms.Form):
@@ -55,8 +55,9 @@ class PayrollBatchAdmin(admin.ModelAdmin):
 
 @admin.register(AttendanceLog)
 class AttendanceLogAdmin(admin.ModelAdmin):
-    list_display = ('employee', 'date', 'check_in', 'check_out', 'entry_type', 'is_absent')
-    list_filter = ('entry_type', 'is_absent', 'status')
+    list_display = ('employee', 'date', 'check_in', 'check_out', 'status', 'total_work_minutes', 'approved_overtime_minutes', 'is_locked')
+    list_filter = ('entry_type', 'status', 'is_locked', 'is_compliant')
+    search_fields = ('employee__username', 'employee__full_name', 'employee__email')
     change_list_template = "admin/attendance_changelist.html"
 
     def get_urls(self):
@@ -79,3 +80,19 @@ class AttendanceLogAdmin(admin.ModelAdmin):
         form = CsvImportForm()
         payload = {"form": form}
         return render(request, "admin/csv_form.html", payload)
+
+@admin.register(DeductionComponent)
+class DeductionComponentAdmin(admin.ModelAdmin):
+    list_display = ('name', 'is_statutory', 'is_recurring')
+
+@admin.register(EmployeeDeduction)
+class EmployeeDeductionAdmin(admin.ModelAdmin):
+    list_display = ('employee', 'component', 'amount', 'percentage', 'is_active')
+    list_filter = ('is_active', 'component')
+    search_fields = ('employee__username', 'employee__full_name')
+
+@admin.register(PayrollDeduction)
+class PayrollDeductionAdmin(admin.ModelAdmin):
+    list_display = ('payroll_entry', 'component', 'amount', 'approved_amount', 'is_waived')
+    list_filter = ('is_waived', 'component')
+

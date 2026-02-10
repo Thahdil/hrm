@@ -384,7 +384,8 @@ def dashboard(request):
 
             for lt in leave_types:
                 # Calculate proper entitlement
-                is_fixed_monthly = (lt.accrual_frequency == 'MONTHLY' and (lt.duration_days == 1 or 'Sick' in lt.name or 'Normal' in lt.name))
+                # Exclude Sick Leave from "Fixed Monthly" logic so it can accumulate
+                is_fixed_monthly = (lt.accrual_frequency == 'MONTHLY' and (lt.duration_days == 1 or 'Normal' in lt.name) and 'Sick' not in lt.name)
                 
                 if is_fixed_monthly:
                     # Non-accumulative: 1 day per month
@@ -402,8 +403,9 @@ def dashboard(request):
                     # Standard logic
                     total_quota = lt.days_entitlement
                     if lt.accrual_frequency == 'MONTHLY':
-                        # Prorate based on current month (Month 1 = 1/12th, Month 12 = 12/12ths)
-                        total_quota = (lt.days_entitlement / 12) * today.month
+                        # Prorate based on COMPLETED months (Month 1 = 0, Month 2 = 1/12th, etc.)
+                        # This ensures accrual is "in arrears" or "earned", preventing balance available at start of month.
+                        total_quota = (lt.days_entitlement / 12) * (today.month - 1)
 
                     balance_obj, created = LeaveBalance.objects.get_or_create(
                         employee=user,
@@ -429,7 +431,8 @@ def dashboard(request):
                     'total': total_quota,
                     'remaining': max(0, remaining),
                     'percentage': percentage,
-                    'remaining_percentage': 100 - percentage
+                    'remaining_percentage': 100 - percentage,
+                    'is_unlimited': lt.allow_unlimited
                 })
         except:
             pass
