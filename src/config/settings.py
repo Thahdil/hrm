@@ -159,3 +159,9 @@ ENCRYPTION_KEY = os.environ.get('HRMS_ENCRYPTION_KEY', 'weUAqis-6FCaESfgJd3y3UmW
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
+
+# --- AUTH BACKENDS ---
+AUTHENTICATION_BACKENDS = [
+    'core.backends.CaseInsensitiveModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
