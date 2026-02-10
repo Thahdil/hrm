@@ -276,6 +276,29 @@ class AttendanceLog(models.Model):
         cleaned = self._get_cleaned_punches(punches_data=punches_list)
         
         if not cleaned:
+            # Auto-detect Public Holiday
+            from core.models import PublicHoliday
+            is_ph = PublicHoliday.objects.filter(date=self.date).exists()
+            if not is_ph:
+                is_ph = PublicHoliday.objects.filter(
+                    is_recurring=True, 
+                    date__month=self.date.month, 
+                    date__day=self.date.day
+                ).exists()
+
+            if is_ph:
+                self.status = self.Status.HOLIDAY
+                self.is_absent = False
+                self.total_work_minutes = 0
+                
+                # Sync summary fields to None since no punches
+                if self.entry_type != self.EntryType.MANUAL:
+                    self.check_in = None
+                    self.check_out = None
+                
+                if not skip_save: self.save()
+                return 0
+
             # No punches found. Respect the status label.
             if any(kw in status_upper for kw in ['HALFDAY', '½', '1/2']):
                 self.total_work_minutes = 240
@@ -310,18 +333,30 @@ class AttendanceLog(models.Model):
             pass
         
         # Sync check_in/out summary fields
+        # Sync check_in/out summary fields - STRICTLY RAW PUNCHES
         if self.entry_type != self.EntryType.MANUAL:
-            in_punches = [p[0] for p in cleaned if p[1] == 'in']
-            out_punches = [p[0] for p in cleaned if p[1] == 'out']
+            # Re-fetch raw punches to ensure we get absolute first/last, ignoring cleaning logic
+            if punches_list:
+                raw_source = punches_list
+            else:
+                raw_p_objs = self.raw_punches.all().order_by('time')
+                raw_source = [(p.time, p.punch_type.lower()) for p in raw_p_objs]
+            
+            raw_in = [p[0] for p in raw_source if p[1] == 'in']
+            raw_out = [p[0] for p in raw_source if p[1] == 'out']
+            
             # Reset
             self.check_in = None
             self.check_out = None
             
-            if in_punches: self.check_in = in_punches[0]
-            if out_punches: self.check_out = out_punches[-1]
-            # Fallback if types missing (unlikely with clean logic but safe)
-            if not self.check_in and cleaned: self.check_in = cleaned[0][0]
-            if not self.check_out and cleaned: self.check_out = cleaned[-1][0]
+            if raw_in:
+                self.check_in = min(raw_in) # Absolute First IN
+            if raw_out:
+                self.check_out = max(raw_out) # Absolute Last OUT
+                
+            # If standard In/Out missing but data exists (e.g. unknown types or single punch), fallback
+            if not self.check_in and raw_source: self.check_in = raw_source[0][0]
+            if not self.check_out and raw_source and len(raw_source) > 1: self.check_out = raw_source[-1][0]
 
         if not skip_save: self.save()
         return self.total_work_minutes

@@ -109,6 +109,7 @@ class AuditLog(models.Model):
         LOGOUT = 'LOGOUT', 'Logged Out'
         APPROVE = 'APPROVE', 'Approved'
         REJECT = 'REJECT', 'Rejected'
+        CANCELLED = 'CANCELLED', 'Cancelled'
         EXPORT = 'EXPORT', 'Exported'
         IMPORT = 'IMPORT', 'Imported'
         VIEW = 'VIEW', 'Viewed'
@@ -162,94 +163,85 @@ class AuditLog(models.Model):
     def __str__(self):
         return f"{self.user} - {self.action} - {self.object_repr or 'System'} at {self.timestamp}"
     
+    def format_changes(self):
+        if not self.changes:
+            return "details updated"
+        
+        parts = []
+        if isinstance(self.changes, dict):
+            for k, v in self.changes.items():
+                if isinstance(v, list) and len(v) == 2:
+                    parts.append(f"{k} changed from '{v[0]}' to '{v[1]}'")
+                else:
+                    parts.append(f"{k}: {v}")
+        return ", ".join(parts)
+
     @property
     def description(self):
         """Returns a human-readable description of the activity matching specific user requirements"""
         user_name = self.user.full_name if (self.user and hasattr(self.user, 'full_name') and self.user.full_name) else (self.user.username if self.user else "System")
         
-        # fallback subject
-        subject = self.object_repr if self.object_repr else user_name
+        # Helper Checks
+        content_type_str = str(self.content_type).lower() if self.content_type else ""
+        obj_name = self.object_repr if self.object_repr else "Unknown"
 
-        # 1. HR & Employee Management
-        if self.module in [self.Module.EMPLOYEES, self.Module.USERS]:
-            if self.action == self.Action.CREATE:
-                return f"Employee {self.object_repr} was added by {user_name}."
-                
-            if self.action == self.Action.UPDATE:
-                # Self-update check
-                if self.object_repr and user_name and self.object_repr.lower() == user_name.lower():
-                    # Filter out purely self-updates if desired, or just make them simpler
-                    return f"{user_name} updated their profile."
-                
-                # Check for Manager assignment
-                if self.changes:
-                    changes_str = str(self.changes).lower()
-                    if 'manager' in changes_str or 'supervisor' in changes_str:
-                         # "Project Manager [User] added [Employee] under his supervision"
-                         # Note: The log is usually on the Employee object.
-                         # If user_name is the manager, and object_repr is the employee:
-                         return f"Project Manager {user_name} added {self.object_repr} under supervision."
-                
-                return f"{self.object_repr}'s profile was updated by {user_name}."
+        # 1. New Employee
+        if self.module == self.Module.EMPLOYEES and self.action == self.Action.CREATE:
+            return f"New employee {obj_name} has been added by {user_name}."
 
-        # 2. Leave Management
-        elif self.module == self.Module.LEAVES:
+        # 2. Leave Configuration & Holidays
+        is_leave_type = 'leavetype' in content_type_str
+        is_holiday = 'holiday' in content_type_str or 'holiday' in obj_name.lower()
+
+        if is_leave_type and self.action == self.Action.UPDATE:
+            changes = self.format_changes()
+            return f"{user_name} updated leave configuration for {obj_name}: {changes}."
+
+        if is_holiday:
             if self.action == self.Action.CREATE:
-                # "New leave request has been requested by [Employee]"
-                # object_repr is typically the employee name for leave logs as per log() method
-                return f"New leave request has been requested by {self.object_repr}."
-            
+                return f"{user_name} added new holiday: {obj_name}."
+            if self.action in [self.Action.UPDATE, self.Action.DELETE]:
+                changes = self.format_changes()
+                return f"{user_name} updated holiday {obj_name}: {changes}."
+
+        # 3. Leave Request
+        if self.module == self.Module.LEAVES:
+            if self.action == self.Action.CREATE:
+                return f"Leave request by {obj_name}."
             if self.action == self.Action.APPROVE:
-                # "Leave request has been accepted for [Employee] by [Manager]"
-                # user_name is the approver (Manager)
-                return f"Leave request has been accepted for {self.object_repr} by {user_name}."
-            
+                return f"Leave request for {obj_name} accepted by {user_name}."
             if self.action == self.Action.REJECT:
-                # "The leave request is rejected by [Manager]"
-                return f"The leave request is rejected by {user_name}."
-
-        # 3. Attendance
-        elif self.module == self.Module.ATTENDANCE:
-            if self.action == self.Action.IMPORT:
-                return f"Biometric attendance logs were imported by {user_name}."
-            # keep detailed log for lateness if needed, or simplify as requested "remove other infos"?
-            # User said "remove other infos". I'll keep it simple.
-            return f"Attendance record for {self.object_repr} was updated."
+                 return f"Leave request for {obj_name} rejected by {user_name}."
+            if self.action == self.Action.CANCELLED:
+                 return f"Leave request for {obj_name} cancelled."
 
         # 4. Payroll
-        elif self.module == self.Module.PAYROLL:
+        if self.module == self.Module.PAYROLL:
             if self.action == self.Action.CREATE:
-                # "Payroll was generated by [User]"
-                return f"Payroll was generated by {user_name}."
+                return f"{user_name} generated payroll."
             if self.action == self.Action.EXPORT:
-                return f"Payroll bank file was exported by {user_name}."
+                return f"{user_name} exported payroll."
 
-        # 5. Documents
-        elif self.module == self.Module.DOCUMENTS:
+        # 5. Attendance
+        if self.module == self.Module.ATTENDANCE:
+            if self.action in [self.Action.IMPORT, self.Action.CREATE]:
+                return f"{user_name} added attendance log."
+
+        # 6. Documents
+        if self.module == self.Module.DOCUMENTS and self.action == self.Action.CREATE:
+            return f"{user_name} added document."
+
+        # 7. Air Ticket
+        if self.module == self.Module.TICKETS:
             if self.action == self.Action.CREATE:
-                # "Document was added by [Employee]"
-                # Typically the user uploading is the employee or HR. 
-                # If HR uploads for emp, user_name=HR. 
-                # The user text "document was added by documents has adde by the employee named" implies they want the uploader name.
-                return f"Document was added by {user_name}." 
+                return f"Air ticket requested by {obj_name}."
+            if self.action == self.Action.APPROVE:
+                return f"Air ticket request approved by {user_name}."
+            if self.action == self.Action.REJECT:
+                return f"Air ticket request rejected by {user_name}."
 
-        # 6. System (Holidays)
-        elif self.module == self.Module.SYSTEM:
-            is_holiday = 'holiday' in str(self.object_repr).lower() or 'holiday' in str(self.content_type).lower()
-            if is_holiday:
-                if self.action == self.Action.CREATE:
-                    # "Added new holiday [Name] by [User]"
-                    return f"Added new holiday {self.object_repr} by {user_name}."
-                if self.action in [self.Action.UPDATE, self.Action.DELETE]:
-                    # "Upcoming holidays is updated by [User]"
-                    return f"Upcoming holidays is updated by {user_name}."
-            
-        # Default Log
-        # If none of the specific cases matched, we try to return a generic string.
-        # But user said "remove other infos". 
-        # If we return None/Empty here, we need to handle it in template.
-        # However, it's safer to return a generic string than nothing to avoid breaking UI layout.
-        return f"{user_name} performed {self.action.lower()} on {self.object_repr or 'system'}."
+        # Fallback
+        return f"{user_name} performed {self.action.lower()} on {obj_name}."
     
     @classmethod
     def log(cls, user, action, obj=None, changes=None, request=None, module=None, object_repr=None):

@@ -105,3 +105,33 @@ class LeaveTypeForm(forms.ModelForm):
             'is_paid': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
             'is_carry_forward': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make code optional in the UI since we auto-generate it
+        self.fields['code'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        name = cleaned_data.get('name')
+        code = cleaned_data.get('code')
+        
+        # Auto-generate code if missing
+        if name and not code:
+            # First try abbreviation (e.g. "Annual Leave" -> "AL")
+            words = name.split()
+            if len(words) > 1:
+                base_code = "".join([w[0] for w in words]).upper()
+            else:
+                base_code = name[:3].upper() # "Holiday" -> "HOL"
+            
+            # Ensure uniqueness
+            final_code = base_code
+            counter = 1
+            while LeaveType.objects.filter(code=final_code).exclude(pk=self.instance.pk).exists():
+                final_code = f"{base_code}-{counter:02d}"
+                counter += 1
+            
+            cleaned_data['code'] = final_code
+            
+        return cleaned_data

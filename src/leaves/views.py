@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import LeaveRequest, LeaveType
-from .forms import LeaveRequestForm
+from .models import LeaveRequest, LeaveType
+from .forms import LeaveRequestForm, LeaveTypeForm
 from django.contrib import messages
+from core.models import AuditLog
 from django.db.models import Q
 
 @login_required
@@ -266,17 +268,35 @@ def ticket_list(request):
 
 @login_required
 def ticket_create(request):
+    if request.user.is_admin() or request.user.is_ceo() or request.user.is_project_manager():
+        messages.error(request, "Management roles cannot submit new ticket requests.")
+        return redirect('ticket_list')
+
     if request.method == 'POST':
         form = TicketRequestForm(request.POST)
         if form.is_valid():
             ticket = form.save(commit=False)
+            
+            # Handle assignment: prefer profile if exists (legacy), else user
             if hasattr(request.user, 'employee_profile'):
                 ticket.employee = request.user.employee_profile
-                ticket.save()
-                messages.success(request, "Ticket request submitted.")
-                return redirect('ticket_list')
             else:
-                messages.error(request, "User not linked to Employee.")
+                ticket.employee = request.user
+                
+            ticket.save()
+            
+            from core.models import AuditLog
+            AuditLog.log(
+                user=request.user,
+                action=AuditLog.Action.CREATE,
+                obj=ticket,
+                request=request,
+                module=AuditLog.Module.TICKETS,
+                object_repr=f"Ticket to {ticket.destination}"
+            )
+            
+            messages.success(request, "Ticket request submitted.")
+            return redirect('ticket_list')
     else:
         form = TicketRequestForm()
     return render(request, 'leaves/ticket_form.html', {'form': form})
@@ -487,6 +507,16 @@ def leave_type_add(request):
                  ltype.code = base_code + str(uuid.uuid4())[:2].upper()
             
             ltype.save()
+            
+            AuditLog.log(
+                user=request.user,
+                action=AuditLog.Action.CREATE,
+                obj=ltype,
+                request=request,
+                module=AuditLog.Module.LEAVES,
+                object_repr=ltype.name
+            )
+            
             messages.success(request, "Leave Type added.")
             return redirect('leave_settings')
     else:
@@ -499,11 +529,39 @@ def leave_type_edit(request, pk):
     if not user.is_staff and not user.is_admin() and not user.is_ceo():
         return redirect('dashboard')
         
-    ltype = LeaveType.objects.get(pk=pk)
+    ltype = get_object_or_404(LeaveType, pk=pk)
+    
+    # Capture old state for audit
+    old_state = {
+        'name': ltype.name,
+        'days_entitlement': ltype.days_entitlement,
+        'is_paid': ltype.is_paid,
+        'accrual_frequency': ltype.accrual_frequency
+    }
+    
     if request.method == 'POST':
         form = LeaveTypeForm(request.POST, instance=ltype)
         if form.is_valid():
-            form.save()
+            ltype = form.save()
+            
+            # Calculate changes
+            changes = {}
+            for field, old_val in old_state.items():
+                new_val = getattr(ltype, field)
+                if old_val != new_val:
+                    changes[field] = [str(old_val), str(new_val)]
+            
+            if changes:
+                AuditLog.log(
+                    user=request.user,
+                    action=AuditLog.Action.UPDATE,
+                    obj=ltype,
+                    changes=changes,
+                    request=request,
+                    module=AuditLog.Module.LEAVES,
+                    object_repr=ltype.name
+                )
+            
             messages.success(request, "Leave Type updated.")
             return redirect('leave_settings')
     else:

@@ -3,38 +3,215 @@
 {% block header_title %}Request Annual Ticket{% endblock %}
 
 {% block content %}
-<div class="section-wrapper" style="max-width: 600px; margin: 0 auto;">
-    <form method="post">
-        {% csrf_token %}
-        <div style="display: grid; gap: 20px;">
-            {% for field in form %}
-            <div
-                style="display: flex; flex-direction: column; gap: 8px; {% if field.name == 'is_encashment' %}flex-direction: row; align-items: center;{% endif %}">
-                <label for="{{ field.id_for_label }}" style="font-weight: 500;">{{ field.label }}</label>
-                {{ field }}
-                {% for error in field.errors %}
-                <span style="color: #ef4444; font-size: 0.85rem;">{{ error }}</span>
-                {% endfor %}
+<div style="flex: 1; display: flex; flex-direction: column; height: 100%; padding-bottom: 20px;">
+    <div class="card" style="display: flex; flex-direction: column; flex: 1; width: 100%; border-radius: 24px; border: 1px solid #e2e8f0; background: white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden;">
+        
+        <!-- Header Visual -->
+        <div style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); padding: 40px; position: relative; overflow: hidden; flex-shrink: 0;">
+            <div style="position: absolute; top: -20px; right: -20px; font-size: 180px; color: white; opacity: 0.1; transform: rotate(-15deg);">
+                <i class="ri-plane-fill"></i>
             </div>
-            {% endfor %}
+            
+            <div style="max-width: 800px; margin: 0 auto; width: 100%;">
+                <h2 style="color: white; font-size: 28px; font-weight: 800; margin: 0; letter-spacing: -0.02em; position: relative;">Flight Ticket Request</h2>
+                <p style="color: rgba(255,255,255,0.9); font-size: 15px; margin: 8px 0 0 0; font-weight: 500; max-width: 600px; position: relative;">
+                    Submit your annual flight ticket entitlement request or cash encashment claim.
+                </p>
+            </div>
         </div>
-        <div style="margin-top: 32px; display: flex; gap: 16px;">
-            <button type="submit" class="btn btn-primary">Submit Request</button>
-            <a href="{% url 'ticket_list' %}" class="btn">Cancel</a>
+
+        <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
+            <form method="post" style="padding: 40px; flex: 1; display: flex; flex-direction: column;">
+                {% csrf_token %}
+                
+                <div style="max-width: 800px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 32px;">
+                    
+                    <!-- Destination -->
+                    <div class="form-group">
+                        <label style="display: block; font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
+                            Destination Airport
+                        </label>
+                        <div style="position: relative; width: 100%;">
+                            <i class="ri-map-pin-line" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 20px; pointer-events: none;"></i>
+                            {{ form.destination }}
+                        </div>
+                        {% if form.destination.errors %}
+                        <div style="color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 6px;">
+                            {{ form.destination.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Dates Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start;">
+                        <div class="form-group" style="display: flex; flex-direction: column;">
+                            <label style="display: block; font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                Travel Date
+                            </label>
+                            <div style="position: relative; width: 100%;">
+                                <i class="ri-calendar-event-line" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 20px; pointer-events: none;"></i>
+                                {{ form.travel_date }}
+                            </div>
+                            {% if form.travel_date.errors %}
+                            <div style="color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 6px;">
+                                {{ form.travel_date.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group" style="display: flex; flex-direction: column;">
+                            <label style="display: block; font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                Return Date <span style="font-weight: 600; color: #94a3b8; text-transform: none;">(Optional)</span>
+                            </label>
+                            <div style="position: relative; width: 100%;">
+                                <i class="ri-calendar-check-line" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 20px; pointer-events: none;"></i>
+                                {{ form.return_date }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="height: 1px; background: #f1f5f9; margin: 8px 0;"></div>
+
+                    <!-- Encashment Toggle -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 24px; background: #f8fafc; border-radius: 16px; border: 1px solid #f1f5f9;">
+                        <div>
+                            <div style="font-size: 15px; font-weight: 700; color: #1e293b;">Cash Encashment</div>
+                            <div style="font-size: 13px; color: #64748b; margin-top: 4px;">Claim cash instead of booking a ticket</div>
+                        </div>
+                        <label class="switch">
+                            {{ form.is_encashment }}
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="margin-top: auto; padding-top: 40px; display: flex; gap: 16px; align-items: center;">
+                        <button type="submit" class="btn-submit">
+                            Send Request
+                            <i class="ri-arrow-right-line"></i>
+                        </button>
+                        <a href="{% url 'ticket_list' %}" style="padding: 14px 28px; font-size: 14px; font-weight: 600; color: #64748b; text-decoration: none; border-radius: 12px; transition: all 0.2s;">
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 </div>
+
 <style>
-    .form-input {
-        padding: 10px;
-        border: 1px solid var(--border);
-        border-radius: 6px;
+    /* Modern Input Styling */
+    input[type="text"], input[type="date"], textarea, select {
         width: 100%;
+        padding: 16px 20px 16px 50px; /* Increased padding */
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        background: #fff;
+        font-size: 15px;
+        font-weight: 500;
+        color: #1e293b;
+        transition: all 0.2s ease;
+        outline: none;
+        height: 56px; /* Explicit height */
+    }
+    
+    input[type="text"]:focus, input[type="date"]:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+    
+    input::placeholder {
+        color: #cbd5e1;
+        font-weight: 400;
     }
 
-    .form-checkbox {
-        width: 18px;
-        height: 18px;
+    /* Primary Button Gradient */
+    .btn-submit {
+        background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+        border: none;
+        padding: 16px 40px;
+        border-radius: 14px;
+        color: white;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+    }
+    
+    .btn-submit:active {
+        transform: translateY(0);
+    }
+
+    /* Toggle Switch */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 52px;
+        height: 28px;
+    }
+
+    .switch input { 
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e1;
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        -webkit-transition: .4s;
+        transition: .4s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    input:checked + .slider {
+        background-color: #4f46e5;
+    }
+
+    input:focus + .slider {
+        box-shadow: 0 0 1px #4f46e5;
+    }
+
+    input:checked + .slider:before {
+        -webkit-transform: translateX(24px);
+        -ms-transform: translateX(24px);
+        transform: translateX(24px);
+    }
+
+    /* Rounded sliders */
+    .slider.round {
+        border-radius: 34px;
+    }
+
+    .slider.round:before {
+        border-radius: 50%;
     }
 </style>
 {% endblock %}

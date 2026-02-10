@@ -15,10 +15,11 @@
             </p>
         </div>
 
-        <form method="POST" action="{% url 'run_payroll' %}" onsubmit="return confirm('Run payroll for current month?');" style="margin: 0;">
+        <form method="POST" action="{% url 'run_payroll' %}" onsubmit="return confirm('Run payroll for selected month?');" style="margin: 0; display: flex; gap: 8px; align-items: center;">
             {% csrf_token %}
-            <button type="submit" class="btn btn-primary" style="padding: 10px 24px; width: 100%;">
-                <i class="ri-flashlight-line"></i> Run Payroll (Current Month)
+            <input type="month" name="payroll_month" value="{% now 'Y-m' %}" required class="btn btn-outline" style="min-width: 160px; height: 44px; padding-left: 12px; border-color: var(--gray-300);">
+            <button type="submit" class="btn btn-primary" style="padding: 10px 24px; white-space: nowrap;">
+                <i class="ri-flashlight-line"></i> Run Payroll
             </button>
         </form>
     </div>

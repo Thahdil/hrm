@@ -1,42 +1,254 @@
 {% extends 'base_modern.html' %}
-{% block title %}Leave Type - Nexteons HR{% endblock %}
-{% block header_title %}{% if form.instance.pk %}Edit Leave Type{% else %}New Leave Type{% endif %}{% endblock %}
+{% block title %}Leave Type Manager - Nexteons HR{% endblock %}
+{% block header_title %}{% if form.instance.pk %}Edit Leave Policy{% else %}New Leave Policy{% endif %}{% endblock %}
 
 {% block content %}
-<div class="section-wrapper" style="max-width: 600px; margin: 0 auto;">
-    <form method="post">
+<div class="flex-1" style="height: 100%; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 24px;">
+    <form method="post" style="display: flex; flex-direction: column; height: 100%;" class="full-height-form">
         {% csrf_token %}
-        <div style="display: grid; gap: 20px;">
-            {% for field in form %}
-            <div
-                style="display: flex; flex-direction: column; gap: 8px; {% if field.field.widget.input_type == 'checkbox' %}flex-direction: row; align-items: center;{% endif %}">
-                <label for="{{ field.id_for_label }}" style="font-weight: 500;">{{ field.label }}</label>
-                {{ field }}
-                {% for error in field.errors %}
-                <span style="color: #ef4444; font-size: 0.85rem;">{{ error }}</span>
-                {% endfor %}
+        
+        <div class="card full-height-card" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 0; background: #fff;">
+            <!-- Card Header -->
+            <div class="card-header" style="flex-shrink: 0; padding: 24px 32px; border-bottom: 1px solid var(--gray-200); background: #fff; z-index: 10;">
+                <div>
+                    <h3 class="card-title" style="font-size: 20px; letter-spacing: -0.01em;">Policy Configuration</h3>
+                    <p class="card-subtitle" style="margin-top: 6px;">Define the rules, entitlement, and eligibility for this leave category.</p>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <a href="{% url 'leave_settings' %}" class="btn btn-outline" style="border-radius: 8px; padding: 10px 24px; font-weight: 500;">Cancel</a>
+                    <button type="submit" class="btn btn-primary" style="border-radius: 8px; padding: 10px 24px; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.1), 0 2px 4px -1px rgba(37, 99, 235, 0.06);">
+                        <i class="ri-save-line" style="margin-right: 6px;"></i> Save Configuration
+                    </button>
+                </div>
             </div>
-            {% endfor %}
-        </div>
-        <div style="margin-top: 32px; display: flex; gap: 16px;">
-            <button type="submit" class="btn btn-primary">Save Configuration</button>
-            <a href="{% url 'leave_settings' %}" class="btn">Cancel</a>
+
+            <!-- Scrollable Content -->
+            <div class="card-body-scroll custom-scroll" style="padding: 32px; background: #f8fafc;">
+                
+                <div style="width: 100%; height: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; align-content: start;">
+                    
+                    <!-- Section A: Identity -->
+                    <div class="modern-card" style="grid-column: 1 / -1;">
+                        <h4 class="section-title">
+                            <span class="accent-bar" style="background: var(--primary);"></span>
+                            Basic Information
+                        </h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                            <div class="form-group">
+                                <label class="form-label">Policy Name <span style="color: var(--error);">*</span></label>
+                                {{ form.name }}
+                                <span class="form-hint">E.g. "Annual Leave", "Sick Leave"</span>
+                                {{ form.name.errors }}
+                            </div>
+                            <div class="form-group" style="display: none;">
+                                <label class="form-label">Code <span style="color: var(--error);">*</span></label>
+                                {{ form.code }}
+                                <span class="form-hint">Unique identifier, e.g. "AL-01"</span>
+                                {{ form.code.errors }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section B: Entitlement -->
+                    <div class="modern-card">
+                        <h4 class="section-title">
+                            <span class="accent-bar" style="background: var(--warning);"></span>
+                            Entitlement Rules
+                        </h4>
+                        <div class="form-group" style="margin-bottom: 24px;">
+                            <label class="form-label">Annual Quota (Days)</label>
+                            <div class="input-wrapper">
+                                {{ form.days_entitlement }}
+                                <div class="input-suffix">Days / Year</div>
+                            </div>
+                            {{ form.days_entitlement.errors }}
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Fixed Duration</label>
+                            {{ form.duration_days }}
+                            <div style="margin-top: 8px; font-size: 13px; color: var(--gray-500); line-height: 1.5; background: #f1f5f9; padding: 12px; border-radius: 8px;">
+                                <strong>Optional:</strong> Set this only if the leave has a fixed duration (e.g., Maternity Leave = 90 days). Leave empty for flexible duration.
+                            </div>
+                            {{ form.duration_days.errors }}
+                        </div>
+                    </div>
+
+                    <!-- Section C: Eligibility -->
+                    <div class="modern-card">
+                        <h4 class="section-title">
+                            <span class="accent-bar" style="background: var(--success);"></span>
+                            Eligibility Criteria
+                        </h4>
+                        <div class="form-group" style="margin-bottom: 24px;">
+                            <label class="form-label">Applicable Gender</label>
+                            {{ form.eligibility_gender }}
+                            {{ form.eligibility_gender.errors }}
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Minimum Service Required</label>
+                            <div class="input-wrapper">
+                                {{ form.min_service_days }}
+                                <div class="input-suffix">Days</div>
+                            </div>
+                            <span class="form-hint">Probation period before eligible</span>
+                            {{ form.min_service_days.errors }}
+                        </div>
+                    </div>
+
+                    <!-- Section D: Flags -->
+                    <div class="modern-card" style="grid-column: 1 / -1; background: transparent; border: none; box-shadow: none; padding: 0;">
+                        <h4 class="section-title" style="margin-bottom: 16px; margin-left: 4px;">Additional Settings</h4>
+                        
+                        <div style="display: flex; gap: 24px;">
+                            <label class="toggle-card">
+                                <div class="toggle-checkbox-wrapper">
+                                    {{ form.is_paid }}
+                                </div>
+                                <div>
+                                    <div class="toggle-title">Paid Leave</div>
+                                    <div class="toggle-desc">Employee will be paid for these days</div>
+                                </div>
+                            </label>
+
+                            <label class="toggle-card">
+                                <div class="toggle-checkbox-wrapper">
+                                    {{ form.is_carry_forward }}
+                                </div>
+                                <div>
+                                    <div class="toggle-title">Carry Forward</div>
+                                    <div class="toggle-desc">Unused balance rolls over to next year</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
         </div>
     </form>
 </div>
+
 <style>
-    .form-input,
-    .form-select {
-        padding: 10px;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        width: 100%;
-        background-color: white;
+    /* Modern Scrollbar */
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .custom-scroll:hover::-webkit-scrollbar-thumb { background: #94a3b8; }
+
+    /* Modern Card */
+    .modern-card {
+        background: white;
+        padding: 32px;
+        border-radius: 16px;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        transition: all 0.3s ease;
+    }
+    .modern-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+        border-color: rgba(226, 232, 240, 1);
     }
 
-    .form-checkbox {
-        width: 18px;
+    /* Typography */
+    .section-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .accent-bar {
+        width: 4px;
         height: 18px;
+        border-radius: 2px;
+    }
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 8px;
+        display: block;
+    }
+    .form-hint {
+        font-size: 13px;
+        color: var(--gray-500);
+        margin-top: 6px;
+        display: block;
+    }
+
+    /* Inputs */
+    .input-wrapper {
+        position: relative;
+    }
+    .input-suffix {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-400);
+        font-size: 13px;
+        font-weight: 500;
+        pointer-events: none;
+    }
+    .form-input, .form-select {
+        height: 46px;
+        padding: 0 16px;
+        border-radius: 10px;
+        border: 1px solid var(--gray-200);
+        font-size: 14px;
+        transition: all 0.2s;
+        background: #f8fafc;
+        width: 100%;
+    }
+    .form-input:focus, .form-select:focus {
+        background: white;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.05);
+        outline: none;
+    }
+
+    /* Toggle Cards */
+    .toggle-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        cursor: pointer;
+        flex: 1;
+        padding: 20px;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 16px;
+        transition: all 0.2s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .toggle-card:hover {
+        background: white;
+        border-color: var(--primary-light);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    }
+    .toggle-checkbox-wrapper input[type="checkbox"] {
+        width: 24px;
+        height: 24px;
+        accent-color: var(--primary);
+        cursor: pointer;
+    }
+    .toggle-title {
+        font-weight: 600;
+        color: var(--gray-900);
+        font-size: 15px;
+    }
+    .toggle-desc {
+        font-size: 13px;
+        color: var(--gray-500);
+        margin-top: 2px;
     }
 </style>
 {% endblock %}

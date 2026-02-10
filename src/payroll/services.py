@@ -321,24 +321,49 @@ class PayrollService:
                 # A. ATTEMPT USER MATCH ON EVERY ROW
                 row_user = None
                 # Optimized scan for user identification
+                # A. ATTEMPT USER MATCH ON EVERY ROW
+                row_user = None
+                potential_id_user = None
+
+                # Scan entire row first to find best match
                 for cell in row:
                     c_str = str(cell).strip()
                     if not c_str or c_str.lower() == 'nan' or len(c_str) < 2: continue
                     
                     c_key = c_str.lower()
                     
-                    # 1. Primary Match: Full Name (as requested)
+                    # 1. Name Match (Highest Priority)
                     if c_key in all_users_by_fullname: 
                         row_user = all_users_by_fullname[c_key]; break
                     
-                    # 2. Secondary Match: ID/Code
-                    if c_key in all_users_by_emp_id: row_user = all_users_by_emp_id[c_key]; break
-                    
-                    clean_id = re.sub(r'^(EMP|ID|NO)[\-\s\:]*', '', c_str, flags=re.IGNORECASE)
-                    if clean_id.lower() in all_users_by_emp_id: row_user = all_users_by_emp_id[clean_id.lower()]; break
-                    
-                    num_id = re.sub(r'\D', '', c_str)
-                    if num_id and num_id in all_users_by_emp_id: row_user = all_users_by_emp_id[num_id]; break
+                    # Cleaned Name Match
+                    c_clean = re.sub(r'^(name|employee|emp|staff|mr\.|mrs\.|ms\.|dr\.)[\s\:\-\.]*', '', c_key).strip()
+                    if c_clean and len(c_clean) > 2 and c_clean in all_users_by_fullname:
+                        row_user = all_users_by_fullname[c_clean]; break
+                        
+                    # Fuzzy Word Match
+                    words = re.split(r'[^a-z0-9]', c_key)
+                    found_name = False
+                    for w in words:
+                         if len(w) >= 3 and w in all_users_by_fullname:
+                             row_user = all_users_by_fullname[w]
+                             found_name = True
+                             break
+                    if found_name: break 
+
+                    # 2. ID Match (Candidate)
+                    if not potential_id_user:
+                        if c_key in all_users_by_emp_id: 
+                            potential_id_user = all_users_by_emp_id[c_key]
+                        elif re.sub(r'^(EMP|ID|NO)[\-\s\:]*', '', c_str, flags=re.IGNORECASE).lower() in all_users_by_emp_id:
+                             potential_id_user = all_users_by_emp_id[re.sub(r'^(EMP|ID|NO)[\-\s\:]*', '', c_str, flags=re.IGNORECASE).lower()]
+                        else:
+                            num_id = re.sub(r'\D', '', c_str)
+                            if num_id and num_id in all_users_by_emp_id: 
+                                potential_id_user = all_users_by_emp_id[num_id]
+
+                if not row_user and potential_id_user:
+                    row_user = potential_id_user
 
                 if row_user:
                     # User found. Switch context.
@@ -368,14 +393,22 @@ class PayrollService:
 
                 # C. DETECT HEADER ROW
                 # Trigger mapping if we see standard headers
-                is_header = any(kw in row_str_lower for kw in ['status', 'punch', 'check-in', 'date', 'work date'])
+                header_keywords = ['status', 'punch', 'check-in', 'check in', 'in time', 'out time', 'clock in', 'clock out', 'date', 'work date', 'emp', 'code']
+                is_header = any(kw in row_raw_str.lower() for kw in header_keywords)
+                # Also check for exact 'in' / 'out' headers which are common
+                if not is_header and ('in' in row_str_lower and 'out' in row_str_lower):
+                    is_header = True
+
                 if is_header:
+                    debug_trace.append(f"Header Detected: {row_str_lower}")
                     for i, val in enumerate(row_str_lower):
+                        val_clean = val.strip()
                         if 'status' in val: col_map['status'] = i
                         elif 'punch' in val or 'logs' in val or 'record' in val: col_map['punch'] = i
-                        elif 'date' in val or 'day' in val: col_map['date'] = i
-                        elif 'check-in' in val or 'in time' in val or 'in_time' in val: col_map['in'] = i
-                        elif 'check-out' in val or 'out time' in val or 'out_time' in val: col_map['out'] = i
+                        elif 'date' in val or 'work day' in val or 'work_date' in val: col_map['date'] = i
+                        # Strict IN/OUT detection
+                        elif val_clean == 'in' or 'check-in' in val or 'in time' in val or 'in_time' in val or 'clock in' in val or 'clock_in' in val: col_map['in'] = i
+                        elif val_clean == 'out' or 'check-out' in val or 'out time' in val or 'out_time' in val or 'clock out' in val or 'clock_out' in val: col_map['out'] = i
                     continue
 
                 # D. DETECT DATA ROW
@@ -412,7 +445,11 @@ class PayrollService:
         if logs_created == 0 and not errors:
              errors.append("No valid attendance data found. Ensure Employee Names/IDs in Excel match the system.")
         
-        return logs_created, errors
+        dates = [k[1] for k in global_data_map.keys()]
+        min_date = min(dates) if dates else None
+        max_date = max(dates) if dates else None
+
+        return logs_created, errors, min_date, max_date
 
     @staticmethod
     def _collect_row_data(row, user, col_map, date_context, global_map):
@@ -431,28 +468,61 @@ class PayrollService:
         if not att_date: att_date = date_context
         if not att_date: return
 
-        # 2. Punch Detection (Merged or Separate Columns)
+        # 2. Punch Detection (Priority: "Punch Records" column -> Summary Columns -> Full Row Scan)
         row_punches = []
-        
-        # Method A: Separate In/Out Columns
-        in_idx = col_map.get('in', -1)
-        out_idx = col_map.get('out', -1)
-        if in_idx != -1 and out_idx != -1:
-             in_val = str(row[in_idx]).strip()
-             out_val = str(row[out_idx]).strip()
-             if re.search(r'\d{1,2}:\d{2}', in_val):
-                  row_punches.extend(PayrollService.parse_punch_records_regex(in_val + " IN"))
-             if re.search(r'\d{1,2}:\d{2}', out_val):
-                  row_punches.extend(PayrollService.parse_punch_records_regex(out_val + " OUT"))
 
-        # Method B: Merged Punch Column or Full Row Scan
+        # Method A: Explicit Punch Records Column (Highest Fidelity)
+        p_idx = col_map.get('punch', -1)
+        if p_idx != -1 and p_idx < len(row):
+            punch_str = str(row[p_idx])
+            if punch_str and punch_str.lower() not in ['nan', 'none', 'null']:
+                 row_punches = PayrollService.parse_punch_records_regex(punch_str)
+
+        # Method B: Separate In/Out Summary Columns (Fallback if no punch records)
         if not row_punches:
-            p_idx = col_map.get('punch', -1)
-            punch_str = str(row[p_idx]) if p_idx != -1 and p_idx < len(row) else ""
-            if not punch_str or punch_str.lower() in ['nan', 'none']:
-                 # Fallback: scan whole row if no specific column matched
-                 punch_str = " ".join([str(x) for x in row if str(x).lower() not in ['nan', 'none', 'null']])
-            row_punches = PayrollService.parse_punch_records_regex(punch_str)
+            in_idx = col_map.get('in', -1)
+            out_idx = col_map.get('out', -1)
+            if in_idx != -1 and out_idx != -1:
+                 # Process IN
+                 in_raw = row[in_idx]
+                 try:
+                     if pd.notna(in_raw):
+                         if isinstance(in_raw, (time, datetime)):
+                             t_val = in_raw.time() if isinstance(in_raw, datetime) else in_raw
+                             row_punches.append((t_val, 'in'))
+                         else:
+                             res = pd.to_datetime(in_raw, errors='coerce')
+                             if pd.notna(res):
+                                 row_punches.append((res.time(), 'in'))
+                             else:
+                                 in_val = str(in_raw).strip()
+                                 if re.search(r'\d{1,2}:\d{2}', in_val):
+                                     row_punches.extend(PayrollService.parse_punch_records_regex(in_val + " IN"))
+                 except: pass
+
+                 # Process OUT
+                 out_raw = row[out_idx]
+                 try:
+                     if pd.notna(out_raw):
+                         if isinstance(out_raw, (time, datetime)):
+                             t_val = out_raw.time() if isinstance(out_raw, datetime) else out_raw
+                             row_punches.append((t_val, 'out'))
+                         else:
+                             res = pd.to_datetime(out_raw, errors='coerce')
+                             if pd.notna(res):
+                                 row_punches.append((res.time(), 'out'))
+                             else:
+                                 out_val = str(out_raw).strip()
+                                 if re.search(r'\d{1,2}:\d{2}', out_val):
+                                     row_punches.extend(PayrollService.parse_punch_records_regex(out_val + " OUT"))
+                 except: pass
+
+        # Method C: Full Row Scan (Last Resort)
+        if not row_punches:
+             # Scan whole row excluding status/date columns to avoid false positives?
+             # Just scanning joined string is risky for 'Present' text matching 'ent' etc? No, strictly regex.
+             punch_str = " ".join([str(x) for x in row if str(x).lower() not in ['nan', 'none', 'null']])
+             row_punches = PayrollService.parse_punch_records_regex(punch_str)
         
         # 3. Status Extraction
         s_idx = col_map.get('status', -1)
@@ -558,11 +628,15 @@ class PayrollService:
             for d in range(1, num_days + 1):
                 check_date = month_start.replace(day=d)
                 
-                # 1. Is it a holiday/weekend? (No deduction if not working)
+                # 1. Is it a future date? (Skip deduction, assume present for forecast)
+                if check_date > timezone.now().date():
+                    continue
+
+                # 2. Is it a holiday/weekend? (No deduction if not working)
                 if settings.is_holiday(check_date):
                     continue
                 
-                # 2. Check for Leaves first (Approved leaves override attendance)
+                # 3. Check for Leaves first (Approved leaves override attendance)
                 leave = LeaveRequest.objects.filter(
                     employee=emp,
                     status=LeaveRequest.Status.APPROVED,
@@ -577,7 +651,7 @@ class PayrollService:
                     # Paid leaves (Annual/Sick) have 0 deduction
                     continue
                 
-                # 3. Check Attendance
+                # 4. Check Attendance
                 log = AttendanceLog.objects.filter(employee=emp, date=check_date).first()
                 
                 if not log or log.is_absent or log.status in ['Absent', 'A']:
@@ -601,6 +675,17 @@ class PayrollService:
             # Ensure net doesn't go below floor
             net = max(net, Decimal('0.00'))
             
+            # Days Calculation:
+            # We base it on 30 days standard (or actual days if you prefer strict calendar)
+            # HRMS typically uses 30 as basis for salary, but attendance log is actual.
+            # Let's use: Days Worked = 30 - Unpaid Leave Days - Absent Days
+            # Note: Short minutes are financial deductions but shouldn't reduce "Days Worked" count significantly unless it's a full day loss.
+            # However, for simplicity and clarity:
+            # effective_days = 30 - (total_missing_minutes / 480)
+            
+            effective_absent_days = round(total_missing_minutes / minutes_per_day, 1)
+            effective_worked_days = float(days_in_basis) - effective_absent_days
+            
             PayrollEntry.objects.create(
                 batch=batch,
                 employee=emp,
@@ -608,7 +693,7 @@ class PayrollService:
                 allowances=allowance,
                 deductions=round(deductions, 2),
                 net_salary=round(net, 2),
-                days_worked=num_days - absent_days_count,
-                days_absent=absent_days_count,
+                days_worked=round(effective_worked_days),
+                days_absent=round(effective_absent_days),
                 iban=emp.iban or ""
             )

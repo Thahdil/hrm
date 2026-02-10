@@ -153,7 +153,18 @@ def public_holiday_add(request):
     if request.method == 'POST':
         form = PublicHolidayForm(request.POST)
         if form.is_valid():
-            form.save()
+            holiday = form.save()
+            
+            from .models import AuditLog
+            AuditLog.log(
+                user=request.user,
+                action=AuditLog.Action.CREATE,
+                obj=holiday,
+                request=request,
+                module=AuditLog.Module.SYSTEM,
+                object_repr=holiday.name
+            )
+            
             messages.success(request, "Holiday added.")
         else:
             messages.error(request, "Error adding holiday.")
@@ -170,7 +181,19 @@ def public_holiday_delete(request, pk):
     
     try:
         holiday = PublicHoliday.objects.get(pk=pk)
+        holiday_name = holiday.name
         holiday.delete()
+        
+        from .models import AuditLog
+        AuditLog.log(
+            user=request.user,
+            action=AuditLog.Action.DELETE,
+            obj=None, # Object deleted
+            request=request,
+            module=AuditLog.Module.SYSTEM,
+            object_repr=holiday_name
+        )
+        
         messages.success(request, "Holiday removed.")
     except PublicHoliday.DoesNotExist:
         pass
@@ -249,6 +272,10 @@ def dashboard(request):
         from .models import AuditLog
         recent_activities = AuditLog.objects.select_related('user').exclude(
             action__in=[AuditLog.Action.LOGIN, AuditLog.Action.LOGOUT]
+        ).exclude(
+            # Exclude Profile Updates (User/Employee Updates)
+            module__in=[AuditLog.Module.EMPLOYEES, AuditLog.Module.USERS],
+            action=AuditLog.Action.UPDATE
         ).exclude(
             action=AuditLog.Action.UPDATE,
             changes=None

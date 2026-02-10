@@ -105,7 +105,7 @@ def attendance_import(request):
                     PayrollService.import_attendance_csv(uploaded_file, timezone.now().date())
                     count = 1 # approximate
                 elif uploaded_file.name.endswith('.xlsx') or uploaded_file.name.endswith('.xls'):
-                    count, errors = PayrollService.import_attendance_excel(uploaded_file)
+                    count, errors, min_d, max_d = PayrollService.import_attendance_excel(uploaded_file)
                 else:
                     messages.error(request, "File must be CSV or Excel (.xlsx or .xls).")
                     return redirect('attendance_import')
@@ -120,7 +120,10 @@ def attendance_import(request):
                         object_repr=f"{count} records",
                         request=request
                     )
-                    messages.success(request, f"Attendance imported successfully. {count} logs created.")
+                    date_msg = ""
+                    if min_d and max_d:
+                         date_msg = f" Covering {min_d.strftime('%d-%b-%Y')} to {max_d.strftime('%d-%b-%Y')}."
+                    messages.success(request, f"Attendance imported successfully. {count} logs created.{date_msg} Please ensure your date filter includes these dates.")
                 elif errors:
                     # Show first 5 errors
                     error_msg = "Import failed. Errors: <br>" + "<br>".join(errors[:5])
@@ -145,8 +148,19 @@ def run_payroll_action(request):
         return redirect('dashboard')
         
     if request.method == "POST":
+        payroll_month_str = request.POST.get('payroll_month') 
         today = timezone.now().date()
-        batch_date = today.replace(day=1)
+        
+        if payroll_month_str:
+            try:
+                # Parse "YYYY-MM"
+                year, month = map(int, payroll_month_str.split('-'))
+                batch_date = today.replace(year=year, month=month, day=1)
+            except ValueError:
+                messages.error(request, "Invalid month format selected.")
+                return redirect('payroll_list')
+        else:
+            batch_date = today.replace(day=1)
         
         if PayrollBatch.objects.filter(month=batch_date).exists():
             messages.warning(request, f"Payroll for {batch_date.strftime('%B %Y')} already exists.")
@@ -161,7 +175,16 @@ def run_payroll_action(request):
         batch.status = PayrollBatch.Status.FINALIZED
         batch.save()
         
-        messages.success(request, "Payroll generated successfully!")
+        from core.models import AuditLog
+        AuditLog.log(
+            user=request.user,
+            action=AuditLog.Action.CREATE,
+            obj=batch,
+            request=request,
+            module=AuditLog.Module.PAYROLL
+        )
+        
+        messages.success(request, f"Payroll generated successfully for {batch_date.strftime('%B %Y')}!")
         return redirect('payroll_list')
     
     return redirect('payroll_list')
@@ -263,6 +286,17 @@ def attendance_manual_entry(request):
             log = form.save(commit=False)
             log.entry_type = AttendanceLog.EntryType.MANUAL
             log.save()
+            
+            from core.models import AuditLog
+            AuditLog.log(
+                user=request.user,
+                action=AuditLog.Action.CREATE,
+                obj=log,
+                request=request,
+                module=AuditLog.Module.ATTENDANCE,
+                object_repr=f"Attendance for {log.employee}"
+            )
+            
             messages.success(request, "Attendance manually logged successfully.")
             return redirect('attendance_list')
     else:

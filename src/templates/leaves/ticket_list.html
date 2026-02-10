@@ -11,9 +11,11 @@
                 <h3 class="card-title" style="font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em;">Ticket Entitlements</h3>
                 <p class="card-subtitle" style="font-weight: 500; color: var(--gray-500);">Manage flight ticket requests and approvals</p>
             </div>
+            {% if not user.is_admin and not user.is_ceo and not user.is_project_manager %}
             <a href="{% url 'ticket_add' %}" class="btn btn-primary" style="border-radius: 12px; font-weight: 700; padding: 12px 24px;">
                 <i class="ri-plane-line"></i> New Request
             </a>
+            {% endif %}
         </div>
 
         <div class="card-body-scroll">
