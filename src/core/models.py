@@ -178,70 +178,83 @@ class AuditLog(models.Model):
 
     @property
     def description(self):
-        """Returns a human-readable description of the activity matching specific user requirements"""
+        """Returns a human-readable description matching specific user requirements"""
         user_name = self.user.full_name if (self.user and hasattr(self.user, 'full_name') and self.user.full_name) else (self.user.username if self.user else "System")
-        
-        # Helper Checks
-        content_type_str = str(self.content_type).lower() if self.content_type else ""
         obj_name = self.object_repr if self.object_repr else "Unknown"
-
-        # 1. New Employee
-        if self.module == self.Module.EMPLOYEES and self.action == self.Action.CREATE:
-            return f"New employee {obj_name} has been added by {user_name}."
-
-        # 2. Leave Configuration & Holidays
-        is_leave_type = 'leavetype' in content_type_str
-        is_holiday = 'holiday' in content_type_str or 'holiday' in obj_name.lower()
-
-        if is_leave_type and self.action == self.Action.UPDATE:
-            changes = self.format_changes()
-            return f"{user_name} updated leave configuration for {obj_name}: {changes}."
-
-        if is_holiday:
+        
+        # 1. Employee Management
+        if self.module == self.Module.EMPLOYEES:
             if self.action == self.Action.CREATE:
-                return f"{user_name} added new holiday: {obj_name}."
-            if self.action in [self.Action.UPDATE, self.Action.DELETE]:
-                changes = self.format_changes()
-                return f"{user_name} updated holiday {obj_name}: {changes}."
+                return f"New employee {obj_name} was onboarded by {user_name}."
+            
+            if self.action == self.Action.UPDATE and self.changes and isinstance(self.changes, dict):
+                # Check for specific interesting fields
+                if 'department' in self.changes:
+                    old, new = self.changes['department'] if isinstance(self.changes['department'], list) else ("Unknown", self.changes['department'])
+                    return f"Department for {obj_name} changed from {old} to {new}."
+                
+                if 'designation' in self.changes:
+                    old, new = self.changes['designation'] if isinstance(self.changes['designation'], list) else ("Unknown", self.changes['designation'])
+                    return f"Designation for {obj_name} changed from {old} to {new}."
+                
+                if 'salary_basic' in self.changes:
+                    return f"Basic Salary for {obj_name} was updated by {user_name}."
+                
+                if 'status' in self.changes:
+                    old, new = self.changes['status'] if isinstance(self.changes['status'], list) else ("Unknown", self.changes['status'])
+                    if new in ['INACTIVE', 'RESIGNED', 'TERMINATED']:
+                        return f"{obj_name} has been marked as '{new}' as of today."
+                    return f"Status for {obj_name} changed to '{new}'."
+                    
+                # If update is not interesting, return None to hide it
+                return None
 
-        # 3. Leave Request
+        # 2. Leave & Attendance
         if self.module == self.Module.LEAVES:
             if self.action == self.Action.CREATE:
-                return f"Leave request by {obj_name}."
+                # changes usually contains leave_type, start_date, end_date for Create
+                leave_type = "Leave"
+                days = ""
+                if self.changes and isinstance(self.changes, dict):
+                    leave_type = self.changes.get('leave_type', 'Leave')
+                    # Calculate days approx if data available? or just say "request"
+                    # User example: "[Name] submitted a Sick Leave request for 2 days."
+                    # We might not have duration easily here without fetching object.
+                    # fallback to generic
+                return f"{obj_name} submitted a {leave_type} request."
+            
             if self.action == self.Action.APPROVE:
-                return f"Leave request for {obj_name} accepted by {user_name}."
+                return f"Leave for {obj_name} was Approved by {user_name}."
+            
             if self.action == self.Action.REJECT:
-                 return f"Leave request for {obj_name} rejected by {user_name}."
-            if self.action == self.Action.CANCELLED:
-                 return f"Leave request for {obj_name} cancelled."
+                return f"Leave for {obj_name} was Rejected by {user_name}."
 
-        # 4. Payroll
+        if self.module == self.Module.ATTENDANCE:
+            if self.action == self.Action.CREATE or self.action == self.Action.IMPORT:
+                # "Late Arrivals" logic would require parsing changes or status
+                # For now, generic attendance log
+                if "late" in obj_name.lower():
+                     return f"{obj_name} checked in late."
+                return f"Attendance recorded for {obj_name}."
+
+        # 3. Payroll & Compliance
         if self.module == self.Module.PAYROLL:
             if self.action == self.Action.CREATE:
-                return f"{user_name} generated payroll."
+                 # object_repr is usually "PayrollBatch for Jan 2026"
+                 return f"Payroll for {obj_name.replace('PayrollBatch for ', '')} has been finalized."
             if self.action == self.Action.EXPORT:
-                return f"{user_name} exported payroll."
+                 return f"Payroll for {obj_name.replace('PayrollBatch for ', '')} was exported."
 
-        # 5. Attendance
-        if self.module == self.Module.ATTENDANCE:
-            if self.action in [self.Action.IMPORT, self.Action.CREATE]:
-                return f"{user_name} added attendance log."
+        # 4. System & Security
+        if self.action == self.Action.LOGIN:
+            ip = self.ip_address if self.ip_address else "Unknown IP"
+            return f"{user_name} logged in from IP address: {ip}."
+            
+        if self.module == self.Module.SYSTEM and self.action == self.Action.UPDATE:
+             return f"{user_name} updated System Settings."
 
-        # 6. Documents
-        if self.module == self.Module.DOCUMENTS and self.action == self.Action.CREATE:
-            return f"{user_name} added document."
-
-        # 7. Air Ticket
-        if self.module == self.Module.TICKETS:
-            if self.action == self.Action.CREATE:
-                return f"Air ticket requested by {obj_name}."
-            if self.action == self.Action.APPROVE:
-                return f"Air ticket request approved by {user_name}."
-            if self.action == self.Action.REJECT:
-                return f"Air ticket request rejected by {user_name}."
-
-        # Fallback
-        return f"{user_name} performed {self.action.lower()} on {obj_name}."
+        # Return None for everything else to filter it out
+        return None
     
     @classmethod
     def log(cls, user, action, obj=None, changes=None, request=None, module=None, object_repr=None):

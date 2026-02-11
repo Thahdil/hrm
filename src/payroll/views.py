@@ -34,15 +34,25 @@ def attendance_list(request):
     logs = logs.order_by('-date')
     
     # Filters
-    search_query = request.GET.get('search', '')
+    search_query = request.GET.get('search', '').strip()
+    date_filter = None
+    
     if search_query:
-        search_id = search_query.replace('EMP-', '').replace('emp-', '')
-        logs = logs.filter(
-            Q(employee__full_name__icontains=search_query) |
-            Q(employee__username__icontains=search_query) |
-            Q(employee__employee_id__icontains=search_query) |
-            Q(employee__id__icontains=search_id)
-        )
+        # Check if search query is a date
+        from datetime import datetime
+        try:
+            # Try YYYY-MM-DD
+            date_filter = datetime.strptime(search_query, '%Y-%m-%d').date()
+            logs = logs.filter(date=date_filter)
+        except ValueError:
+            # Not a date, search by name/ID
+            search_id = search_query.replace('EMP-', '').replace('emp-', '')
+            logs = logs.filter(
+                Q(employee__full_name__icontains=search_query) |
+                Q(employee__username__icontains=search_query) |
+                Q(employee__employee_id__icontains=search_query) |
+                Q(employee__id__icontains=search_id)
+            )
         
     status_filter = request.GET.get('status', '')
     if status_filter == 'present':
@@ -56,26 +66,32 @@ def attendance_list(request):
     elif status_filter == 'holiday':
         logs = logs.filter(status='Holiday')
 
-    date_str = request.GET.get('date')
-    if date_str:
+    # Date Range Filter
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    
+    if start_date_str:
         from datetime import datetime
-        valid_date = None
-        # Try various formats
-        for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']:
-            try:
-                valid_date = datetime.strptime(date_str, fmt).date()
-                break
-            except ValueError:
-                continue
-        
-        if valid_date:
-            logs = logs.filter(date=valid_date)
-        
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            logs = logs.filter(date__gte=start_date)
+        except ValueError:
+            pass
+            
+    if end_date_str:
+        from datetime import datetime
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            logs = logs.filter(date__lte=end_date)
+        except ValueError:
+            pass
+
     return render(request, 'payroll/attendance_list.html', {
         'logs': logs,
         'search_query': search_query,
         'status_filter': status_filter,
-        'selected_date': date_str
+        'start_date': start_date_str,
+        'end_date': end_date_str
     })
 
 @login_required

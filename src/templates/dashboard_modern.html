@@ -93,7 +93,7 @@
                         </div>
                         <div style="flex: 1; min-width: 0;">
                             <div style="font-size: 12.5px; color: #334155; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;">
-                                <strong style="color: #1e293b;">{{ activity.user.full_name|default:activity.user.username }}</strong> {{ activity.description|striptags }}
+                                {{ activity.description }}
                             </div>
                             <div style="font-size: 10px; color: #94a3b8; font-weight: 600; margin-top: 1px;">
                                 <i class="ri-time-line" style="font-size: 9px;"></i> {{ activity.timestamp|timesince }} ago

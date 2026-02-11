@@ -49,7 +49,7 @@
                     <label style="font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Search Employee</label>
                     <div style="position: relative;">
                         <i class="ri-search-line" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 18px;"></i>
-                        <input type="text" name="search" value="{{ search_query }}" placeholder="Type name or Employee ID..." autocomplete="off"
+                        <input type="text" name="search" value="{{ search_query }}" placeholder="Search Name, ID, or Date (YYYY-MM-DD)..." autocomplete="off"
                                style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid #e2e8f0; padding-left: 40px; font-size: 13px; font-weight:500; transition: all 0.2s;"
                                onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 4px rgba(37,99,235,0.08)'"
                                onblur="setTimeout(() => { this.style.borderColor='#e2e8f0'; this.style.boxShadow='none' }, 200)">
@@ -67,10 +67,15 @@
                         <option value="holiday" {% if status_filter == 'holiday' %}selected{% endif %}>Holiday</option>
                     </select>
                 </div>
+                <div style="min-width: 130px;">
+                    <label style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">From</label>
+                    <input type="date" name="start_date" value="{{ start_date|default:'' }}" 
+                           style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid #e2e8f0; padding: 0 12px; font-size: 13px; font-weight: 600;">
+                </div>
 
-                <div style="min-width: 160px;">
-                    <label style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">Target Date</label>
-                    <input type="date" name="date" value="{{ selected_date|default:'' }}" 
+                <div style="min-width: 130px;">
+                    <label style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">To</label>
+                    <input type="date" name="end_date" value="{{ end_date|default:'' }}" 
                            style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid #e2e8f0; padding: 0 12px; font-size: 13px; font-weight: 600;">
                 </div>
 
@@ -78,7 +83,7 @@
                     <button type="submit" class="btn btn-primary" style="height: 38px; border-radius: 10px; padding: 0 20px; font-weight: 700; gap: 8px; font-size: 13px;">
                         <i class="ri-filter-fill"></i> Filter
                     </button>
-                    {% if search_query or status_filter or selected_date %}
+                    {% if search_query or status_filter or start_date or end_date %}
                     <a href="{% url 'attendance_list' %}" class="btn" style="height: 38px; border-radius: 10px; background: white; border: 1px solid #e2e8f0; color: #64748b; font-weight: 600; display: flex; align-items: center; padding: 0 12px; font-size: 13px;">
                         Reset
                     </a>

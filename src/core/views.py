@@ -270,16 +270,17 @@ def dashboard(request):
         
         # Recent Activities from Audit Log
         from .models import AuditLog
-        recent_activities = AuditLog.objects.select_related('user').exclude(
-            action__in=[AuditLog.Action.LOGIN, AuditLog.Action.LOGOUT]
-        ).exclude(
-            # Exclude Profile Updates (User/Employee Updates)
-            module__in=[AuditLog.Module.EMPLOYEES, AuditLog.Module.USERS],
-            action=AuditLog.Action.UPDATE
-        ).exclude(
-            action=AuditLog.Action.UPDATE,
-            changes=None
-        ).order_by('-timestamp')[:10]
+        
+        # Fetch more logs initially to allow for filtering
+        raw_activities = AuditLog.objects.select_related('user').order_by('-timestamp')[:50]
+        
+        recent_activities = []
+        for activity in raw_activities:
+            # The description property now returns None for irrelevant activities
+            if activity.description:
+                recent_activities.append(activity)
+                if len(recent_activities) >= 10:
+                    break
         
         # Leave Balance for current user (if they're also an employee)
         leave_balances = []
