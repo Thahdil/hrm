@@ -148,8 +148,8 @@
                                 </div>
                                 <div style="text-align: right;">
                                     {% if leave_type_id in unlimited_types_list %}
-                                        <div style="font-size: 15px; font-weight: 900; color: var(--gray-400); letter-spacing: -0.02em;">∞</div>
-                                        <div style="font-size: 8px; color: var(--gray-400); font-weight: 800; text-transform: uppercase;">Unlimited</div>
+                                        <!-- Unlimited hidden per user request, just show dash or nothing -->
+                                        <div style="font-size: 15px; font-weight: 900; color: var(--gray-300);">-</div>
                                     {% else %}
                                         <div style="font-size: 15px; font-weight: 900; color: var(--success); letter-spacing: -0.02em;">{{ balance.remaining|floatformat:0 }}</div>
                                         <div style="font-size: 8px; color: var(--success); font-weight: 800; text-transform: uppercase;">Days</div>

@@ -12,12 +12,39 @@
             <h3 class="section-title">Payroll Management</h3>
             <p style="color: var(--gray-500); font-size: 0.875rem; margin-top: 4px;">
                 Generate salary sheets and download Bank Transfer export files.
+                <span style="font-size: 11px; margin-left: 8px; padding: 2px 6px; background: #dcfce7; color: #166534; border-radius: 4px; font-weight: 600;">Startup Model Active</span>
             </p>
         </div>
 
         <form method="POST" action="{% url 'run_payroll' %}" onsubmit="return confirm('Run payroll for selected month?');" style="margin: 0; display: flex; gap: 8px; align-items: center;">
             {% csrf_token %}
-            <input type="month" name="payroll_month" value="{% now 'Y-m' %}" required class="btn btn-outline" style="min-width: 160px; height: 44px; padding-left: 12px; border-color: var(--gray-300);">
+            <div style="display: flex; gap: 8px;">
+                <select name="payroll_month_select" class="btn btn-outline" style="height: 44px; padding-left: 12px; border-color: var(--gray-300); cursor: pointer;" required>
+                    <option value="" disabled>Select Month</option>
+                    {% now "n" as current_month %}
+                    <option value="1" {% if "1" == current_month %}selected{% endif %}>January</option>
+                    <option value="2" {% if "2" == current_month %}selected{% endif %}>February</option>
+                    <option value="3" {% if "3" == current_month %}selected{% endif %}>March</option>
+                    <option value="4" {% if "4" == current_month %}selected{% endif %}>April</option>
+                    <option value="5" {% if "5" == current_month %}selected{% endif %}>May</option>
+                    <option value="6" {% if "6" == current_month %}selected{% endif %}>June</option>
+                    <option value="7" {% if "7" == current_month %}selected{% endif %}>July</option>
+                    <option value="8" {% if "8" == current_month %}selected{% endif %}>August</option>
+                    <option value="9" {% if "9" == current_month %}selected{% endif %}>September</option>
+                    <option value="10" {% if "10" == current_month %}selected{% endif %}>October</option>
+                    <option value="11" {% if "11" == current_month %}selected{% endif %}>November</option>
+                    <option value="12" {% if "12" == current_month %}selected{% endif %}>December</option>
+                </select>
+                <select name="payroll_year_select" class="btn btn-outline" style="height: 44px; padding-left: 12px; border-color: var(--gray-300); cursor: pointer;" required>
+                    {% now "Y" as current_year %}
+                    <option value="2024" {% if "2024" == current_year %}selected{% endif %}>2024</option>
+                    <option value="2025" {% if "2025" == current_year %}selected{% endif %}>2025</option>
+                    <option value="2026" {% if "2026" == current_year %}selected{% endif %}>2026</option>
+                    <option value="2027" {% if "2027" == current_year %}selected{% endif %}>2027</option>
+                    <option value="2028" {% if "2028" == current_year %}selected{% endif %}>2028</option>
+                    <option value="2029" {% if "2029" == current_year %}selected{% endif %}>2029</option>
+                </select>
+            </div>
             <button type="submit" class="btn btn-primary" style="padding: 10px 24px; white-space: nowrap;">
                 <i class="ri-flashlight-line"></i> Run Payroll
             </button>
@@ -70,6 +97,13 @@
                     {% csrf_token %}
                     <button type="submit" class="btn" style="background: #fff1f2; color: #e11d48; border: 1px solid #fee2e2; padding: 10px; border-radius: 8px;" title="Delete Draft">
                         <i class="ri-delete-bin-line"></i>
+                    </button>
+                </form>
+                {% elif batch.status == 'VOID' %}
+                <form action="{% url 'payroll_batch_delete' batch.id %}" method="POST" onsubmit="return confirm('Delete this voided payroll record for {{ batch.month|date:'F Y' }}? This cannot be undone.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn" style="background: #fff1f2; color: #e11d48; border: 1px solid #fee2e2; padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 6px;" title="Delete Record">
+                        <i class="ri-delete-bin-line"></i> Delete
                     </button>
                 </form>
                 {% elif batch.status == 'FINALIZED' %}

@@ -1,164 +1,500 @@
-{% extends 'base.html' %}
+{% extends 'base_modern.html' %}
 {% load humanize %}
+{% load static %}
+
+{% block title %}Payslip - {{ entry.batch.month|date:"F Y" }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8 max-w-4xl">
-    <div class="flex justify-between items-center mb-6 no-print">
-        <a href="javascript:history.back()" class="text-gray-500 hover:text-gray-700">
-            <i class="fas fa-arrow-left mr-2"></i> Back
+<div class="payslip-container">
+    <!-- Actions Bar -->
+    <div class="actions-bar no-print">
+        <a href="javascript:history.back()" class="btn btn-outline">
+            <i class="ri-arrow-left-line"></i> Back
         </a>
-        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow">
-            <i class="fas fa-print mr-2"></i> Print / Save as PDF
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="ri-printer-line"></i> Print / Download PDF
         </button>
     </div>
 
-    <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 print:shadow-none print:border-0">
-        <!-- Header -->
-        <div class="flex justify-between border-b pb-6 mb-6">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">PAYSLIP</h1>
-                <p class="text-gray-600">{{ entry.batch.month|date:"F Y" }}</p>
-            </div>
-            <div class="text-right">
-                <h2 class="text-xl font-bold text-gray-900">Nexteons</h2>
-                <p class="text-sm text-gray-500">Confidential</p>
-            </div>
-        </div>
-
-        <!-- Employee Info -->
-        <div class="grid grid-cols-2 gap-8 mb-8">
-            <div>
-                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Employee Details</h3>
-                <div class="text-gray-900 space-y-1">
-                    <p><span class="font-medium">Name:</span> {{ entry.employee.full_name }}</p>
-                    <p><span class="font-medium">ID:</span> {{ entry.employee.employee_id|default:entry.employee.username }}</p>
-                    <p><span class="font-medium">Designation:</span> {{ entry.employee.get_designation_display }}</p>
-                    <p><span class="font-medium">Department:</span> {{ entry.employee.get_department_display }}</p>
+    <!-- Payslip Paper -->
+    <div class="payslip-paper">
+        <!-- Header Section -->
+        <header class="payslip-header">
+            <div class="company-branding">
+                <div class="logo-area">
+                    <img src="{% static 'img/logo_color.png' %}" alt="Company Logo" class="company-logo">
+                </div>
+                <div class="company-details">
+                    <h1>Nexteons</h1>
+                    <p>Dubai Silicon Oasis, Dubai, UAE</p>
+                    <p>www.nexteon.com | info@nexteons.com</p>
                 </div>
             </div>
-            <div>
-                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Payment Details</h3>
-                <div class="text-gray-900 space-y-1">
-                    <p><span class="font-medium">Bank Account:</span> {{ entry.iban|default:"Not Available" }}</p>
-                    <p><span class="font-medium">Days Worked:</span> {{ entry.days_worked }}</p>
-                    <p><span class="font-medium">Days Absent:</span> {{ entry.days_absent }}</p>
-                    <p><span class="font-medium">Full/Half Days:</span> {{ entry.total_full_days }} / {{ entry.total_half_days }}</p>
+            <div class="payslip-title-block">
+                <h2>PAYSLIP</h2>
+                <span class="period-badge">{{ entry.batch.month|date:"F Y" }}</span>
+            </div>
+        </header>
+
+        <hr class="divider">
+
+        <!-- Employee & Bank Grid -->
+        <section class="info-grid">
+            <div class="info-column">
+                <h3 class="section-heading">Employee Details</h3>
+                <div class="field-row">
+                    <span class="label">Name:</span>
+                    <span class="value font-bold">{{ entry.employee.full_name|default:entry.employee.username|upper }}</span>
+                </div>
+                <div class="field-row">
+                    <span class="label">Employee ID:</span>
+                    <span class="value">{{ entry.employee.employee_id|default:entry.employee.pk }}</span>
+                </div>
+                <div class="field-row">
+                    <span class="label">Designation:</span>
+                    <span class="value">{{ entry.employee.designation|default:"-" }}</span>
+                </div>
+                <div class="field-row">
+                    <span class="label">Department:</span>
+                    <span class="value">{{ entry.employee.department|default:"-" }}</span>
+                </div>
+                <div class="field-row">
+                    <span class="label">Joining Date:</span>
+                    <span class="value">{{ entry.employee.date_of_joining|date:"d M, Y"|default:"-" }}</span>
                 </div>
             </div>
-        </div>
-
-        <!-- Earnings Table -->
-        <div class="mb-8">
-            <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Earnings</h3>
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="text-gray-500 text-sm">
-                        <th class="pb-2">Description</th>
-                        <th class="pb-2 text-right">Amount (AED)</th>
-                    </tr>
-                </thead>
-                <tbody class="text-gray-800">
-                    <tr class="border-b border-gray-100">
-                        <td class="py-2">Basic Salary</td>
-                        <td class="py-2 text-right">{{ entry.basic_salary|floatform:2|intcomma }}</td>
-                    </tr>
-                    <tr class="border-b border-gray-100">
-                        <td class="py-2">Allowances</td>
-                        <td class="py-2 text-right">{{ entry.allowances|floatform:2|intcomma }}</td>
-                    </tr>
-                    <!-- Derived Base Pay display if needed, but standard breakdown usually shows Basic + Allowances -->
-                    
-                    {% if entry.ot_pay > 0 %}
-                    <tr class="border-b border-gray-100">
-                        <td class="py-2">Overtime Pay ({{ entry.approved_ot_minutes }} mins)</td>
-                        <td class="py-2 text-right">{{ entry.ot_pay|floatform:2|intcomma }}</td>
-                    </tr>
-                    {% endif %}
-                    
-                    {% if entry.variable_pay > 0 %}
-                    <tr class="border-b border-gray-100">
-                        <td class="py-2">Variable Pay / Bonus</td>
-                        <td class="py-2 text-right">{{ entry.variable_pay|floatform:2|intcomma }}</td>
-                    </tr>
-                    {% endif %}
-                </tbody>
-                <tfoot>
-                    <tr class="font-bold text-gray-900">
-                        <td class="pt-4">Total Gross Salary</td>
-                        <td class="pt-4 text-right">{{ entry.gross_salary|floatform:2|intcomma }}</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-
-        <!-- Deductions Table -->
-        <div class="mb-8">
-            <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Deductions</h3>
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="text-gray-500 text-sm">
-                        <th class="pb-2">Description</th>
-                        <th class="pb-2 text-right">Amount (AED)</th>
-                    </tr>
-                </thead>
-                <tbody class="text-gray-800">
-                    {% for ded in entry.breakdown_deductions.all %}
-                    <tr class="border-b border-gray-100">
-                        <td class="py-2">{{ ded.component.name }} {% if ded.is_waived %}(Waived){% endif %}</td>
-                        <td class="py-2 text-right text-red-600">-{{ ded.amount|floatform:2|intcomma }}</td>
-                    </tr>
-                    {% empty %}
-                    {% if entry.days_absent > 0 %}
-                     <tr class="border-b border-gray-100">
-                        <td class="py-2">Absent Days Deduction ({{ entry.days_absent }})</td>
-                        <td class="py-2 text-right text-red-600">-{{ entry.deductions|floatform:2|intcomma }}</td> <!-- Simplification if detailed breakdown missing -->
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td class="py-2 text-gray-500 italic">No deductions</td>
-                        <td class="py-2 text-right">-</td>
-                    </tr>
-                    {% endif %}
-                    {% endfor %}
-                    
-                    <!-- Fallback if breakdown empty but total deduction exists (Legacy/Correction) -->
-                    {% if not entry.breakdown_deductions.exists and entry.deductions > 0 %}
-                     <tr class="border-b border-gray-100">
-                        <td class="py-2">Total Deductions (Unspecified)</td>
-                        <td class="py-2 text-right text-red-600">-{{ entry.deductions|floatform:2|intcomma }}</td>
-                    </tr>
-                    {% endif %}
-                </tbody>
-                <tfoot>
-                    <tr class="font-bold text-gray-900">
-                        <td class="pt-4">Total Deductions</td>
-                        <td class="pt-4 text-right text-red-600">-{{ entry.deductions|floatform:2|intcomma }}</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-
-        <!-- Net Pay -->
-        <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
-            <div class="flex justify-between items-center text-xl font-bold text-gray-900">
-                <span>Net Payable Amount</span>
-                <span>AED {{ entry.net_salary|floatform:2|intcomma }}</span>
+            
+            <div class="info-column">
+                <h3 class="section-heading">Bank & Attendance</h3>
+                <div class="field-row">
+                    <span class="label">Bank Account:</span>
+                    <span class="value">{{ entry.iban|default:"Not Available" }}</span>
+                </div>
+                <div class="field-row">
+                    <span class="label">Pay Date:</span>
+                    <span class="value">{{ entry.updated_at|date:"d M, Y" }}</span>
+                </div>
+                <div class="field-row">
+                    <span class="label">Total Work Days:</span>
+                    <span class="value">{{ entry.days_worked }} Days</span>
+                </div>
+                <div class="field-row">
+                    <span class="label">Worked Hours:</span>
+                    <span class="value">{{ entry.actual_work_hours }} / {{ entry.required_work_hours }} Hrs</span>
+                </div>
+                <div class="field-row">
+                    <span class="label">LOP Days:</span>
+                    <span class="value text-error">{{ entry.days_absent }} Days</span>
+                </div>
             </div>
-            <p class="text-sm text-gray-500 mt-2 text-right">Transfer Date: {{ entry.updated_at|date:"d M, Y" }}</p>
+        </section>
+
+        <!-- Financial Table -->
+        <div class="financials-wrapper">
+            <!-- Earnings -->
+            <div class="financial-table-container">
+                <table class="financial-table earnings-table">
+                    <thead>
+                        <tr>
+                            <th>Earnings</th>
+                            <th class="text-right">Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Basic Salary</td>
+                            <td class="text-right">{{ entry.basic_salary|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td>House Rent Allowance</td>
+                            <td class="text-right">{{ entry.allowances|intcomma }}</td>
+                        </tr>
+                        <!-- Standard Allowances Breakdown could go here if available -->
+                        
+                        {% if entry.ot_pay > 0 %}
+                        <tr>
+                            <td>Overtime Pay <span class="sub-text">({{ entry.approved_ot_hours }} hrs)</span></td>
+                            <td class="text-right">{{ entry.ot_pay|intcomma }}</td>
+                        </tr>
+                        {% endif %}
+
+                        {% if entry.variable_pay > 0 %}
+                        <tr>
+                            <td>Bonus / Commission</td>
+                            <td class="text-right">{{ entry.variable_pay|intcomma }}</td>
+                        </tr>
+                        {% endif %}
+                        
+                        <!-- Filler rows to align height if needed -->
+                        {% if not entry.ot_pay and not entry.variable_pay %}
+                        <tr class="filler-row"><td colspan="2">&nbsp;</td></tr>
+                        <tr class="filler-row"><td colspan="2">&nbsp;</td></tr>
+                        {% endif %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>Total Earnings</td>
+                            <td class="text-right">{{ entry.gross_salary|intcomma }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Deductions -->
+            <div class="financial-table-container">
+                <table class="financial-table deviations-table">
+                    <thead>
+                        <tr>
+                            <th>Deductions</th>
+                            <th class="text-right">Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ded in entry.breakdown_deductions.all %}
+                        <tr>
+                            <td>
+                                {{ ded.component.name }}
+                                {% if ded.is_waived %}
+                                <span class="badge-waived">WAIVED</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-right {% if not ded.is_waived %}text-red{% else %}text-muted{% endif %}">
+                                {% if not ded.is_waived %}-{{ ded.amount|intcomma }}{% else %}0.00{% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        {% if entry.deductions > 0 %}
+                        <tr>
+                            <td>Total Deductions</td>
+                            <td class="text-right text-red">-{{ entry.deductions|intcomma }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td class="text-muted">No Deductions</td>
+                            <td class="text-right">-</td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+
+                         <!-- LOP Explicit Row if not in breakdown but calculated -->
+                        {% if entry.lop_deduction > 0 and not entry.breakdown_deductions.exists %}
+                        <tr>
+                            <td>Loss of Pay (Shortfall)</td>
+                            <td class="text-right text-red">-{{ entry.lop_deduction|intcomma }}</td>
+                        </tr>
+                        {% endif %}
+                        
+                         <!-- Filler to match height approx -->
+                         <tr class="filler-row"><td colspan="2">&nbsp;</td></tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>Total Deductions</td>
+                            <td class="text-right text-red">-{{ entry.deductions|intcomma }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
 
-        <div class="mt-12 text-center text-xs text-gray-400">
-            <p>This is a system generated payslip.</p>
+        <!-- Net Pay Banner -->
+        <div class="net-pay-section">
+            <div class="amount-word-col">
+                <span class="label">Net Payable Amount</span>
+                <span class="amount-words">** Transfer to Bank Account **</span>
+            </div>
+            <div class="net-amount-col">
+                <span class="currency">₹</span>
+                <span class="value">{{ entry.net_salary|intcomma }}</span>
+            </div>
         </div>
+
+        <!-- Footer -->
+        <footer class="payslip-footer">
+            <p>This is a computer-generated document and does not require a signature.</p>
+            <p>Generated on {{ entry.updated_at|date:"d M Y, h:i A" }}</p>
+        </footer>
     </div>
 </div>
 
 <style>
+    /* Page Layout */
+    .payslip-container {
+        max-width: 850px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        font-family: 'Inter', sans-serif;
+        color: #1e293b;
+    }
+
+    .actions-bar {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 24px;
+    }
+
+    .payslip-paper {
+        background: white;
+        padding: 48px;
+        border-radius: 2px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.08); /* Subtle paper shadow */
+        border: 1px solid #e2e8f0;
+        position: relative;
+    }
+
+    /* Header */
+    .payslip-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 32px;
+    }
+
+    .company-branding {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
+
+    .company-logo {
+        height: 48px;
+        width: auto;
+    }
+
+    .company-details h1 {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0 0 4px 0;
+        color: #0f172a;
+        text-transform: uppercase;
+        letter-spacing: -0.02em;
+    }
+
+    .company-details p {
+        font-size: 11px;
+        color: #64748b;
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .payslip-title-block {
+        text-align: right;
+    }
+
+    .payslip-title-block h2 {
+        font-size: 24px;
+        font-weight: 800;
+        color: #cbd5e1;
+        margin: 0 0 4px 0;
+        letter-spacing: 0.1em;
+    }
+
+    .period-badge {
+        display: inline-block;
+        background: #f1f5f9;
+        color: #334155;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 600;
+        border: 1px solid #e2e8f0;
+    }
+
+    .divider {
+        border: 0;
+        border-top: 2px solid #f1f5f9;
+        margin-bottom: 32px;
+    }
+
+    /* Info Grid */
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 48px;
+        margin-bottom: 40px;
+    }
+
+    .section-heading {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #94a3b8;
+        letter-spacing: 0.1em;
+        font-weight: 700;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 8px;
+        margin-bottom: 16px;
+    }
+
+    .field-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 13px;
+    }
+
+    .field-row .label {
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .field-row .value {
+        color: #0f172a;
+        font-weight: 600;
+        text-align: right;
+    }
+
+    /* Financial Tables */
+    .financials-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        margin-bottom: 40px;
+    }
+
+    .financial-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .financial-table th {
+        text-align: left;
+        padding: 12px 0;
+        border-bottom: 2px solid #e2e8f0;
+        color: #475569;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+
+    .financial-table td {
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+    }
+
+    .financial-table tfoot td {
+        border-top: 2px solid #0f172a;
+        border-bottom: 0;
+        padding-top: 16px;
+        font-weight: 700;
+        font-size: 14px;
+        color: #0f172a;
+    }
+
+    .text-right { text-align: right; }
+    .text-red { color: #dc2626; }
+    .text-muted { color: #94a3b8; font-style: italic; }
+    .sub-text { font-size: 11px; color: #64748b; margin-left: 4px; }
+
+    .badge-waived {
+        font-size: 9px;
+        background: #fef3c7;
+        color: #d97706;
+        padding: 2px 4px;
+        border-radius: 2px;
+        margin-left: 6px;
+        vertical-align: middle;
+        font-weight: 700;
+    }
+
+    /* Net Pay Banner */
+    .net-pay-section {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 24px 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 40px;
+    }
+
+    .amount-word-col {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .amount-word-col .label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    .amount-word-col .amount-words {
+        font-size: 14px;
+        font-weight: 500;
+        color: #0f172a;
+        margin-top: 4px;
+    }
+
+    .net-amount-col {
+        text-align: right;
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+
+    .net-amount-col .currency {
+        font-size: 16px;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .net-amount-col .value {
+        font-size: 32px;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+    }
+
+    /* Footer */
+    .payslip-footer {
+        text-align: center;
+        margin-top: auto;
+        border-top: 1px dotted #cbd5e1;
+        padding-top: 24px;
+    }
+
+    .payslip-footer p {
+        font-size: 10px;
+        color: #94a3b8;
+        margin: 4px 0;
+    }
+
+    /* Print Styles */
     @media print {
+        body {
+            background-color: white;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+        
         .no-print { display: none !important; }
-        body { background-color: white; }
-        .shadow-lg { box-shadow: none !important; }
-        .border { border: 1px solid #ddd !important; }
+        
+        .payslip-container {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        .payslip-paper {
+            box-shadow: none;
+            border: 0;
+            padding: 20px;
+        }
+        
+        .net-pay-section {
+            background-color: #f8fafc !important; /* Force background print */
+            border: 1px solid #e2e8f0;
+        }
+
+        .period-badge {
+            border: 1px solid #cbd5e1;
+        }
     }
 </style>
 {% endblock %}

@@ -249,6 +249,15 @@ def leave_create(request):
             leave = form.save(commit=False)
             leave.employee = request.user
             
+            # Auto-assign manager if not set (Crucial for approval workflow)
+            if not leave.assigned_manager:
+                manager = request.user.managers.first() # Get primary manager
+                if manager:
+                    leave.assigned_manager = manager
+                else:
+                    messages.error(request, "Submission Failed: You are not assigned to a Reporting Manager. Please contact HR to assign a manager.")
+                    return redirect('leave_add') # Reload form to show error
+
             # Validate balance
             requested_days = leave.duration_days
             leave_type_id = leave.leave_type.id
@@ -411,97 +420,75 @@ def leave_approve(request, pk):
         comment = request.POST.get('manager_comment', '')
         
         if action == 'approve':
-            # Approval Logic
+            # Strict Single-Stage Workflow:
+            # PENDING -> APPROVED (Only by Assigned Manager)
             
-            # 1. Admin / CEO / HR (Final Approval Authority)
-            if user.is_admin() or user.is_ceo() or user.is_hr() or user.is_superuser:
-                if leave.status == LeaveRequest.Status.APPROVED:
-                    messages.info(request, "This request is already approved.")
+            is_assigned_manager = (leave.assigned_manager == user)
+            
+            if leave.status == LeaveRequest.Status.PENDING:
+                if is_assigned_manager:
+                    # Final Audit/Deduction
+                    from .models import LeaveBalance
+                    balance, created = LeaveBalance.objects.get_or_create(
+                        employee=leave.employee,
+                        leave_type=leave.leave_type,
+                        year=leave.start_date.year,
+                        defaults={'total_entitlement': leave.leave_type.days_entitlement, 'days_used': 0}
+                    )
+                    balance.days_used = float(balance.days_used) + float(leave.duration_days)
+                    balance.save()
+
+                    leave.status = LeaveRequest.Status.APPROVED
+                    leave.approved_by = request.user
+                    leave.manager_comment = comment
+                    leave.save()
+                    
+                    from core.models import AuditLog
+                    AuditLog.log(user=request.user, action=AuditLog.Action.APPROVE, obj=leave, request=request)
+                    messages.success(request, "Leave request approved.")
+                else:
+                    messages.error(request, "Only the assigned manager can approve this request.")
                     return redirect('leave_detail', pk=pk)
-                
-                # Deduction Logic
-                from .models import LeaveBalance
-                balance, created = LeaveBalance.objects.get_or_create(
-                    employee=leave.employee,
-                    leave_type=leave.leave_type,
-                    year=leave.start_date.year,
-                    defaults={'total_entitlement': leave.leave_type.days_entitlement, 'days_used': 0}
-                )
-                balance.days_used = float(balance.days_used) + float(leave.duration_days)
-                balance.save()
-
-                leave.status = LeaveRequest.Status.APPROVED
-                leave.approved_by = request.user 
-                leave.manager_comment = comment
-                leave.save()
-                
-                # Log activity
-                from core.models import AuditLog
-                AuditLog.log(
-                    user=request.user,
-                    action=AuditLog.Action.APPROVE,
-                    obj=leave,
-                    request=request
-                )
-                
-                messages.success(request, "Leave fully approved and balance updated.")
-
-            # 2. Project Manager (Intermediate Approval)
-            elif user.is_project_manager():
-                if leave.assigned_manager != request.user:
-                     messages.error(request, "You are not the assigned manager for this request.")
-                     return redirect('leave_detail', pk=pk)
-                
-                leave.status = LeaveRequest.Status.MGR_APPROVED
-                leave.approved_by = request.user # Track PM approval
-                leave.manager_comment = comment
-                leave.save()
-                messages.success(request, "Leave approved. Forwarded to HR.")
-                
+            
+            elif leave.status == LeaveRequest.Status.APPROVED:
+                 messages.info(request, "This request is already approved.")
+                 return redirect('leave_detail', pk=pk)
+            
             else:
-                 messages.error(request, "You do not have permission to approve leaves.")
+                 messages.error(request, "Cannot approve request in current status.")
+                 return redirect('leave_detail', pk=pk)
                 
         elif action == 'reject':
-             can_reject = False
-             if user.is_staff or user.is_admin() or user.is_hr():
-                 can_reject = True
-             elif user.is_project_manager() and leave.assigned_manager == user:
-                 can_reject = True
-             elif user.is_ceo():
-                 can_reject = True
-                 
-             if can_reject:
-                # Reversal Logic (If transitioning from APPROVED to REJECTED)
-                if leave.status == LeaveRequest.Status.APPROVED:
-                    from .models import LeaveBalance
-                    try:
-                        balance = LeaveBalance.objects.get(
-                            employee=leave.employee,
-                            leave_type=leave.leave_type,
-                            year=leave.start_date.year
-                        )
-                        balance.days_used = max(0.0, float(balance.days_used) - float(leave.duration_days))
-                        balance.save()
-                    except LeaveBalance.DoesNotExist:
-                        pass
+             # Strict Rejection Logic (Assigned Manager Only)
+             is_assigned_manager = (leave.assigned_manager == user)
+             
+             if not is_assigned_manager:
+                 messages.error(request, "Only the assigned manager can reject this request.")
+                 return redirect('leave_detail', pk=pk)
 
-                leave.status = LeaveRequest.Status.REJECTED
-                leave.approved_by = request.user
-                leave.manager_comment = comment
-                leave.save()
-                
-                # Log activity
-                from core.models import AuditLog
-                AuditLog.log(
-                    user=request.user,
-                    action=AuditLog.Action.REJECT,
-                    obj=leave,
-                    request=request
-                )
-                
-                messages.warning(request, "Leave rejected.")
-             else:
-                messages.error(request, "You do not have permission to reject this request.")
+             # Reversal Logic (If transitioning from APPROVED to REJECTED - unlikely in strict flow but safe to keep)
+             if leave.status == LeaveRequest.Status.APPROVED:
+                from .models import LeaveBalance
+                try:
+                    balance = LeaveBalance.objects.get(
+                        employee=leave.employee,
+                        leave_type=leave.leave_type,
+                        year=leave.start_date.year
+                    )
+                    balance.days_used = max(0.0, float(balance.days_used) - float(leave.duration_days))
+                    balance.save()
+                except LeaveBalance.DoesNotExist:
+                    pass
+
+             leave.status = LeaveRequest.Status.REJECTED
+             leave.approved_by = request.user
+             leave.manager_comment = comment
+             leave.save()
+             
+             from core.models import AuditLog
+             AuditLog.log(user=request.user, action=AuditLog.Action.REJECT, obj=leave, request=request)
+             
+             messages.warning(request, "Leave rejected.")
 
         elif action == 'cancel':
             # Employee cancelling own request

@@ -55,7 +55,7 @@
 
             <div style="margin-bottom: 12px;">
                 <label style="display: block; font-size: 0.85rem; color: var(--text-secondary);">Assigned Manager</label>
-                <div style="font-weight: 500;">{{ leave.assigned_manager.full_name|default:leave.assigned_manager.username|default:"Not Assigned" }}</div>
+                <div style="font-weight: 500;">{{ leave.assigned_manager|default:"Not Assigned" }}</div>
             </div>
 
             <div style="margin-bottom: 12px;">
@@ -68,61 +68,55 @@
 
         <!-- Actions -->
         <div>
-            <h4
-                style="margin-bottom: 16px; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 8px;">
-                Workflow Actions</h4>
+            <h4 style="margin-bottom: 16px; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                Workflow Actions
+            </h4>
 
-            {% if user.is_staff or user.is_admin or user.is_hr or user.is_ceo or user.is_project_manager %}
-            {% if leave.status == 'PENDING' or leave.status == 'MGR_APPROVED' %}
-            <div
-                style="background: white; padding: 20px; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <form method="post" action="{% url 'leave_approve' leave.id %}">
-                    {% csrf_token %}
-                    <div style="margin-bottom: 16px;">
-                        <label style="font-weight: 500; display: block; margin-bottom: 8px;">Manager Comment</label>
-                        <textarea name="manager_comment" rows="3" class="form-control"
-                            style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px;"></textarea>
-                    </div>
-                    <div style="display: flex; gap: 12px;">
-                        <button type="submit" name="action" value="approve" class="btn"
-                            style="background: #10b981; color: white; border: none; flex: 1;">
-                            <i class="ri-checkbox-circle-line"></i> Approve
-                        </button>
-                        <button type="submit" name="action" value="reject" class="btn"
-                            style="background: #ef4444; color: white; border: none; flex: 1;">
-                            <i class="ri-close-circle-line"></i> Reject
-                        </button>
-                    </div>
-                </form>
-            </div>
-            {% else %}
-            <div
-                style="padding: 20px; text-align: center; color: var(--text-secondary); background: #f8fafc; border-radius: 8px;">
-                This request has clear been processed. <br>
-                <strong>Decided by:</strong> {{ leave.approved_by.username|default:"System" }}
-            </div>
-            {% endif %}
-            {% else %}
-            <!-- For Employees -->
-            <!-- For Employees -->
             {% if leave.status == 'PENDING' %}
-            <div style="background: white; padding: 20px; border: 1px solid var(--border); border-radius: 8px;">
-                <p style="margin-bottom: 16px; color: var(--text-secondary);">You can cancel this request while it is
-                    still pending.</p>
-                <form method="post" action="{% url 'leave_approve' leave.id %}">
-                    <!-- Reusing action endpoint for simplicity or create cancel endpoint -->
-                    {% csrf_token %}
-                    <button type="submit" name="action" value="cancel" class="btn"
-                        style="background: #64748b; color: white; width: 100%;">
-                        Cancel Request
-                    </button>
-                </form>
-            </div>
+                {% if leave.assigned_manager == user %}
+                    <!-- ASSIGNED MANAGER ACTIONS -->
+                    <div style="background: white; padding: 20px; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <form method="post" action="{% url 'leave_approve' leave.id %}">
+                            {% csrf_token %}
+                            <div style="margin-bottom: 16px;">
+                                <label style="font-weight: 500; display: block; margin-bottom: 8px;">Manager Comment</label>
+                                <textarea name="manager_comment" rows="3" class="form-control" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px;"></textarea>
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <button type="submit" name="action" value="approve" class="btn" style="background: #10b981; color: white; border: none; flex: 1; cursor: pointer;">
+                                    <i class="ri-checkbox-circle-line"></i> Approve
+                                </button>
+                                <button type="submit" name="action" value="reject" class="btn" style="background: #ef4444; color: white; border: none; flex: 1; cursor: pointer;">
+                                    <i class="ri-close-circle-line"></i> Reject
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                {% elif leave.employee == user %}
+                     <!-- EMPLOYEE ACTIONS -->
+                    <div style="background: white; padding: 20px; border: 1px solid var(--border); border-radius: 8px;">
+                        <p style="margin-bottom: 16px; color: var(--text-secondary);">You can cancel this request while it is still pending.</p>
+                        <form method="post" action="{% url 'leave_approve' leave.id %}">
+                            {% csrf_token %}
+                            <button type="submit" name="action" value="cancel" class="btn" style="background: #64748b; color: white; width: 100%; cursor: pointer;">
+                                Cancel Request
+                            </button>
+                        </form>
+                    </div>
+                {% else %}
+                    <!-- OTHERS (ADMIN/HR NOT ASSIGNED) -->
+                    <div style="padding: 20px; text-align: center; color: var(--text-secondary); background: #f8fafc; border-radius: 8px; border: 1px dashed var(--border);">
+                        <i class="ri-time-line" style="font-size: 24px; color: var(--text-secondary); margin-bottom: 8px; display: block;"></i>
+                        Waiting for action by <strong>{{ leave.assigned_manager|default:"Assigned Manager" }}</strong>.
+                    </div>
+                {% endif %}
+
             {% else %}
-            <div style="padding: 20px; text-align: center; color: var(--text-secondary);">
-                No actions available.
-            </div>
-            {% endif %}
+                <!-- PROCESSED -->
+                <div style="padding: 20px; text-align: center; color: var(--text-secondary); background: #f8fafc; border-radius: 8px;">
+                     Request has been processed.<br>
+                    <strong>Decided by:</strong> {{ leave.approved_by|default:"System" }}
+                </div>
             {% endif %}
         </div>
     </div>

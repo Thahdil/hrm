@@ -164,10 +164,21 @@ def run_payroll_action(request):
         return redirect('dashboard')
         
     if request.method == "POST":
-        payroll_month_str = request.POST.get('payroll_month') 
+        payroll_month_sel = request.POST.get('payroll_month_select')
+        payroll_year_sel = request.POST.get('payroll_year_select')
+        payroll_month_str = request.POST.get('payroll_month') # Legacy backup
+        
         today = timezone.now().date()
         
-        if payroll_month_str:
+        if payroll_month_sel and payroll_year_sel:
+            try:
+                year = int(payroll_year_sel)
+                month = int(payroll_month_sel)
+                batch_date = today.replace(year=year, month=month, day=1)
+            except ValueError:
+                messages.error(request, "Invalid month/year selection.")
+                return redirect('payroll_list')
+        elif payroll_month_str:
             try:
                 # Parse "YYYY-MM"
                 year, month = map(int, payroll_month_str.split('-'))
@@ -176,6 +187,7 @@ def run_payroll_action(request):
                 messages.error(request, "Invalid month format selected.")
                 return redirect('payroll_list')
         else:
+            # Default to current month if nothing selected (though required in frontend)
             batch_date = today.replace(day=1)
         
         if PayrollBatch.objects.filter(month=batch_date).exists():
@@ -375,8 +387,8 @@ def payroll_batch_delete(request, pk):
         
     batch = get_object_or_404(PayrollBatch, pk=pk)
     
-    if batch.status != PayrollBatch.Status.DRAFT:
-        messages.error(request, "Only Draft payroll batches can be deleted.")
+    if batch.status not in [PayrollBatch.Status.DRAFT, PayrollBatch.Status.VOID]:
+        messages.error(request, "Only Draft or Void payroll batches can be deleted.")
         return redirect('payroll_list')
         
     if request.method == 'POST':
@@ -398,7 +410,7 @@ def payroll_batch_void(request, pk):
     if request.method == 'POST':
         batch.status = PayrollBatch.Status.VOID
         batch.save()
-        messages.warning(request, f"Payroll batch for {batch.month|date:'F Y'} has been voided.")
+        messages.warning(request, f"Payroll batch for {batch.month.strftime('%B %Y')} has been voided.")
         
     return redirect('payroll_list')
 
@@ -421,7 +433,10 @@ def manage_overtime(request):
     Manager view to approve overtime minutes.
     Shows worked hours, calculated extra time, and approved OT field.
     """
-    if not (request.user.is_superuser or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO'])):
+    is_manager = hasattr(request.user, 'role') and request.user.role == 'PROJECT_MANAGER'
+    allowed_roles = ['ADMIN', 'HR_MANAGER', 'CEO', 'PROJECT_MANAGER']
+    
+    if not (request.user.is_superuser or (hasattr(request.user, 'role') and request.user.role in allowed_roles)):
         messages.error(request, "Permission denied.")
         return redirect('dashboard')
     
@@ -443,6 +458,12 @@ def manage_overtime(request):
         date__year=start_date.year, 
         date__month=start_date.month
     ).select_related('employee').order_by('-date', 'employee__full_name')
+
+    # 2b. Role-based Filtering (Strict Assignment for Managers)
+    if is_manager and not (request.user.is_superuser or request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO']):
+        # Show only subordinates
+        # 'employee__managers' is the reverse lookup for "Employees who have this user as manager"
+        logs = logs.filter(employee__managers=request.user)
 
     # Calculate Total OT ( Approved )
     from django.db.models import Sum
@@ -476,7 +497,16 @@ def manage_overtime(request):
         updated_count = 0
         if visible_log_ids:
             # Fetch logs that are candidates for update (not locked)
-            logs_to_update = AttendanceLog.objects.filter(id__in=visible_log_ids, is_locked=False)
+            # Apply same permission filter effectively by checking against 'logs' queryset logic or just ID
+            # But simpler: logs_to_update = AttendanceLog.objects.filter(id__in=visible_log_ids, is_locked=False)
+            # If a malicious manager tries to update a non-subordinate log ID, they shouldn't be able to.
+            # So we should scope it.
+            
+            scope = AttendanceLog.objects.all()
+            if is_manager and not (request.user.is_superuser or request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO']):
+                 scope = scope.filter(employee__managers=request.user)
+            
+            logs_to_update = scope.filter(id__in=visible_log_ids, is_locked=False)
             
             for log in logs_to_update:
                 is_checked = log.id in checked_ids

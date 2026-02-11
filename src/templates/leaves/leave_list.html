@@ -166,7 +166,7 @@
                         
                         <td style="padding: 16px 32px; text-align: right; border-bottom: 1px solid #f1f5f9;">
                             <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
-                                {% if leave.status == 'PENDING' and is_admin %}
+                                {% if leave.status == 'PENDING' and leave.assigned_manager == request.user %}
                                 <form method="POST" action="{% url 'leave_approve' leave.pk %}" style="display: inline;">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="approve">

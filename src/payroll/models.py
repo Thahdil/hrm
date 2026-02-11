@@ -429,6 +429,14 @@ class PayrollEntry(models.Model):
     # WPS Info
     iban = models.CharField(max_length=34) # Decrypted storage for SIF generation or keep valid chars
     
+    # CEO/Startup Model Visibility
+    required_work_hours = models.DecimalField(max_digits=6, decimal_places=2, default=0, help_text="Total required hours for the month")
+    actual_work_hours = models.DecimalField(max_digits=6, decimal_places=2, default=0, help_text="Total worked hours for the month")
+    shortfall_work_hours = models.DecimalField(max_digits=6, decimal_places=2, default=0, help_text="Shortfall hours (basis for LOP)")
+    lop_deduction = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Loss of Pay Amount")
+    approved_ot_hours = models.DecimalField(max_digits=6, decimal_places=2, default=0, help_text="Approved OT Hours for display")
+
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -442,6 +450,11 @@ class PayrollEntry(models.Model):
 
     def __str__(self):
         return f"{self.employee.full_name} - {self.net_salary}"
+
+    @property
+    def waived_total(self):
+        from django.db.models import Sum
+        return self.breakdown_deductions.filter(is_waived=True).aggregate(Sum('amount'))['amount__sum'] or 0
 
 class DeductionComponent(models.Model):
     name = models.CharField(max_length=100)
