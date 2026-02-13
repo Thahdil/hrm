@@ -274,7 +274,12 @@ def leave_create(request):
                         )
                         return render(request, 'leaves/leave_form.html', {
                             'form': form,
-                            'type_config': json.dumps({lt.id: (lt.duration_days or 0) for lt in valid_types}),
+                            'type_config': json.dumps({
+                                lt.id: {
+                                    'duration': (lt.duration_days or 0),
+                                    'allow_half_day': lt.allow_half_day
+                                } for lt in valid_types
+                            }),
                             'unlimited_types': json.dumps([lt.id for lt in valid_types if lt.allow_unlimited]),
                             'unlimited_types_list': [lt.id for lt in valid_types if lt.allow_unlimited],
                             'leave_balances': leave_balances
@@ -302,7 +307,12 @@ def leave_create(request):
 
     # Prepare configuration for frontend (Duration handling)
     import json
-    type_config = {lt.id: (lt.duration_days or 0) for lt in valid_types}
+    type_config = {
+        lt.id: {
+            'duration': (lt.duration_days or 0),
+            'allow_half_day': lt.allow_half_day
+        } for lt in valid_types
+    }
 
     return render(request, 'leaves/leave_form.html', {
         'form': form, 

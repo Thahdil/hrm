@@ -270,26 +270,49 @@
         }
     }
 </style>
+<style>
+    /* Toggle Switch */
+    .toggle-switch input:checked + .slider {
+        background-color: var(--primary);
+    }
+    .toggle-switch input:checked + .slider .slider-circle {
+        transform: translateX(18px);
+    }
+    
+    /* Minimal Session Cards */
+    .session-card-mini:hover {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+    }
+    .session-card-mini.active {
+        border-color: var(--primary);
+        background: #eff6ff;
+        color: var(--primary);
+        font-weight: 700;
+    }
+</style>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const typeSelect = document.querySelector('#id_leave_type');
         const startInput = document.querySelector('#id_start_date');
         const endInput = document.querySelector('#id_end_date');
+        const halfDayCheckbox = document.querySelector('#id_half_day');
+        const sessionSelect = document.querySelector('#id_half_day_session');
         const leaveDaysDisplay = document.querySelector('#leaveDaysDisplay');
         const submitButton = document.querySelector('button[type="submit"]');
 
         if (!typeSelect || !startInput || !endInput) return;
         
         // --- 1. Inject Duration Field dynamicallly ---
-        // Find the start date container
         const startContainer = startInput.closest('.form-group');
+        
+        // Duration Wrapper
         const durationWrapper = document.createElement('div');
         durationWrapper.className = 'form-group';
         durationWrapper.id = 'durationContainer';
         durationWrapper.style.display = 'flex';
         durationWrapper.style.flexDirection = 'column';
-        durationWrapper.style.gap = '10px';
-        
+        durationWrapper.style.gap = '5px';
         durationWrapper.innerHTML = `
             <label style="font-size: 12px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;">
                 Duration (Days)
@@ -299,158 +322,297 @@
                 <i class="ri-hourglass-fill" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 18px;"></i>
             </div>
         `;
-        
-        // Insert AFTER start date container
         startContainer.parentNode.insertBefore(durationWrapper, startContainer.nextSibling);
-        
         const durationInput = document.getElementById('manualDuration');
-        
-        // Set End Date to Readonly globally as requested
+
+        // --- 2. Inject Minimal Half Day UI (only if Django fields exist) ---
+        if (!halfDayCheckbox || !sessionSelect) {
+            console.warn('Half day fields not found in form. Checkbox:', halfDayCheckbox, 'Select:', sessionSelect);
+        } else {
+            console.log('Creating half-day UI...');
+            const halfDayWrapper = document.createElement('div');
+            halfDayWrapper.className = 'form-group';
+            halfDayWrapper.id = 'halfDayContainer';
+            halfDayWrapper.style.display = 'none';
+            halfDayWrapper.style.flexDirection = 'column';
+            halfDayWrapper.style.gap = '5px';
+            
+            // Minimal UI HTML
+            halfDayWrapper.innerHTML = `
+                <label style="font-size: 12px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;">
+                    Half Day
+                </label>
+                <div style="position: relative;">
+                    <div style="display: flex; gap: 8px; align-items: center; padding: 8px 12px; border: 2px solid #f1f5f9; border-radius: 10px; background: white; transition: all 0.2s;">
+                        <!-- Toggle -->
+                        <label class="toggle-switch" style="position: relative; display: inline-block; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0;">
+                            <input type="checkbox" id="customHalfDayToggle" style="opacity: 0; width: 0; height: 0;">
+                            <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;">
+                                <span class="slider-circle" style="position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"></span>
+                            </span>
+                        </label>
+                        
+                        <!-- Session Selector (inline) -->
+                        <div id="sessionSelectionPanel" style="display: none; flex: 1; gap: 6px;">
+                            <div style="display: flex; gap: 6px; width: 100%;">
+                                <div class="session-card-mini" data-value="MORNING" style="flex: 1; padding: 6px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; background: white; font-size: 12px; font-weight: 600; color: #64748b;">
+                                    <i class="ri-sun-line" style="font-size: 14px;"></i>
+                                    <span>Morning</span>
+                                </div>
+                                <div class="session-card-mini" data-value="AFTERNOON" style="flex: 1; padding: 6px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; background: white; font-size: 12px; font-weight: 600; color: #64748b;">
+                                    <i class="ri-moon-line" style="font-size: 14px;"></i>
+                                    <span>Afternoon</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Placeholder when off -->
+                        <div id="halfDayPlaceholder" style="flex: 1; font-size: 13px; color: #94a3b8; font-weight: 500;">
+                            Enable for 0.5 day leave
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Hide original Django fields but keep them in DOM
+            const halfDayFieldContainer = halfDayCheckbox.closest('.form-group');
+            const sessionFieldContainer = sessionSelect.closest('.form-group');
+            
+            if (halfDayFieldContainer) halfDayFieldContainer.style.display = 'none';
+            if (sessionFieldContainer) sessionFieldContainer.style.display = 'none';
+            
+            // Insert new UI
+            startContainer.parentNode.insertBefore(halfDayWrapper, durationWrapper.nextSibling);
+
+            // --- 3. Sync Logic (AFTER inserting into DOM) ---
+            const customToggle = document.getElementById('customHalfDayToggle');
+            const sessionPanel = document.getElementById('sessionSelectionPanel');
+            const sessionCards = document.querySelectorAll('.session-card-mini');
+            const halfDayPlaceholder = document.getElementById('halfDayPlaceholder');
+
+            if (!customToggle || !sessionPanel || !halfDayPlaceholder) {
+                console.error('Failed to find half-day UI elements after insertion');
+                return;
+            }
+
+            // Toggle Change Handler
+            customToggle.addEventListener('change', function() {
+                // Update hidden Django checkbox
+                halfDayCheckbox.checked = this.checked;
+                
+                // Show/Hide Panel & Placeholder
+                if (this.checked) {
+                    sessionPanel.style.display = 'flex';
+                    halfDayPlaceholder.style.display = 'none';
+                    // Trigger calculation
+                    calculateState();
+                    
+                    // Select first option by default if none selected
+                    if (!sessionSelect.value) {
+                        selectSession('MORNING');
+                    }
+                } else {
+                    sessionPanel.style.display = 'none';
+                    halfDayPlaceholder.style.display = 'block';
+                    sessionSelect.value = ''; // Clear hidden select
+                    // Clear visual selection
+                    sessionCards.forEach(c => c.classList.remove('active'));
+                    
+                    calculateState();
+                    handleLeaveTypeChange(); // Re-show duration if needed
+                }
+            });
+
+            // Session Card Click Handler
+            sessionCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const val = this.dataset.value;
+                    selectSession(val);
+                });
+            });
+
+            function selectSession(val) {
+                // Update Visuals
+                sessionCards.forEach(c => {
+                    if (c.dataset.value === val) c.classList.add('active');
+                    else c.classList.remove('active');
+                });
+                
+                // Update Hidden Select
+                sessionSelect.value = val;
+                
+                // Recalc
+                calculateState();
+            }
+        }
+
+        // Set End Date to Readonly
         endInput.readOnly = true;
         endInput.style.backgroundColor = 'var(--gray-100)';
         endInput.style.cursor = 'not-allowed';
-        const endContainer = endInput.closest('.form-group');
 
         // Configuration passed from view
         const typeConfig = {{ type_config|safe }};
         const leaveBalances = {{ leave_balances|safe }};
         const unlimitedTypes = {{ unlimited_types|safe }};
         
-        // Use the duration input from now on
-        
-        // Create warning element
         const warningDiv = document.createElement('div');
         warningDiv.id = 'balanceWarning';
-        // Styled for top placement: added margin-bottom and shadow for premium feel
         warningDiv.style.cssText = 'display: none; background: #FEF2F2; padding: 20px; border-radius: 16px; border-left: 6px solid #EF4444; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.08);';
-        
-        // Insert at the very top of the form for immediate visibility
-        const form = document.querySelector('.modern-form');
-        form.prepend(warningDiv);
+        document.querySelector('.modern-form').prepend(warningDiv);
 
-        function checkBalance() {
+        function checkBalance(finalDuration) {
             const selectedTypeId = typeSelect.value;
-            // Use manual duration value
-            const requestedDays = parseInt(durationInput.value) || 0;
+            const requestedDays = finalDuration || parseFloat(durationInput.value) || 0;
             
             if (selectedTypeId && requestedDays > 0 && leaveBalances[selectedTypeId]) {
                 const balance = leaveBalances[selectedTypeId];
                 const remaining = balance.remaining;
                 
                 if (unlimitedTypes.includes(parseInt(selectedTypeId))) {
-                    // Skip validation for unlimited types
-                    warningDiv.style.display = 'none';
-                    submitButton.disabled = false;
-                    submitButton.style.opacity = '1';
-                    submitButton.style.cursor = 'pointer';
+                    toggleSubmit(true);
                     return;
                 }
 
                 if (requestedDays > remaining) {
-                    warningDiv.innerHTML = `
-                        <div style="display: flex; align-items: start; gap: 12px;">
-                            <i class="ri-error-warning-line" style="color: var(--error); font-size: 24px; margin-top: 2px;"></i>
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; color: var(--gray-900); margin-bottom: 4px;">
-                                    Insufficient Leave Balance
-                                </div>
-                                <div style="font-size: 14px; color: var(--gray-700);">
-                                    You are requesting <strong>${requestedDays} days</strong> but only have <strong>${remaining} days</strong> remaining. 
-                                    Please reduce your request or select a different leave type.
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    warningDiv.style.display = 'block';
-                    submitButton.disabled = true;
-                    submitButton.style.opacity = '0.5';
-                    submitButton.style.cursor = 'not-allowed';
+                    showWarning(requestedDays, remaining);
+                    toggleSubmit(false);
                 } else {
-                    warningDiv.style.display = 'none';
-                    submitButton.disabled = false;
-                    submitButton.style.opacity = '1';
-                    submitButton.style.cursor = 'pointer';
+                    hideWarning();
+                    toggleSubmit(true);
                 }
             } else {
-                warningDiv.style.display = 'none';
-                submitButton.disabled = false;
-                submitButton.style.opacity = '1';
-                submitButton.style.cursor = 'pointer';
+                hideWarning();
+                toggleSubmit(true);
             }
         }
 
-        // Core Calculation Logic: Start + Duration -> End
-        function calculateFromDuration() {
-            const duration = parseInt(durationInput.value) || 0;
+        function showWarning(req, rem) {
+            warningDiv.innerHTML = `
+                <div style="display: flex; align-items: start; gap: 12px;">
+                    <i class="ri-error-warning-line" style="color: var(--error); font-size: 24px; margin-top: 2px;"></i>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: var(--gray-900); margin-bottom: 4px;">Insufficient Leave Balance</div>
+                        <div style="font-size: 14px; color: var(--gray-700);">
+                            You are requesting <strong>${req} days</strong> but only have <strong>${rem} days</strong> remaining.
+                        </div>
+                    </div>
+                </div>
+            `;
+            warningDiv.style.display = 'block';
+        }
+
+        function hideWarning() {
+            warningDiv.style.display = 'none';
+        }
+
+        function toggleSubmit(enable) {
+            submitButton.disabled = !enable;
+            submitButton.style.opacity = enable ? '1' : '0.5';
+            submitButton.style.cursor = enable ? 'pointer' : 'not-allowed';
+        }
+
+        function calculateState() {
+            const isHalfDay = halfDayCheckbox.checked; // Synced with custom toggle
             
-            if (!startInput.value || duration <= 0) {
-                endInput.value = '';
-                leaveDaysDisplay.value = '';
-                return;
-            }
-            
-            const parts = startInput.value.split('-');
-            const d = new Date(parts[0], parts[1]-1, parts[2]); 
-            
-            // Calc End Date
-            d.setDate(d.getDate() + (duration - 1));
-             
-            const yyyy = d.getFullYear();
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            const calculatedEnd = `${yyyy}-${mm}-${dd}`;
-            
-            endInput.value = calculatedEnd;
-            
-            // Format for display
-            const niceStart = new Date(startInput.value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            const niceEnd = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            
-            if (duration === 1) {
-                leaveDaysDisplay.value = `${duration} Day • ${niceStart}`;
+            if (isHalfDay) {
+                // Hide Duration Input (it's fixed 0.5)
+                durationWrapper.style.display = 'none';
+                
+                // Set End Date same as Start Date
+                endInput.value = startInput.value;
+                
+                // Update Display
+                if (startInput.value) {
+                    const niceStart = new Date(startInput.value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    // Get session text
+                    const sess = sessionSelect.options[sessionSelect.selectedIndex]?.text || "Session";
+                    leaveDaysDisplay.value = `0.5 Day • ${niceStart} (${sess})`;
+                } else {
+                    leaveDaysDisplay.value = '';
+                }
+                
+                checkBalance(0.5);
+                
             } else {
-                leaveDaysDisplay.value = `${duration} Days • ${niceStart} to ${niceEnd}`;
+                // Normal Mode - Show Duration Input logic handles display
+                // Recalc End Date
+                const duration = parseInt(durationInput.value) || 0;
+                 if (startInput.value && duration > 0) {
+                    const parts = startInput.value.split('-');
+                    const d = new Date(parts[0], parts[1]-1, parts[2]); 
+                    d.setDate(d.getDate() + (duration - 1));
+                    
+                    const yyyy = d.getFullYear();
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    endInput.value = `${yyyy}-${mm}-${dd}`;
+                    
+                    const niceStart = new Date(startInput.value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const niceEnd = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    
+                    if (duration === 1) leaveDaysDisplay.value = `${duration} Day • ${niceStart}`;
+                    else leaveDaysDisplay.value = `${duration} Days • ${niceStart} to ${niceEnd}`;
+                } else {
+                    endInput.value = '';
+                    leaveDaysDisplay.value = '';
+                }
+                
+                checkBalance(duration);
             }
-            
-            checkBalance();
         }
 
         function handleLeaveTypeChange() {
             const selectedId = typeSelect.value;
-            // Get fixed duration from server config
-            let fixedDur = typeConfig[selectedId] || 0;
+            const config = typeConfig[selectedId] || {};
+            const fixedDur = config.duration || 0;
+            const allowHalfDay = config.allow_half_day || false;
 
-            // If fixed duration is configured (e.g. 1 day for mandatory types)
-            if (fixedDur > 0) {
-                 durationInput.value = fixedDur;
-                 durationInput.readOnly = true;
-                 // Hide if it's 1 day fixed (cleaner UI), show if it's a package > 1
-                 if (fixedDur > 1) {
-                     durationWrapper.style.display = 'flex';
-                 } else {
-                     durationWrapper.style.display = 'none';
-                 }
-            } else {
-                 // Manual duration entry
-                 durationInput.readOnly = false;
-                 durationInput.removeAttribute('max'); // No artificial limit
-                 durationWrapper.style.display = 'flex';
-                 
-                 // Default to 1 if coming from a fixed type
-                 if (durationInput.value < 1) durationInput.value = 1;
+            console.log('Leave type changed:', selectedId, 'Allow half day:', allowHalfDay);
+
+            // 1. Handle Half Day Visibility
+            const halfDayContainer = document.getElementById('halfDayContainer');
+            if (halfDayContainer) {
+                if (allowHalfDay) {
+                    halfDayContainer.style.display = 'flex';
+                    console.log('Showing half day container');
+                } else {
+                    halfDayContainer.style.display = 'none';
+                    console.log('Hiding half day container');
+                    // Reset Custom Toggle if it exists
+                    const customToggle = document.getElementById('customHalfDayToggle');
+                    if (customToggle && halfDayCheckbox) {
+                        customToggle.checked = false;
+                        halfDayCheckbox.checked = false;
+                        customToggle.dispatchEvent(new Event('change'));
+                    }
+                }
+            }
+
+            // 2. Handle Duration Visibility (only if NOT half day)
+            const customToggle = document.getElementById('customHalfDayToggle');
+            if (!customToggle || !customToggle.checked) {
+                if (fixedDur > 0) {
+                    durationInput.value = fixedDur;
+                    durationInput.readOnly = true;
+                    if (fixedDur > 1) durationWrapper.style.display = 'flex';
+                    else durationWrapper.style.display = 'none';
+                } else {
+                    durationInput.readOnly = false;
+                    durationWrapper.style.display = 'flex';
+                    if (durationInput.value < 1) durationInput.value = 1;
+                }
             }
             
-            calculateFromDuration();
+            calculateState();
         }
 
         typeSelect.addEventListener('change', handleLeaveTypeChange);
-        startInput.addEventListener('change', calculateFromDuration);
-        
-        durationInput.addEventListener('input', function() {
-            calculateFromDuration();
-        });
+        startInput.addEventListener('change', calculateState);
+        durationInput.addEventListener('input', calculateState);
         
         // Initial init
+        console.log('Initializing form...');
         handleLeaveTypeChange();
     });
 </script>

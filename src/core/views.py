@@ -252,7 +252,7 @@ def dashboard(request):
         pending_leaves = pending_leave_requests # Use the queryset for iteration in template
         
         # Upcoming Holidays
-        upcoming_holidays = PublicHoliday.objects.filter(date__gte=today).order_by('date')[:5]
+        upcoming_holidays = PublicHoliday.objects.filter(date__gte=today).order_by('date')
         
         # Calculate Total Gratuity Liability
         from payroll.services import GratuityService
@@ -454,7 +454,7 @@ def dashboard(request):
 
         # Upcoming Holidays
         from .models import PublicHoliday
-        upcoming_holidays = PublicHoliday.objects.filter(date__gte=today.date()).order_by('date')[:5]
+        upcoming_holidays = PublicHoliday.objects.filter(date__gte=today.date()).order_by('date')
 
         context = {
             'employee': employee,

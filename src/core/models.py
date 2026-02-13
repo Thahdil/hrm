@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+from datetime import datetime
 
 class CompanySettings(models.Model):
     name = models.CharField(max_length=100, default="Nexteons")
@@ -209,19 +210,47 @@ class AuditLog(models.Model):
                 # If update is not interesting, return None to hide it
                 return None
 
-        # 2. Leave & Attendance
         if self.module == self.Module.LEAVES:
             if self.action == self.Action.CREATE:
                 # changes usually contains leave_type, start_date, end_date for Create
                 leave_type = "Leave"
-                days = ""
+                duration_str = ""
+                
                 if self.changes and isinstance(self.changes, dict):
                     leave_type = self.changes.get('leave_type', 'Leave')
-                    # Calculate days approx if data available? or just say "request"
-                    # User example: "[Name] submitted a Sick Leave request for 2 days."
-                    # We might not have duration easily here without fetching object.
-                    # fallback to generic
-                return f"{obj_name} submitted a {leave_type} request."
+                    
+                    # Try to get duration
+                    dur = self.changes.get('duration')
+                    
+                    # Fallback for old logs: Calculate from start/end
+                    if not dur:
+                        start = self.changes.get('start_date')
+                        end = self.changes.get('end_date')
+                        if start and end:
+                            try:
+                                d1 = datetime.strptime(start, "%Y-%m-%d")
+                                d2 = datetime.strptime(end, "%Y-%m-%d")
+                                # This calculation assumes 1 day per date difference + 1 (inclusive)
+                                # It won't detect half-days for old logs, but is better than nothing.
+                                days = (d2 - d1).days + 1
+                                dur = days
+                            except:
+                                pass
+                    
+                    if dur:
+                        try:
+                            val = float(dur)
+                            if val == 0.5:
+                                duration_str = " for a Half Day"
+                            elif val == 1:
+                                duration_str = " for 1 day"
+                            else:
+                                # Show decimals only if needed
+                                duration_str = f" for {val:g} days"
+                        except:
+                            duration_str = f" for {dur} days"
+
+                return f"{obj_name} submitted a {leave_type} request{duration_str}."
             
             if self.action == self.Action.APPROVE:
                 return f"Leave for {obj_name} was Approved by {user_name}."
@@ -311,6 +340,9 @@ class AuditLog(models.Model):
                     changes['leave_type'] = str(obj.leave_type.name)
                     changes['start_date'] = str(obj.start_date)
                     changes['end_date'] = str(obj.end_date)
+                    # Capture duration for accurate logging
+                    if hasattr(obj, 'duration_days'):
+                        changes['duration'] = str(obj.duration_days)
                 elif 'documentvault' in model_name:
                     changes['document_type'] = str(obj.document_type)
         

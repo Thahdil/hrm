@@ -20,6 +20,7 @@ class LeaveType(models.Model):
     # New Fields for unlimited/emergency leave
     allow_unlimited = models.BooleanField(default=False, help_text="Skip entitlement / balance check (e.g. for Unpaid/Emergency Leave).")
     hidden_unless_used = models.BooleanField(default=False, help_text="Hide from dashboard unless the user has used it.")
+    allow_half_day = models.BooleanField(default=False, help_text="Allow half-day requests for this leave type.")
 
     ACCRUAL_CHOICES = [
         ('ANNUAL', 'Annual (Upfront)'),
@@ -109,6 +110,15 @@ class LeaveRequest(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     
+    # Half Day logic
+    half_day = models.BooleanField(default=False)
+    half_day_session = models.CharField(
+        max_length=10,
+        choices=[('MORNING', 'Morning'), ('AFTERNOON', 'Afternoon')],
+        null=True, 
+        blank=True
+    )
+    
     reason = models.TextField(blank=True)
     
     # Workflow
@@ -140,6 +150,10 @@ class LeaveRequest(models.Model):
             # If duration > 1 (e.g. Some fixed package), End = Start + (Duration - 1)
             elif self.leave_type.duration_days > 1:
                 self.end_date = self.start_date + timedelta(days=self.leave_type.duration_days - 1)
+        
+        # Enforce Half-Day Constraints
+        if self.half_day:
+            self.end_date = self.start_date
                 
         # Call parent clean
         super().clean()
@@ -150,6 +164,8 @@ class LeaveRequest(models.Model):
 
     @property
     def duration_days(self):
+        if self.half_day:
+            return 0.5
         if not self.end_date or not self.start_date:
             return 0
         return (self.end_date - self.start_date).days + 1

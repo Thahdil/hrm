@@ -5,11 +5,13 @@ from .models import TicketRequest
 class LeaveRequestForm(forms.ModelForm):
     class Meta:
         model = LeaveRequest
-        fields = ['leave_type', 'start_date', 'end_date', 'reason', 'assigned_manager']
+        fields = ['leave_type', 'start_date', 'end_date', 'half_day', 'half_day_session', 'reason', 'assigned_manager']
         widgets = {
             'leave_type': forms.Select(attrs={'class': 'form-select'}),
             'start_date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
             'end_date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
+            'half_day': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+            'half_day_session': forms.Select(attrs={'class': 'form-select'}),
             'reason': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 3}),
             'assigned_manager': forms.Select(attrs={'class': 'form-select'}),
         }
@@ -65,25 +67,35 @@ class LeaveRequestForm(forms.ModelForm):
         start_date = cleaned_data.get('start_date')
         end_date = cleaned_data.get('end_date')
         leave_type = cleaned_data.get('leave_type')
+        half_day = cleaned_data.get('half_day')
+        half_day_session = cleaned_data.get('half_day_session')
 
         if start_date and leave_type:
             # Backend Logic for validation:
-            # If duration_days is set on leave_type, we don't care what end_date the user sent (or if it's missing), 
-            # we will re-calculate it in save() / model clean(). 
-            # However, since this is the Form clean(), we should allow end_date to be optional 
-            # if duration_days IS set.
             
-            if hasattr(leave_type, 'duration_days') and leave_type.duration_days:
-                 # If Fixed Duration, we effectively ignore the user's end date input for validation purposes 
-                 # because the model will overwrite it.
-                 # Just ensure start_date is present.
-                 pass
+            # Half Day Logic
+            if half_day:
+                if not half_day_session:
+                    self.add_error('half_day_session', 'Please select Morning or Afternoon for half-day leave.')
+                
+                # Check if this leave type allows half day
+                if hasattr(leave_type, 'allow_half_day') and not leave_type.allow_half_day:
+                     self.add_error('half_day', f'{leave_type.name} does not allow half-day requests.')
+                
+                # For half day, end date is effectively ignored/reset to start date
+                # So we don't need to validate it strictly if missing
             else:
-                 # For manual duration (Sick Leave), End Date IS required.
-                 if not end_date:
-                     self.add_error('end_date', 'End date is required for this leave type.')
-                 elif end_date < start_date:
-                     self.add_error('end_date', 'End date cannot be before start date.')
+                # Normal Full Day Logic
+                if hasattr(leave_type, 'duration_days') and leave_type.duration_days:
+                     # If Fixed Duration, we effectively ignore the user's end date input for validation purposes 
+                     # because the model will overwrite it.
+                     pass
+                else:
+                     # For manual duration (Sick Leave), End Date IS required.
+                     if not end_date:
+                         self.add_error('end_date', 'End date is required for this leave type.')
+                     elif end_date < start_date:
+                         self.add_error('end_date', 'End date cannot be before start date.')
             
             # 2. Duration Check (Generic Max Entitlement) - Only if end_date valid or calculable
             # We skip this here to keep it simple or implement if needed. 
@@ -94,7 +106,7 @@ class LeaveRequestForm(forms.ModelForm):
 class LeaveTypeForm(forms.ModelForm):
     class Meta:
         model = LeaveType
-        fields = ['name', 'code', 'days_entitlement', 'duration_days', 'eligibility_gender', 'min_service_days', 'is_paid', 'is_carry_forward', 'reset_monthly', 'allow_unlimited', 'hidden_unless_used']
+        fields = ['name', 'code', 'days_entitlement', 'duration_days', 'eligibility_gender', 'min_service_days', 'is_paid', 'is_carry_forward', 'reset_monthly', 'allow_unlimited', 'hidden_unless_used', 'allow_half_day']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-input'}),
             'code': forms.TextInput(attrs={'class': 'form-input'}),
@@ -107,6 +119,7 @@ class LeaveTypeForm(forms.ModelForm):
             'reset_monthly': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
             'allow_unlimited': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
             'hidden_unless_used': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+            'allow_half_day': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
         }
     
     def __init__(self, *args, **kwargs):
