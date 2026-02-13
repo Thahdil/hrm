@@ -27,6 +27,9 @@ CSRF_USE_SESSIONS = False
 CSRF_COOKIE_NAME = 'csrftoken' # Standard name
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_PATH = '/'
+CSRF_TRUSTED_ORIGINS = [
+    "https://rooster-classic-reliably.ngrok-free.app",
+]
 
 
 

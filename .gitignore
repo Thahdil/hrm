@@ -5,14 +5,5 @@ __pycache__/
 .DS_Store
 .env
 db_unified.dbml
-# *.sqlite3
-# *.db
-src/db.sqlite3
-src/db.sqlite3
-src/db.sqlite3
-src/db.sqlite3
-src/db.sqlite3
-src/db.sqlite3
-src/db.sqlite3
-src/db.sqlite3
-src/db.sqlite3
+**.sqlite3
+**.db
