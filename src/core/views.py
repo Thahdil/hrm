@@ -392,31 +392,50 @@ def dashboard(request):
                     # Non-accumulative: 1 day per month
                     total_quota = 1.0
                     # Calculate used THIS MONTH specifically
-                    days_used = LeaveRequest.objects.filter(
+                    requests = LeaveRequest.objects.filter(
                         employee=user,
                         leave_type=lt,
                         status=LeaveRequest.Status.APPROVED,
                         start_date__month=today.month,
                         start_date__year=today.year
-                    ).count()
-                    used = float(days_used)
+                    )
+                    used = sum(req.duration_days for req in requests)
                 else:
-                    # Standard logic
+                    # Standard logic: Accumulating Monthly or Annual
                     total_quota = lt.days_entitlement
                     if lt.accrual_frequency == 'MONTHLY':
                         # Prorate based on COMPLETED months (Month 1 = 0, Month 2 = 1/12th, etc.)
                         # This ensures accrual is "in arrears" or "earned", preventing balance available at start of month.
                         total_quota = (lt.days_entitlement / 12) * (today.month - 1)
 
+                    # Calculate Used Days from Actual Requests (Source of Truth)
+                    # This ensures correct counting of half-days (0.5) and fully syncs nicely.
+                    annual_reqs = LeaveRequest.objects.filter(
+                        employee=user,
+                        leave_type=lt,
+                        status__in=['APPROVED', 'HR_PROCESSED'],
+                        start_date__year=today.year
+                    )
+                    calculated_used = sum(r.duration_days for r in annual_reqs)
+
                     balance_obj, created = LeaveBalance.objects.get_or_create(
                         employee=user,
                         leave_type=lt,
                         year=today.year,
-                        defaults={'total_entitlement': total_quota, 'days_used': 0}
+                        defaults={'total_entitlement': total_quota, 'days_used': calculated_used}
                     )
                     
-                    if not created and balance_obj.total_entitlement != total_quota:
+                    # Sync Balance Object if needed
+                    should_save = False
+                    if balance_obj.total_entitlement != total_quota:
                         balance_obj.total_entitlement = total_quota
+                        should_save = True
+                    
+                    if float(balance_obj.days_used) != float(calculated_used):
+                        balance_obj.days_used = calculated_used
+                        should_save = True
+                        
+                    if should_save:
                         balance_obj.save()
                     
                     used = float(balance_obj.days_used)
