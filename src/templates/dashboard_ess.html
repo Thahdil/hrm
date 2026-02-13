@@ -2,7 +2,7 @@
 {% load humanize %}
 {% load static %}
 
-{% block title %}Dashboard - Nexteons HRMS{% endblock %}
+{% block title %}EONS HRM{% endblock %}
 {% block header_title %}Dashboard{% endblock %}
 {% block main_class %}viewport-fill{% endblock %}
 {% block page_subtitle %}Welcome back, {{ user.full_name|default:user.username|upper }}. Here's what's happening today.{% endblock %}
@@ -106,7 +106,7 @@
                             </div>
                             <div style="text-align: right;">
                                 {% if not balance.is_unlimited %}
-                                <div style="font-size: 18px; font-weight: 800; color: #1e293b; line-height: 1;">{{ balance.remaining|floatformat:0 }}</div>
+                                <div style="font-size: 18px; font-weight: 800; color: #1e293b; line-height: 1;">{{ balance.remaining|floatformat:1 }}</div>
                                 <div style="font-size: 8px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Days Left</div>
                                 {% endif %}
                             </div>
@@ -124,7 +124,7 @@
                         <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: 600; color: #64748b; font-family: monospace;">
                             <span>USED: {{ balance.used|floatformat:1 }}</span>
                             {% if not balance.is_unlimited %}
-                            <span>TOTAL: {{ balance.total|floatformat:0 }}</span>
+                            <span>TOTAL: {{ balance.total|floatformat:1 }}</span>
                             {% endif %}
                         </div>
                     </div>
@@ -157,7 +157,16 @@
                                     <div style="font-size: 13.5px; font-weight: 700; color: #1e293b;">{{ leave.leave_type.name }}</div>
                                     <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">{{ leave.start_date|date:"D, d M" }}</div>
                                 </td>
-                                <td style="padding: 16px 24px; font-size: 13px; font-weight: 600; color: #475569;">{{ leave.duration_days }} Day{{ leave.duration_days|pluralize }}</td>
+                                <td style="padding: 16px 24px; font-size: 13px; font-weight: 600; color: #475569;">
+                                    {% if leave.half_day %}
+                                        Half Day 
+                                        {% if leave.half_day_session %}
+                                            <span style="font-size: 10px; color: #64748b; font-weight: 500;">({{ leave.get_half_day_session_display }})</span>
+                                        {% endif %}
+                                    {% else %}
+                                        {{ leave.duration_days }} Day{{ leave.duration_days|pluralize }}
+                                    {% endif %}
+                                </td>
                                 <td style="padding: 16px 24px; text-align: right;">
                                     <span style="padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase;
                                         {% if leave.status == 'APPROVED' %}background: #ecfdf5; color: #10b981;

@@ -1,7 +1,7 @@
 {% extends 'base_modern.html' %}
 {% load humanize %}
 
-{% block title %}Leave Management - Nexteons HRMS{% endblock %}
+{% block title %}Leave Management - EONS HRM{% endblock %}
 {% block header_title %}Leave Management{% endblock %}
 {% block page_subtitle %}{% if is_admin %}Manage and approve employee leave requests.{% else %}Track your leave balances and history.{% endif %}{% endblock %}
 
@@ -121,7 +121,7 @@
                         <td style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9;">
                             <span style="font-weight: 800; color: #1e293b; font-size: 14px;">
                                 {% if leave.half_day %}
-                                    0.5 Day <br><span style="font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase;">{{ leave.get_half_day_session_display }}</span>
+                                    Half Day <br><span style="font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase;">{{ leave.get_half_day_session_display }}</span>
                                 {% else %}
                                     {{ leave.duration_days }} days
                                 {% endif %}

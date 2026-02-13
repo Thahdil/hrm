@@ -1,6 +1,6 @@
 {% extends 'base_modern.html' %}
 
-{% block title %}Manage Leave Request - Nexteons HR{% endblock %}
+{% block title %}Manage Leave Request - EONS HRM{% endblock %}
 {% block header_title %}Leave Request Details{% endblock %}
 
 {% block content %}
@@ -50,7 +50,13 @@
 
             <div style="margin-bottom: 12px;">
                 <label style="display: block; font-size: 0.85rem; color: var(--text-secondary);">Duration</label>
-                <div style="font-weight: 500;">{{ leave.duration_days }} Days</div>
+                <div style="font-weight: 500;">
+                    {% if leave.half_day %}
+                        Half Day {% if leave.half_day_session %}({{ leave.get_half_day_session_display }}){% endif %}
+                    {% else %}
+                        {{ leave.duration_days }} Days
+                    {% endif %}
+                </div>
             </div>
 
             <div style="margin-bottom: 12px;">

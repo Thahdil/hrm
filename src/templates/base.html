@@ -4,8 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Nexteons HRMS{% endblock %}</title>
+    <title>{% block title %}EONS HRM{% endblock %}</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'img/tab_logo.png' %}?v={{ timestamp|default:'1.0' }}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'img/tab_logo.png' %}?v={{ timestamp|default:'1.0' }}">
+        
     <!-- Google Fonts - Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,7 +30,7 @@
             <!-- Logo Header -->
             <div class="sidebar-header">
                 <a href="{% url 'dashboard' %}" class="sidebar-logo" style="display: flex; justify-content: center; width: 100%; padding: 0;">
-                    <img src="{% static 'img/logo_color.png' %}" alt="Nexteons" style="width: 100%; height: auto; max-width: 100%; object-fit: contain;">
+                    <img src="{% static 'img/logo_color.png' %}" alt="EONS HRM" style="width: 100%; height: auto; max-width: 100%; object-fit: contain;">
                 </a>
             </div>
             
@@ -195,6 +199,12 @@
                 this.style.background = 'transparent';
             });
         });
+
+        // Debug: Check if Tab Logo loads
+        const checkLogo = new Image();
+        checkLogo.onload = () => console.log("✅ Tab Logo (Favicon) is shown/loaded successfully");
+        checkLogo.onerror = () => console.error("❌ Tab Logo (Favicon) failed to load");
+        checkLogo.src = "{% static 'img/tab_logo.png' %}";
     </script>
     
     {% block extra_js %}{% endblock %}

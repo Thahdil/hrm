@@ -4,12 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexteons HRMS - Secure Login</title>
-    
+    <title>EONS HRM - Secure Login</title>
+        
     <!-- Google Fonts - Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'img/tab_logo.png' %}?v={{ timestamp|default:'1.0' }}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'img/tab_logo.png' %}?v={{ timestamp|default:'1.0' }}">
     
     <!-- Remix Icons -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
@@ -491,8 +495,8 @@
     <!-- Left Side - Branding -->
     <div class="login-branding">
         <div class="branding-content">
-            <img src="{% static 'img/logo_color.png' %}" alt="Nexteons" class="brand-logo">
-            <h1 class="branding-title">Nexteons HRMS</h1>
+            <img src="{% static 'img/logo_color.png' %}" alt="EONS HRM" class="brand-logo">
+            <h1 class="branding-title">EONS HRM</h1>
             <p class="branding-subtitle">
                 Streamline your workforce management with our comprehensive HR solution
             </p>
@@ -574,7 +578,7 @@
         </form>
 
         <div class="login-footer">
-            &copy; {% now "Y" %} <strong>Nexteons</strong>. All rights reserved.
+            &copy; {% now "Y" %} <strong>EONS HRM</strong>. All rights reserved.
         </div>
     </div>
 </div>
@@ -627,6 +631,12 @@
             });
         }
     }
+
+    // Debug: Check if Tab Logo loads
+    const checkLogo = new Image();
+    checkLogo.onload = () => console.log("✅ Tab Logo (Favicon) is shown/loaded successfully");
+    checkLogo.onerror = () => console.error("❌ Tab Logo (Favicon) failed to load");
+    checkLogo.src = "{% static 'img/tab_logo.png' %}";
 </script>
 
 </body>

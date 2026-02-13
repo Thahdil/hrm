@@ -1,5 +1,5 @@
 {% extends 'base_modern.html' %}
-{% block title %}Request Leave - Nexteons HR{% endblock %}
+{% block title %}Request Leave - EONS HRM{% endblock %}
 {% block header_title %}Request Leave{% endblock %}
 
 {% block content %}
@@ -144,14 +144,14 @@
                                             {% if lt.id == leave_type_id %}{{ lt.name }}{% endif %}
                                         {% endfor %}
                                     </div>
-                                    <div style="font-size: 9px; color: var(--gray-400); font-weight: 600;">Used: {{ balance.used|floatformat:0 }}d</div>
+                                    <div style="font-size: 9px; color: var(--gray-400); font-weight: 600;">Used: {{ balance.used|floatformat:1 }}d</div>
                                 </div>
                                 <div style="text-align: right;">
                                     {% if leave_type_id in unlimited_types_list %}
                                         <!-- Unlimited hidden per user request, just show dash or nothing -->
                                         <div style="font-size: 15px; font-weight: 900; color: var(--gray-300);">-</div>
                                     {% else %}
-                                        <div style="font-size: 15px; font-weight: 900; color: var(--success); letter-spacing: -0.02em;">{{ balance.remaining|floatformat:0 }}</div>
+                                        <div style="font-size: 15px; font-weight: 900; color: var(--success); letter-spacing: -0.02em;">{{ balance.remaining|floatformat:1 }}</div>
                                         <div style="font-size: 8px; color: var(--success); font-weight: 800; text-transform: uppercase;">Days</div>
                                     {% endif %}
                                 </div>
@@ -271,14 +271,6 @@
     }
 </style>
 <style>
-    /* Toggle Switch */
-    .toggle-switch input:checked + .slider {
-        background-color: var(--primary);
-    }
-    .toggle-switch input:checked + .slider .slider-circle {
-        transform: translateX(18px);
-    }
-    
     /* Minimal Session Cards */
     .session-card-mini:hover {
         border-color: #cbd5e1;
@@ -344,22 +336,19 @@
                 </label>
                 <div style="position: relative;">
                     <div style="display: flex; gap: 8px; align-items: center; padding: 8px 12px; border: 2px solid #f1f5f9; border-radius: 10px; background: white; transition: all 0.2s;">
-                        <!-- Toggle -->
-                        <label class="toggle-switch" style="position: relative; display: inline-block; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0;">
-                            <input type="checkbox" id="customHalfDayToggle" style="opacity: 0; width: 0; height: 0;">
-                            <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;">
-                                <span class="slider-circle" style="position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"></span>
-                            </span>
-                        </label>
+                        <!-- Toggle (clickable div) -->
+                        <div id="customHalfDayToggle" style="position: relative; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0; background-color: #cbd5e1; border-radius: 34px; transition: .3s;">
+                            <div id="toggleCircle" style="position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"></div>
+                        </div>
                         
                         <!-- Session Selector (inline) -->
                         <div id="sessionSelectionPanel" style="display: none; flex: 1; gap: 6px;">
                             <div style="display: flex; gap: 6px; width: 100%;">
-                                <div class="session-card-mini" data-value="MORNING" style="flex: 1; padding: 6px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; background: white; font-size: 12px; font-weight: 600; color: #64748b;">
+                                <div class="session-card-mini" data-value="MORNING" onclick="window.selectHalfDaySession('MORNING')" style="flex: 1; padding: 6px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; background: white; font-size: 12px; font-weight: 600; color: #64748b;">
                                     <i class="ri-sun-line" style="font-size: 14px;"></i>
                                     <span>Morning</span>
                                 </div>
-                                <div class="session-card-mini" data-value="AFTERNOON" style="flex: 1; padding: 6px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; background: white; font-size: 12px; font-weight: 600; color: #64748b;">
+                                <div class="session-card-mini" data-value="AFTERNOON" onclick="window.selectHalfDaySession('AFTERNOON')" style="flex: 1; padding: 6px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; background: white; font-size: 12px; font-weight: 600; color: #64748b;">
                                     <i class="ri-moon-line" style="font-size: 14px;"></i>
                                     <span>Afternoon</span>
                                 </div>
@@ -386,24 +375,36 @@
 
             // --- 3. Sync Logic (AFTER inserting into DOM) ---
             const customToggle = document.getElementById('customHalfDayToggle');
+            const toggleCircle = document.getElementById('toggleCircle');
             const sessionPanel = document.getElementById('sessionSelectionPanel');
             const sessionCards = document.querySelectorAll('.session-card-mini');
             const halfDayPlaceholder = document.getElementById('halfDayPlaceholder');
 
-            if (!customToggle || !sessionPanel || !halfDayPlaceholder) {
+            if (!customToggle || !sessionPanel || !halfDayPlaceholder || !toggleCircle) {
                 console.error('Failed to find half-day UI elements after insertion');
                 return;
             }
 
-            // Toggle Change Handler
-            customToggle.addEventListener('change', function() {
-                // Update hidden Django checkbox
-                halfDayCheckbox.checked = this.checked;
+            console.log('Half-day UI elements found, attaching event listeners...');
+
+            // Track toggle state
+            let isToggleOn = false;
+
+            // Toggle Click Handler
+            customToggle.addEventListener('click', function() {
+                isToggleOn = !isToggleOn;
+                console.log('Toggle clicked, new state:', isToggleOn);
                 
-                // Show/Hide Panel & Placeholder
-                if (this.checked) {
+                // Update visuals
+                if (isToggleOn) {
+                    customToggle.style.backgroundColor = 'var(--primary)';
+                    toggleCircle.style.transform = 'translateX(18px)';
                     sessionPanel.style.display = 'flex';
                     halfDayPlaceholder.style.display = 'none';
+                    
+                    // Update hidden Django checkbox
+                    halfDayCheckbox.checked = true;
+                    
                     // Trigger calculation
                     calculateState();
                     
@@ -412,9 +413,15 @@
                         selectSession('MORNING');
                     }
                 } else {
+                    customToggle.style.backgroundColor = '#cbd5e1';
+                    toggleCircle.style.transform = 'translateX(0)';
                     sessionPanel.style.display = 'none';
                     halfDayPlaceholder.style.display = 'block';
+                    
+                    // Update hidden Django checkbox
+                    halfDayCheckbox.checked = false;
                     sessionSelect.value = ''; // Clear hidden select
+                    
                     // Clear visual selection
                     sessionCards.forEach(c => c.classList.remove('active'));
                     
@@ -423,23 +430,55 @@
                 }
             });
 
-            // Session Card Click Handler
-            sessionCards.forEach(card => {
-                card.addEventListener('click', function() {
+            // Session Card Click Handler (backup method)
+            console.log('Found', sessionCards.length, 'session cards');
+            sessionCards.forEach((card, index) => {
+                console.log('Attaching click to card', index, card.dataset.value);
+                card.addEventListener('click', function(e) {
+                    console.log('Session card clicked via addEventListener:', this.dataset.value);
                     const val = this.dataset.value;
                     selectSession(val);
+                    e.stopPropagation();
                 });
+                // Ensure cards are clickable
+                card.style.pointerEvents = 'auto';
             });
 
+            // Global function for inline onclick (primary method)
+            window.selectHalfDaySession = function(val) {
+                console.log('Session selected via onclick:', val);
+                selectSession(val);
+            };
+
             function selectSession(val) {
-                // Update Visuals
-                sessionCards.forEach(c => {
-                    if (c.dataset.value === val) c.classList.add('active');
-                    else c.classList.remove('active');
+                console.log('Selecting session:', val);
+                
+                // Update Visuals - re-query to ensure we have current elements
+                const allCards = document.querySelectorAll('.session-card-mini');
+                allCards.forEach(c => {
+                    if (c.dataset.value === val) {
+                        c.classList.add('active');
+                        // Also update inline styles for immediate visual feedback
+                        c.style.borderColor = 'var(--primary)';
+                        c.style.background = '#eff6ff';
+                        c.style.color = 'var(--primary)';
+                        c.style.fontWeight = '700';
+                        console.log('Activated card:', val);
+                    } else {
+                        c.classList.remove('active');
+                        // Reset inline styles
+                        c.style.borderColor = '#e2e8f0';
+                        c.style.background = 'white';
+                        c.style.color = '#64748b';
+                        c.style.fontWeight = '600';
+                    }
                 });
                 
                 // Update Hidden Select
-                sessionSelect.value = val;
+                if (sessionSelect) {
+                    sessionSelect.value = val;
+                    console.log('Updated hidden select to:', val);
+                }
                 
                 // Recalc
                 calculateState();
@@ -527,7 +566,7 @@
                     const niceStart = new Date(startInput.value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     // Get session text
                     const sess = sessionSelect.options[sessionSelect.selectedIndex]?.text || "Session";
-                    leaveDaysDisplay.value = `0.5 Day • ${niceStart} (${sess})`;
+                    leaveDaysDisplay.value = `Half Day • ${niceStart} (${sess})`;
                 } else {
                     leaveDaysDisplay.value = '';
                 }
@@ -579,19 +618,25 @@
                 } else {
                     halfDayContainer.style.display = 'none';
                     console.log('Hiding half day container');
-                    // Reset Custom Toggle if it exists
+                    // Reset toggle if it exists
                     const customToggle = document.getElementById('customHalfDayToggle');
-                    if (customToggle && halfDayCheckbox) {
-                        customToggle.checked = false;
+                    const toggleCircle = document.getElementById('toggleCircle');
+                    if (customToggle && toggleCircle && halfDayCheckbox) {
+                        // Reset visual state
+                        customToggle.style.backgroundColor = '#cbd5e1';
+                        toggleCircle.style.transform = 'translateX(0)';
+                        // Reset hidden checkbox
                         halfDayCheckbox.checked = false;
-                        customToggle.dispatchEvent(new Event('change'));
+                        // Reset session select
+                        if (sessionSelect) sessionSelect.value = '';
                     }
                 }
             }
 
             // 2. Handle Duration Visibility (only if NOT half day)
             const customToggle = document.getElementById('customHalfDayToggle');
-            if (!customToggle || !customToggle.checked) {
+            const isHalfDayOn = halfDayCheckbox && halfDayCheckbox.checked;
+            if (!isHalfDayOn) {
                 if (fixedDur > 0) {
                     durationInput.value = fixedDur;
                     durationInput.readOnly = true;
