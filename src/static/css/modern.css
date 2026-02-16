@@ -142,6 +142,14 @@ a.action-tile {
     }
 }
 
+/* Dashboard Layout Grid - Restore Default */
+.dashboard-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: var(--spacing-lg);
+    align-items: start;
+}
+
 /* Dark Theme Variable Overrides */
 html[data-theme="dark"] {
     /* Semantic Colors Redefinition */
@@ -584,8 +592,8 @@ body:has(.viewport-fill) {
 }
 
 .viewport-fill .content-area {
-    overflow: hidden;
-    /* Prevent page scrolling in viewport-fill mode */
+    overflow-y: auto;
+    /* Enable internal scrolling only */
     background: var(--bg-body);
     display: flex;
     flex-direction: column;
@@ -593,9 +601,7 @@ body:has(.viewport-fill) {
     min-height: 0;
     position: relative;
     padding: var(--spacing-lg) var(--spacing-lg) 0 var(--spacing-lg);
-    /* Only top and sides, no bottom padding to allow full height */
     gap: var(--spacing-lg);
-    /* Use gap for spacing between elements */
 }
 
 /* Flex utilities for fitting UI */
