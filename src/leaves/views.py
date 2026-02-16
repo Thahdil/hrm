@@ -20,7 +20,7 @@ def leave_list(request):
     if not is_admin:
         from .models import LeaveBalance
         from django.utils import timezone
-        today = timezone.now().date()
+        today = timezone.localdate()
         
         valid_types = LeaveType.objects.filter(is_active=True)
         # Filter by gender if available
@@ -138,7 +138,7 @@ def leave_create(request):
     from .models import LeaveBalance
     from datetime import date
     
-    today = timezone.now().date()
+    today = timezone.localdate()
     current_year = today.year
     
     # 1. Calc Service Days & Gender

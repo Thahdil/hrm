@@ -2553,3 +2553,67 @@ html[data-theme="dark"] span[style*="background: #e0f2fe"] {
     background: #0C4A6E !important;
     color: #7DD3FC !important;
 }
+
+/* Team Management / My Team Overrides */
+html[data-theme="dark"] .info-alert {
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-left-color: #3B82F6 !important;
+    color: #D1D5DB !important;
+}
+
+html[data-theme="dark"] .search-input {
+    background: #2A2A2A !important;
+    border-color: #4B5563 !important;
+    color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] .employee-list-header {
+    border-bottom-color: #374151 !important;
+    color: #9CA3AF !important;
+}
+
+html[data-theme="dark"] .employee-row {
+    border-bottom-color: #262626 !important;
+}
+
+html[data-theme="dark"] .employee-row:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+html[data-theme="dark"] .details .name {
+    color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] .details .role {
+    color: #9CA3AF !important;
+}
+
+html[data-theme="dark"] .status-label.unassigned {
+    color: #4B5563 !important;
+}
+
+html[data-theme="dark"] .search-suggestions {
+    background: #1E1E1E !important;
+    border-color: #374151 !important;
+}
+
+html[data-theme="dark"] .suggestion-item {
+    border-bottom-color: #262626 !important;
+}
+
+html[data-theme="dark"] .suggestion-item:hover {
+    background: #2A2A2A !important;
+}
+
+html[data-theme="dark"] .suggestion-name {
+    color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] .empty-state {
+    color: #4B5563 !important;
+}
+
+html[data-theme="dark"] .border-top,
+html[data-theme="dark"] .border-bottom {
+    border-color: #374151 !important;
+}

@@ -109,6 +109,40 @@
                 </div>
             </div>
 
+            <div class="card" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-surface);">
+                <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface);">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i class="ri-user-unfollow-line" style="color: #f59e0b; font-size: 16px;"></i>
+                        <h3 style="margin: 0; font-size: 14px; font-weight: 800; color: var(--text-main); letter-spacing: -0.01em;">On Leave Today</h3>
+                    </div>
+                    <span style="font-size: 10px; font-weight: 800; color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 4px 10px; border-radius: 6px;">{{ on_leave_count }} ACTIVE</span>
+                </div>
+                <div style="flex: 1; overflow-y: auto; padding: 0 20px;" class="custom-scroll">
+                    {% for req in on_leave_today %}
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border-color); transition: all 0.2s;">
+                        <div style="width: 36px; height: 36px; background: var(--gray-50); color: var(--text-secondary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; border: 1px solid var(--border-color);">
+                            {{ req.employee.full_name|default:req.employee.username|slice:":1"|upper }}
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 13px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ req.employee.full_name|default:req.employee.username }}</div>
+                            <div style="font-size: 10px; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                                <span style="background: rgba(59, 130, 246, 0.1); color: var(--primary); padding: 1px 6px; border-radius: 4px;">{{ req.leave_type.name }}</span>
+                                {% if req.half_day %}<span style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 1px 6px; border-radius: 4px;">Half-Day</span>{% endif %}
+                            </div>
+                        </div>
+                        <div style="text-align: right; flex-shrink: 0;">
+                            <div style="font-size: 9px; color: var(--text-secondary); font-weight: 800; text-transform: uppercase;">Until</div>
+                            <div style="font-size: 11px; font-weight: 800; color: #f59e0b;">{{ req.end_date|date:"d M" }}</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.4; padding: 40px 0;">
+                        <i class="ri-user-star-line" style="font-size: 40px; margin-bottom: 10px;"></i>
+                        <span style="font-size: 13px; font-weight: 600;">Everyone is present today</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
 
         <!-- Right: Actions & Timeline -->

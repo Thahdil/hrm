@@ -211,7 +211,7 @@ def dashboard(request):
         User = get_user_model()
         
         # Statistics for the Admin Dashboard
-        today = timezone.now().date()
+        today = timezone.localdate()
         current_month = today.month
         current_year = today.year
         
@@ -235,11 +235,12 @@ def dashboard(request):
             attendance_rate = 0
             
         # 3. On Leave & Pending Approvals
-        on_leave_count = LeaveRequest.objects.filter(
+        on_leave_today = LeaveRequest.objects.filter(
             start_date__lte=today,
             end_date__gte=today,
-            status=LeaveRequest.Status.APPROVED
-        ).count()
+            status__in=[LeaveRequest.Status.APPROVED, LeaveRequest.Status.HR_PROCESSED]
+        ).select_related('employee', 'leave_type')
+        on_leave_count = on_leave_today.count()
         
         pending_approvals_count = LeaveRequest.objects.filter(status=LeaveRequest.Status.PENDING).count()
         
@@ -264,9 +265,6 @@ def dashboard(request):
             service = GratuityService(emp)
             result = service.calculate()
             total_liability += result['amount']
-        
-        # Attendance rate (mock for now - you can calculate actual)
-        attendance_rate = 95
         
         # Recent Activities from Audit Log
         from .models import AuditLog
@@ -340,6 +338,7 @@ def dashboard(request):
             'attendance_rate': attendance_rate,
             
             'on_leave_count': on_leave_count,
+            'on_leave_today': on_leave_today,
             'pending_approvals_count': pending_approvals_count,
             
             'active_employees': active_employees_count, # kept for backward compat if used elsewhere
@@ -362,7 +361,7 @@ def dashboard(request):
         recent_leaves = LeaveRequest.objects.filter(employee=user).order_by('-created_at')[:5]
         
         # Attendance
-        today = timezone.now()
+        today = timezone.localtime()
         from payroll.models import AttendanceLog
         attendance_count = AttendanceLog.objects.filter(
             employee=user, 

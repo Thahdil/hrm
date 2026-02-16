@@ -96,8 +96,10 @@ def attendance_list(request):
 
 @login_required
 def clear_attendance_logs(request):
+    # Statistics for the dashboard
     if request.method == "POST":
-        if request.user.is_staff or request.user.role in ['ADMIN', 'CEO']:
+        if request.user.is_staff or request.user.is_admin() or request.user.is_ceo():
+            today = timezone.localdate()
             count, _ = AttendanceLog.objects.all().delete()
             messages.success(request, f"Cleared {count} attendance logs.")
         else:

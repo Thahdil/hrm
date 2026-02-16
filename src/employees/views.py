@@ -47,7 +47,7 @@ def employee_list(request):
         
     employees = queryset.order_by('-date_joined').prefetch_related('documents', 'leave_requests')
     
-    today = timezone.now().date()
+    today = timezone.localdate()
     
     # Enhance employee objects with computed status for the dashboard
     for emp in employees:
