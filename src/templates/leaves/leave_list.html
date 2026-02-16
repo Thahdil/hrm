@@ -40,8 +40,8 @@
         <div class="card-header" style="flex-direction: column; gap: 24px; padding: 32px; border-bottom: 1px solid var(--gray-100); margin-bottom: 0; flex-shrink: 0;">
             <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <h3 class="card-title" style="font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em;">Leave History</h3>
-                    <p class="card-subtitle" style="font-weight: 500; color: var(--gray-500);">Manage and track your leave requests</p>
+                    <h3 class="card-title" style="font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text-main);">Leave History</h3>
+                    <p class="card-subtitle" style="font-weight: 500; color: var(--text-secondary);">Manage and track your leave requests</p>
                 </div>
                 
                 {% if not is_admin %}
@@ -60,7 +60,7 @@
                 <div style="width: 200px;">
                     <div style="position: relative;">
                          <i class="ri-filter-3-line" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
-                        <select id="statusFilter" style="width: 100%; padding: 10px 12px 10px 40px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 14px; background: white; appearance: none; cursor: pointer;">
+                        <select id="statusFilter" style="width: 100%; padding: 10px 12px 10px 40px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: var(--input-bg); color: var(--text-main); appearance: none; cursor: pointer;">
                             <option value="">All Statuses</option>
                             <option value="PENDING">Pending</option>
                             <option value="APPROVED">Approved</option>
@@ -75,11 +75,11 @@
                 <div style="width: 240px;">
                     <div style="position: relative;">
                         <i class="ri-calendar-line" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
-                        <input type="month" id="monthFilter" value="{% now 'Y-m' %}" style="width: 100%; padding: 10px 12px 10px 40px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 14px; background: white;">
+                        <input type="month" id="monthFilter" value="{% now 'Y-m' %}" style="width: 100%; padding: 10px 12px 10px 40px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: var(--input-bg); color: var(--text-main);">
                     </div>
                 </div>
 
-                <button id="resetFilters" class="btn btn-outline" style="padding: 10px 16px; border: 1px solid var(--gray-300); border-radius: 8px; color: var(--gray-600); font-weight: 600; background: white;">
+                <button id="resetFilters" class="btn btn-outline" style="padding: 10px 16px; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-secondary); font-weight: 600; background: var(--input-bg);">
                     Reset
                 </button>
             </div>
@@ -88,102 +88,102 @@
         <div class="card-body-scroll">
             <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
                 <thead>
-                    <tr style="background: #fafafa;">
-                        <th style="padding: 16px 32px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100); width: 200px;">EMPLOYEE</th>
-                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">LEAVE TYPE</th>
-                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">DURATION</th>
-                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">DATES</th>
-                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">REASON</th>
-                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">PROCESSED BY</th>
-                        <th style="padding: 16px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">STATUS</th>
-                        <th style="padding: 16px 32px; text-align: right; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">ACTIONS</th>
+                    <tr style="background: var(--gray-50);">
+                        <th style="padding: 16px 32px; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color); width: 200px;">EMPLOYEE</th>
+                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">LEAVE TYPE</th>
+                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">DURATION</th>
+                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">DATES</th>
+                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">REASON</th>
+                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">PROCESSED BY</th>
+                        <th style="padding: 16px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">STATUS</th>
+                        <th style="padding: 16px 32px; text-align: right; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">ACTIONS</th>
                     </tr>
                 </thead>
-                <tbody style="background: white;">
+                <tbody style="background: var(--bg-surface);">
                     {% for leave in leaves %}
                     <tr style="transition: all 0.25s ease;">
-                        <td style="padding: 16px 32px; border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 16px 32px; border-bottom: 1px solid var(--border-color);">
                             <div style="display: flex; align-items: center; gap: 14px;">
                                 <div style="width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: white; background: var(--primary); box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2); flex-shrink: 0; aspect-ratio: 1/1;">
                                     {{ leave.employee.full_name|default:leave.employee.username|slice:":1"|upper }}
                                 </div>
                                 <div>
-                                    <div style="font-weight: 700; color: #334155; font-size: 14.5px;">{{ leave.employee.full_name|default:leave.employee.username|upper }}</div>
-                                    <div style="font-size: 11px; color: #94a3b8; font-weight: 600;">{{ leave.employee.get_department_display|default:"Engineering" }}</div>
+                                    <div style="font-weight: 700; color: var(--text-main); font-size: 14.5px;">{{ leave.employee.full_name|default:leave.employee.username|upper }}</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">{{ leave.employee.get_department_display|default:"Engineering" }}</div>
                                 </div>
                             </div>
                         </td>
                         
-                        <td style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9;">
-                            <span style="display: inline-block; padding: 6px 14px; background: #eff6ff; color: #2563eb; border-radius: 8px; font-size: 12px; font-weight: 700;">{{ leave.leave_type.name }}</span>
+                        <td style="padding: 16px 20px; border-bottom: 1px solid var(--border-color);">
+                            <span style="display: inline-block; padding: 6px 14px; background: rgba(37, 99, 235, 0.1); color: var(--primary); border-radius: 8px; font-size: 12px; font-weight: 700;">{{ leave.leave_type.name }}</span>
                         </td>
                         
-                        <td style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9;">
-                            <span style="font-weight: 800; color: #1e293b; font-size: 14px;">
+                        <td style="padding: 16px 20px; border-bottom: 1px solid var(--border-color);">
+                            <span style="font-weight: 800; color: var(--text-main); font-size: 14px;">
                                 {% if leave.half_day %}
-                                    Half Day <br><span style="font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase;">{{ leave.get_half_day_session_display }}</span>
+                                    Half Day <br><span style="font-size: 10px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">{{ leave.get_half_day_session_display }}</span>
                                 {% else %}
                                     {{ leave.duration_days }} days
                                 {% endif %}
                             </span>
                         </td>
                         
-                        <td style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9;">
-                            <div style="font-weight: 700; color: #475569; font-size: 13.5px;">{{ leave.start_date|date:"d M Y" }}</div>
-                            <div style="font-size: 11px; color: #94a3b8; font-weight: 600;">to {{ leave.end_date|date:"d M Y" }}</div>
+                        <td style="padding: 16px 20px; border-bottom: 1px solid var(--border-color);">
+                            <div style="font-weight: 700; color: var(--text-secondary); font-size: 13.5px;">{{ leave.start_date|date:"d M Y" }}</div>
+                            <div style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">to {{ leave.end_date|date:"d M Y" }}</div>
                         </td>
 
-                        <td style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 13.5px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ leave.reason }}">
+                        <td style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); font-size: 13.5px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ leave.reason }}">
                             {{ leave.reason|truncatechars:40|default:"--" }}
                         </td>
 
-                        <td style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 16px 20px; border-bottom: 1px solid var(--border-color);">
                             {% if leave.approved_by %}
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="width: 24px; height: 24px; border-radius: 6px; background: #f1f5f9; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800;">
+                                    <div style="width: 24px; height: 24px; border-radius: 6px; background: var(--gray-50); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800;">
                                         {{ leave.approved_by.full_name|default:leave.approved_by.username|slice:":1"|upper }}
                                     </div>
-                                    <span style="font-size: 13px; color: #334155; font-weight: 700;">{{ leave.approved_by.full_name|default:leave.approved_by.username|upper }}</span>
+                                    <span style="font-size: 13px; color: var(--text-secondary); font-weight: 700;">{{ leave.approved_by.full_name|default:leave.approved_by.username|upper }}</span>
                                 </div>
                             {% else %}
-                                <span style="font-size: 12px; color: #cbd5e1; font-weight: 600; font-style: italic;">Awaiting action</span>
+                                <span style="font-size: 12px; color: var(--gray-400); font-weight: 600; font-style: italic;">Awaiting action</span>
                             {% endif %}
                         </td>
                         
-                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
                             {% if leave.status == 'PENDING' %}
-                                <span style="display: inline-flex; align-items: center; gap: 6px; background: #fffcf0; color: #ca8a04; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;">
+                                <span style="display: inline-flex; align-items: center; gap: 6px; background: var(--status-pending-bg); color: var(--status-pending-text); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;">
                                     <i class="ri-history-line"></i> PENDING
                                 </span>
                             {% elif leave.status == 'APPROVED' %}
-                                <span style="display: inline-flex; align-items: center; gap: 6px; background: #f0fdf4; color: #16a34a; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;">
+                                <span style="display: inline-flex; align-items: center; gap: 6px; background: var(--status-approved-bg); color: var(--status-approved-text); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;">
                                     <i class="ri-checkbox-circle-fill"></i> APPROVED
                                 </span>
                             {% elif leave.status == 'REJECTED' %}
-                                <span style="display: inline-flex; align-items: center; gap: 6px; background: #fef2f2; color: #dc2626; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;">
+                                <span style="display: inline-flex; align-items: center; gap: 6px; background: var(--status-rejected-bg); color: var(--status-rejected-text); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;">
                                     <i class="ri-close-circle-fill"></i> REJECTED
                                 </span>
                             {% else %}
-                                <span style="display: inline-flex; align-items: center; padding: 6px 12px; background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 11px; font-weight: 800;">
+                                <span style="display: inline-flex; align-items: center; padding: 6px 12px; background: var(--gray-50); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 20px; font-size: 11px; font-weight: 800;">
                                     {{ leave.status|upper }}
                                 </span>
                             {% endif %}
                         </td>
                         
-                        <td style="padding: 16px 32px; text-align: right; border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 16px 32px; text-align: right; border-bottom: 1px solid var(--border-color);">
                             <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
                                 {% if leave.status == 'PENDING' and leave.assigned_manager == request.user %}
                                 <form method="POST" action="{% url 'leave_approve' leave.pk %}" style="display: inline;">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="approve">
-                                    <button type="submit" style="width: 32px; height: 32px; border-radius: 8px; background: #f0fdf4; border: none; color: #16a34a; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Approve" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
+                                    <button type="submit" style="width: 32px; height: 32px; border-radius: 8px; background: var(--status-approved-bg); border: none; color: var(--status-approved-text); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Approve">
                                         <i class="ri-check-line" style="font-size: 18px; font-weight: bold;"></i>
                                     </button>
                                 </form>
                                 <form method="POST" action="{% url 'leave_approve' leave.pk %}" style="display: inline;">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="reject">
-                                    <button type="submit" style="width: 32px; height: 32px; border-radius: 8px; background: #fef2f2; border: none; color: #dc2626; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Reject" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
+                                    <button type="submit" style="width: 32px; height: 32px; border-radius: 8px; background: var(--status-rejected-bg); border: none; color: var(--status-rejected-text); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Reject">
                                         <i class="ri-close-line" style="font-size: 18px; font-weight: bold;"></i>
                                     </button>
                                 </form>
@@ -193,7 +193,7 @@
                                 <form method="POST" action="{% url 'leave_approve' leave.pk %}" style="display: inline;">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="cancel">
-                                    <button type="submit" style="min-width: 80px; height: 32px; border-radius: 8px; background: #fffcf0; border: 1px solid #fef08a; color: #ca8a04; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; padding: 0 12px;" title="Cancel Request" onclick="return confirm('Are you sure you want to cancel this leave request?');">
+                                    <button type="submit" style="min-width: 80px; height: 32px; border-radius: 8px; background: var(--status-pending-bg); border: 1px solid var(--status-pending-text); color: var(--status-pending-text); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; padding: 0 12px;" title="Cancel Request" onclick="return confirm('Are you sure you want to cancel this leave request?');">
                                         <i class="ri-close-circle-line"></i>
                                         <span style="font-size: 11px; font-weight: 700;">Cancel</span>
                                     </button>
@@ -203,7 +203,7 @@
                                 {% if leave.status == 'CANCELLED' and leave.employee == request.user %}
                                 <form method="POST" action="{% url 'leave_delete' leave.pk %}" style="display: inline;">
                                     {% csrf_token %}
-                                    <button type="submit" style="width: 32px; height: 32px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Delete">
+                                    <button type="submit" style="width: 32px; height: 32px; border-radius: 8px; background: var(--gray-50); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Delete">
                                         <i class="ri-delete-bin-line"></i>
                                     </button>
                                 </form>
@@ -214,11 +214,11 @@
                     {% empty %}
                     <tr>
                         <td colspan="8" style="padding: 100px 32px; text-align: center;">
-                            <div style="width: 80px; height: 80px; background: #f8fafc; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #cbd5e1;">
+                            <div style="width: 80px; height: 80px; background: var(--gray-50); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--gray-400);">
                                 <i class="ri-calendar-event-line" style="font-size: 40px;"></i>
                             </div>
-                            <h3 style="font-size: 18px; font-weight: 800; color: #334155; margin-bottom: 8px;">No Leave Requests Found</h3>
-                            <p style="color: #94a3b8; font-size: 14px; font-weight: 500;">Start by creating a new request or adjust your filters.</p>
+                            <h3 style="font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">No Leave Requests Found</h3>
+                            <p style="color: var(--text-secondary); font-size: 14px; font-weight: 500;">Start by creating a new request or adjust your filters.</p>
                         </td>
                     </tr>
                     {% endfor %}

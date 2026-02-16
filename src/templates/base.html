@@ -148,7 +148,11 @@
                 </div>
                 
                 <div class="top-bar-actions">
-                    <!-- Actions removed as per request -->
+                    <select id="theme-selector" class="theme-select" aria-label="Select Theme">
+                        <option value="light">Light Mode</option>
+                        <option value="dark">Dark Mode</option>
+                        <option value="system">System Default</option>
+                    </select>
                 </div>
             </div>
             
@@ -205,6 +209,48 @@
         checkLogo.onload = () => console.log("✅ Tab Logo (Favicon) is shown/loaded successfully");
         checkLogo.onerror = () => console.error("❌ Tab Logo (Favicon) failed to load");
         checkLogo.src = "{% static 'img/tab_logo.png' %}";
+
+        /* ========================================
+           THEME SWITCHER LOGIC
+           ======================================== */
+        (function() {
+            const themeSelect = document.getElementById('theme-selector');
+            const savedTheme = localStorage.getItem('erp_theme') || 'system';
+            
+            // Set initial select value
+            if(themeSelect) {
+                themeSelect.value = savedTheme;
+            }
+
+            // Function to apply theme
+            function applyTheme(theme) {
+                if (theme === 'system') {
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    document.documentElement.setAttribute('data-theme', systemDark ? 'dark' : 'light');
+                } else {
+                    document.documentElement.setAttribute('data-theme', theme);
+                }
+            }
+
+            // Apply initially
+            applyTheme(savedTheme);
+
+            // Handle Manual Change
+            if(themeSelect) {
+                themeSelect.addEventListener('change', (e) => {
+                    const newTheme = e.target.value;
+                    localStorage.setItem('erp_theme', newTheme);
+                    applyTheme(newTheme);
+                });
+            }
+
+            // Handle System Preference Change
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                if (localStorage.getItem('erp_theme') === 'system') {
+                    applyTheme('system');
+                }
+            });
+        })();
     </script>
     
     {% block extra_js %}{% endblock %}

@@ -11,11 +11,11 @@
 <div style="flex: 1; display: flex; flex-direction: column; gap: 20px; padding-bottom: 24px; min-height: 0;">
     <!-- Compact Stats Row -->
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; flex-shrink: 0;">
-        <div class="stat-card" style="padding: 18px; border-radius: 20px; border: 1px solid #e2e8f0; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+        <div class="stat-card" style="padding: 18px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-surface); box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <div style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Monthly Attendance</div>
-                    <div style="font-size: 32px; font-weight: 800; color: #1e293b; line-height: 1;">{{ attendance_count }}</div>
+                    <div style="font-size: 10px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Monthly Attendance</div>
+                    <div style="font-size: 32px; font-weight: 800; color: var(--text-main); line-height: 1;">{{ attendance_count }}</div>
                     <div style="font-size: 11px; color: var(--success); font-weight: 700; margin-top: 8px; display: flex; align-items: center; gap: 4px;">
                         <i class="ri-checkbox-circle-fill"></i> Present Today
                     </div>
@@ -26,11 +26,11 @@
             </div>
         </div>
 
-        <div class="stat-card" style="padding: 18px; border-radius: 20px; border: 1px solid #e2e8f0; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+        <div class="stat-card" style="padding: 18px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-surface); box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <div style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Pending Requests</div>
-                    <div style="font-size: 32px; font-weight: 800; color: #1e293b; line-height: 1;">{{ pending_leaves_count }}</div>
+                    <div style="font-size: 10px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Pending Requests</div>
+                    <div style="font-size: 32px; font-weight: 800; color: var(--text-main); line-height: 1;">{{ pending_leaves_count }}</div>
                     <div style="font-size: 11px; color: #f59e0b; font-weight: 700; margin-top: 8px;">
                         Awaiting Review
                     </div>
@@ -41,11 +41,11 @@
             </div>
         </div>
 
-        <div class="stat-card" style="padding: 18px; border-radius: 20px; border: 1px solid #e2e8f0; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+        <div class="stat-card" style="padding: 18px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-surface); box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <div style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Avg. Daily Attendance</div>
-                    <div style="font-size: 32px; font-weight: 800; color: #1e293b; line-height: 1;">{{ avg_daily_attendance }}</div>
+                    <div style="font-size: 10px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Avg. Daily Attendance</div>
+                    <div style="font-size: 32px; font-weight: 800; color: var(--text-main); line-height: 1;">{{ avg_daily_attendance }}</div>
                     <div style="font-size: 11px; color: #8b5cf6; font-weight: 700; margin-top: 8px;">
                         Employees
                     </div>
@@ -56,11 +56,11 @@
             </div>
         </div>
 
-        <div class="stat-card" style="padding: 18px; border-radius: 20px; border: 1px solid #e2e8f0; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+        <div class="stat-card" style="padding: 18px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-surface); box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <div style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Work Days</div>
-                    <div style="font-size: 32px; font-weight: 800; color: #1e293b; line-height: 1;">22</div>
+                    <div style="font-size: 10px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Work Days</div>
+                    <div style="font-size: 32px; font-weight: 800; color: var(--text-main); line-height: 1;">22</div>
                     <div style="font-size: 11px; color: var(--primary); font-weight: 700; margin-top: 8px;">
                         Scheduled Shift
                     </div>
@@ -78,17 +78,17 @@
         <div style="display: flex; flex-direction: column; gap: 20px; min-height: 0;">
             
             <!-- DETAILS: Leave Balances -->
-            <div class="card" style="padding: 24px; border-radius: 24px; border: 1px solid #e2e8f0; background: white;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+            <div class="card" style="padding: 24px; border-radius: 24px; border: 1px solid var(--border-color); background: var(--bg-surface);">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);">
                     <div style="width: 32px; height: 32px; background: #eff6ff; color: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
                         <i class="ri-calendar-check-line"></i>
                     </div>
-                    <h3 style="margin: 0; font-size: 15px; font-weight: 800; color: #1e293b;">My Leave Balances</h3>
+                    <h3 style="margin: 0; font-size: 15px; font-weight: 800; color: var(--text-main);">My Leave Balances</h3>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
                     {% for balance in leave_balances %}
-                    <div style="padding: 16px; border-radius: 16px; border: 1px solid #f1f5f9; background: #f8fafc;">
+                    <div style="padding: 16px; border-radius: 16px; border: 1px solid var(--border-color); background: var(--gray-50);">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                             <div style="display: flex; gap: 10px; align-items: center;">
                                 <div style="width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px;
@@ -100,20 +100,20 @@
                                     {% else %}<i class="ri-calendar-line"></i>{% endif %}
                                 </div>
                                 <div>
-                                    <div style="font-size: 11px; font-weight: 800; color: #1e293b; text-transform: uppercase; line-height: 1.2;">{{ balance.name }}</div>
-                                    {% if balance.code %}<div style="font-size: 9px; font-weight: 700; color: #94a3b8;">{{ balance.code }}</div>{% endif %}
+                                    <div style="font-size: 11px; font-weight: 800; color: var(--text-main); text-transform: uppercase; line-height: 1.2;">{{ balance.name }}</div>
+                                    {% if balance.code %}<div style="font-size: 9px; font-weight: 700; color: var(--text-secondary);">{{ balance.code }}</div>{% endif %}
                                 </div>
                             </div>
                             <div style="text-align: right;">
                                 {% if not balance.is_unlimited %}
-                                <div style="font-size: 18px; font-weight: 800; color: #1e293b; line-height: 1;">{{ balance.remaining|floatformat:1 }}</div>
-                                <div style="font-size: 8px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Days Left</div>
+                                <div style="font-size: 18px; font-weight: 800; color: var(--text-main); line-height: 1;">{{ balance.remaining|floatformat:1 }}</div>
+                                <div style="font-size: 8px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Days Left</div>
                                 {% endif %}
                             </div>
                         </div>
                         
                         <!-- Progress Bar (Shows Used %) -->
-                        <div style="height: 4px; width: 100%; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin-bottom: 8px;">
+                        <div style="height: 4px; width: 100%; background: var(--border-color); border-radius: 2px; overflow: hidden; margin-bottom: 8px;">
                             <div style="height: 100%; border-radius: 2px; width: {{ balance.percentage }}%;
                                 {% if 'SICK' in balance.name|upper %}background: #ef4444;
                                 {% elif 'NORMAL' in balance.name|upper or 'CASUAL' in balance.name|upper %}background: #06b6d4;
@@ -121,7 +121,7 @@
                             </div>
                         </div>
                         
-                        <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: 600; color: #64748b; font-family: monospace;">
+                        <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: 600; color: var(--text-secondary); font-family: monospace;">
                             <span>USED: {{ balance.used|floatformat:1 }}</span>
                             {% if not balance.is_unlimited %}
                             <span>TOTAL: {{ balance.total|floatformat:1 }}</span>
@@ -133,35 +133,35 @@
             </div>
 
             <!-- Recent Requests -->
-            <div class="card" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; border-radius: 24px; border: 1px solid #e2e8f0; background: white;">
-                <div style="padding: 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #fdfdfd;">
+            <div class="card" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; border-radius: 24px; border: 1px solid var(--border-color); background: var(--bg-surface);">
+                <div style="padding: 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface);">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <i class="ri-history-line" style="color: var(--primary); font-size: 18px;"></i>
-                        <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #1e293b; letter-spacing: -0.01em;">Recent Requests</h3>
+                        <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: var(--text-main); letter-spacing: -0.01em;">Recent Requests</h3>
                     </div>
                     <a href="{% url 'leave_list' %}" style="color: var(--primary); font-size: 12px; text-decoration: none; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; background: #eff6ff; padding: 6px 14px; border-radius: 8px;">History</a>
                 </div>
                 <div style="flex: 1; overflow-y: auto;" class="custom-scroll">
                     <table style="width: 100%; border-collapse: collapse;">
-                        <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
+                        <thead style="position: sticky; top: 0; background: var(--gray-50); z-index: 10;">
                             <tr>
-                                <th style="padding: 12px 24px; text-align: left; font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">Type</th>
-                                <th style="padding: 12px 24px; text-align: left; font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">Duration</th>
-                                <th style="padding: 12px 24px; text-align: right; font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">Status</th>
+                                <th style="padding: 12px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Type</th>
+                                <th style="padding: 12px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Duration</th>
+                                <th style="padding: 12px 24px; text-align: right; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for leave in recent_leaves %}
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <tr style="border-bottom: 1px solid var(--border-color);">
                                 <td style="padding: 16px 24px;">
-                                    <div style="font-size: 13.5px; font-weight: 700; color: #1e293b;">{{ leave.leave_type.name }}</div>
-                                    <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">{{ leave.start_date|date:"D, d M" }}</div>
+                                    <div style="font-size: 13.5px; font-weight: 700; color: var(--text-main);">{{ leave.leave_type.name }}</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">{{ leave.start_date|date:"D, d M" }}</div>
                                 </td>
-                                <td style="padding: 16px 24px; font-size: 13px; font-weight: 600; color: #475569;">
+                                <td style="padding: 16px 24px; font-size: 13px; font-weight: 600; color: var(--text-secondary);">
                                     {% if leave.half_day %}
                                         Half Day 
                                         {% if leave.half_day_session %}
-                                            <span style="font-size: 10px; color: #64748b; font-weight: 500;">({{ leave.get_half_day_session_display }})</span>
+                                            <span style="font-size: 10px; color: var(--text-secondary); font-weight: 500;">({{ leave.get_half_day_session_display }})</span>
                                         {% endif %}
                                     {% else %}
                                         {{ leave.duration_days }} Day{{ leave.duration_days|pluralize }}
@@ -178,7 +178,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="3" style="padding: 40px; text-align: center; color: #94a3b8; font-size: 14px;">No recent records</td>
+                                <td colspan="3" style="padding: 40px; text-align: center; color: var(--text-secondary); font-size: 14px;">No recent records</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -190,54 +190,54 @@
         <!-- Right: Actions & Holidays -->
         <div style="display: flex; flex-direction: column; gap: 20px; min-height: 0;">
             <!-- Actions -->
-            <div class="card" style="padding: 24px; border-radius: 24px; border: 1px solid #e2e8f0; background: white; flex-shrink: 0;">
-                <h3 style="margin: 0 0 20px; font-size: 12px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em;">Quick Action</h3>
+            <div class="card" style="padding: 24px; border-radius: 24px; border: 1px solid var(--border-color); background: var(--bg-surface); flex-shrink: 0;">
+                <h3 style="margin: 0 0 20px; font-size: 12px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em;">Quick Action</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <a href="{% url 'leave_add' %}" class="action-tile" style="text-decoration: none; padding: 16px; background: #f8fafc; border-radius: 16px; border: 1px solid #f1f5f9; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                    <a href="{% url 'leave_add' %}" class="action-tile" style="text-decoration: none; padding: 16px; background: var(--gray-50); border-radius: 16px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px;">
                         <div style="width: 40px; height: 40px; background: #eff6ff; color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
                             <i class="ri-calendar-event-line"></i>
                         </div>
-                        <span style="font-size: 12px; font-weight: 700; color: #475569;">Request Leave</span>
+                        <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Request Leave</span>
                     </a>
-                    <a href="{% url 'my_payslips' %}" class="action-tile" style="text-decoration: none; padding: 16px; background: #f8fafc; border-radius: 16px; border: 1px solid #f1f5f9; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                    <a href="{% url 'my_payslips' %}" class="action-tile" style="text-decoration: none; padding: 16px; background: var(--gray-50); border-radius: 16px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px;">
                         <div style="width: 40px; height: 40px; background: #ecfdf5; color: #10b981; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
                             <i class="ri-money-dollar-circle-line"></i>
                         </div>
-                        <span style="font-size: 12px; font-weight: 700; color: #475569;">Payslips</span>
+                        <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Payslips</span>
                     </a>
-                    <a href="{% url 'attendance_list' %}" class="action-tile" style="text-decoration: none; padding: 16px; background: #f8fafc; border-radius: 16px; border: 1px solid #f1f5f9; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                    <a href="{% url 'attendance_list' %}" class="action-tile" style="text-decoration: none; padding: 16px; background: var(--gray-50); border-radius: 16px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px;">
                         <div style="width: 40px; height: 40px; background: #fffbeb; color: #f59e0b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
                             <i class="ri-fingerprint-line"></i>
                         </div>
-                        <span style="font-size: 12px; font-weight: 700; color: #475569;">My Logs</span>
+                        <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">My Logs</span>
                     </a>
-                    <a href="{% url 'ticket_list' %}" class="action-tile" style="text-decoration: none; padding: 16px; background: #f8fafc; border-radius: 16px; border: 1px solid #f1f5f9; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                    <a href="{% url 'ticket_list' %}" class="action-tile" style="text-decoration: none; padding: 16px; background: var(--gray-50); border-radius: 16px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px;">
                         <div style="width: 40px; height: 40px; background: #f5f3ff; color: #8b5cf6; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
                             <i class="ri-plane-line"></i>
                         </div>
-                        <span style="font-size: 12px; font-weight: 700; color: #475569;">Ticket Request</span>
+                        <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Ticket Request</span>
                     </a>
                 </div>
             </div>
 
             <!-- Holidays Timeline -->
-            <div class="card" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; border-radius: 24px; border: 1px solid #e2e8f0; background: white;">
-                <div style="padding: 18px 24px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; background: #fdfdfd;">
+            <div class="card" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; border-radius: 24px; border: 1px solid var(--border-color); background: var(--bg-surface);">
+                <div style="padding: 18px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; background: var(--bg-surface);">
                     <i class="ri-calendar-event-fill" style="color: #f59e0b; font-size: 18px;"></i>
-                    <h3 style="margin: 0; font-size: 13px; font-weight: 900; color: #1e293b; text-transform: uppercase; letter-spacing: 0.05em;">Upcoming Holidays</h3>
+                    <h3 style="margin: 0; font-size: 13px; font-weight: 900; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em;">Upcoming Holidays</h3>
                 </div>
                 <div style="flex: 1; overflow-y: auto; padding: 16px 20px;" class="custom-scroll">
                     {% if upcoming_holidays %}
                         <div style="display: flex; flex-direction: column; gap: 14px;">
                         {% for holiday in upcoming_holidays %}
-                            <div style="display: flex; gap: 16px; align-items: center; padding-bottom: 14px; border-bottom: 1px dashed #f1f5f9;">
-                                <div style="width: 48px; height: 48px; border-radius: 12px; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid #e2e8f0; flex-shrink: 0;">
+                            <div style="display: flex; gap: 16px; align-items: center; padding-bottom: 14px; border-bottom: 1px dashed var(--border-color);">
+                                <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--gray-50); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid var(--border-color); flex-shrink: 0;">
                                     <span style="font-size: 14px; font-weight: 900; color: var(--primary); line-height: 1;">{{ holiday.date|date:"d" }}</span>
-                                    <span style="font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">{{ holiday.date|date:"M" }}</span>
+                                    <span style="font-size: 9px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">{{ holiday.date|date:"M" }}</span>
                                 </div>
                                 <div style="flex: 1; min-width: 0;">
-                                    <div style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 2px;">{{ holiday.name }}</div>
-                                    <div style="font-size: 11px; color: #94a3b8; font-weight: 600;">{{ holiday.date|date:"l" }}</div>
+                                    <div style="font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 2px;">{{ holiday.name }}</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">{{ holiday.date|date:"l" }}</div>
                                 </div>
                             </div>
                         {% endfor %}
@@ -257,11 +257,11 @@
 <style>
     .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
     .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
     
     .action-tile:hover {
-        background: white !important;
+        background: var(--bg-surface) !important;
         border-color: var(--primary) !important;
         transform: translateY(-3px);
         box-shadow: 0 8px 16px rgba(0,0,0,0.05);

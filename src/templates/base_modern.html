@@ -19,7 +19,16 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     
     <!-- Modern Design System CSS -->
-    <link rel="stylesheet" href="{% static 'css/modern.css' %}">
+    <link rel="stylesheet" href="{% static 'css/modern.css' %}?v=4.2">
+    
+    <!-- Theme Flash Protection -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('erp_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+        })();
+    </script>
     
     {% block extra_css %}{% endblock %}
 </head>
@@ -142,6 +151,46 @@
                 </div>
                 
                 <div class="top-bar-actions">
+                    <!-- Bold Sliding Toggle Switch -->
+                    <div id="theme-toggle-btn" class="theme-toggle-slider" title="Switch Theme">
+                         <div class="slider-track">
+                             <!-- Sun (Left) - Visible in Dark Mode -->
+                             <svg class="track-icon-sun" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                 <circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"></circle>
+                                 <line x1="12" y1="1" x2="12" y2="3"></line>
+                                 <line x1="12" y1="21" x2="12" y2="23"></line>
+                                 <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                 <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                 <line x1="1" y1="12" x2="3" y2="12"></line>
+                                 <line x1="21" y1="12" x2="23" y2="12"></line>
+                                 <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                             </svg>
+                             <!-- Moon (Right) - Visible in Light Mode -->
+                             <svg class="track-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                             </svg>
+                         </div>
+                         <div class="slider-knob">
+                             <!-- Knob Internal Icons -->
+                             <!-- Sun Icon (Visible in Light Mode) -->
+                             <svg class="knob-icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                 <circle cx="12" cy="12" r="5" fill="white" stroke="none"></circle>
+                                 <line x1="12" y1="1" x2="12" y2="3"></line>
+                                 <line x1="12" y1="21" x2="12" y2="23"></line>
+                                 <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                 <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                 <line x1="1" y1="12" x2="3" y2="12"></line>
+                                 <line x1="21" y1="12" x2="23" y2="12"></line>
+                                 <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                             </svg>
+                             <!-- Moon Icon (Visible in Dark Mode) -->
+                             <svg class="knob-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                             </svg>
+                         </div>
+                    </div>
                     <div class="user-profile" onclick="toggleUserMenu()" style="position: relative; cursor: pointer; padding: 6px 12px; border-radius: 12px; transition: all 0.2s; border: 1px solid transparent; background: var(--gray-50);">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <div class="user-info" style="text-align: right;">
@@ -255,6 +304,58 @@
         checkLogo.onload = () => console.log("✅ Tab Logo (Favicon) is shown/loaded successfully");
         checkLogo.onerror = () => console.error("❌ Tab Logo (Favicon) failed to load");
         checkLogo.src = "{% static 'img/tab_logo.png' %}";
+
+        /* ========================================
+           THEME SWITCHER LOGIC
+           ======================================== */
+        /* ========================================
+           THEME SWITCHER LOGIC (ADVANCED)
+           ======================================== */
+        (function() {
+            // Default to 'light' if not set
+            let savedTheme = localStorage.getItem('erp_theme');
+            if (!savedTheme || savedTheme === 'system') {
+                savedTheme = 'light';
+            }
+
+            // Function to apply theme
+            function applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+
+            // Function to update UI button state
+            function updateThemeUI(theme) {
+                const btn = document.getElementById('theme-toggle-btn');
+                if (theme === 'dark') {
+                    btn.classList.add('dark-mode');
+                    document.documentElement.classList.add('dark');
+                } else {
+                    btn.classList.remove('dark-mode');
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+
+            // Apply initially
+            applyTheme(savedTheme);
+            updateThemeUI(savedTheme);
+
+            // Handle Click
+            const toggleBtn = document.getElementById('theme-toggle-btn');
+            toggleBtn.addEventListener('click', function() {
+                // Check current state based on class or stored value
+                let currentTheme = localStorage.getItem('erp_theme') || 'light';
+                let newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                
+                applyTheme(newTheme);
+                updateThemeUI(newTheme);
+                localStorage.setItem('erp_theme', newTheme);
+            });
+        })();
     </script>
     
     {% block extra_js %}{% endblock %}

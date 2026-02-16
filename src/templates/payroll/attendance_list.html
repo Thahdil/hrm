@@ -5,7 +5,7 @@
 
 {% block content %}
 <div class="flex-1" style="width: 100%; animation: fadeIn 0.4s ease-out; display: flex; flex-direction: column;">
-    <div class="card full-height-card" style="border: none; background: white; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-md);">
+    <div class="card full-height-card" style="border: none; background: var(--bg-surface); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-md);">
         <!-- Premium Header -->
         <div style="padding: 20px 32px 16px 32px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--gray-100); flex-shrink: 0;">
             <div>
@@ -13,7 +13,7 @@
                     <div style="width: 36px; height: 36px; background: rgba(37, 99, 235, 0.1); color: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px;">
                         <i class="ri-fingerprint-line"></i>
                     </div>
-                    <h1 style="font-size: 20px; font-weight: 800; color: #1e293b; margin: 0; letter-spacing: -0.02em;">Daily Attendance Logs</h1>
+                    <h1 style="font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.02em;">Daily Attendance Logs</h1>
                 </div>
                 <p style="font-size: 12.5px; color: var(--gray-500); margin: 0; font-weight: 500;">
                     <span style="color: var(--primary); font-weight: 700;">{{ logs|length }}</span> biometric records synchronized
@@ -22,18 +22,18 @@
 
             {% if user.is_staff or user.role == 'ADMIN' or user.role == 'HR_MANAGER' or user.role == 'CEO' %}
             <div style="display: flex; gap: 12px;">
-                <a href="{% url 'attendance_manual_entry' %}" class="btn btn-outline" style="border-radius: 10px; font-weight: 600; font-size: 13.5px; border-color: #e2e8f0;">
+                <a href="{% url 'attendance_manual_entry' %}" class="btn btn-outline" style="border-radius: 10px; font-weight: 600; font-size: 13.5px; border-color: var(--border-color); color: var(--text-main);">
                     <i class="ri-add-line"></i> Manual Punch
                 </a>
-                <a href="{% url 'manage_overtime' %}" class="btn btn-outline" style="border-radius: 10px; font-weight: 600; font-size: 13.5px; border-color: #e2e8f0; color: #4f46e5;">
+                <a href="{% url 'manage_overtime' %}" class="btn btn-outline" style="border-radius: 10px; font-weight: 600; font-size: 13.5px; border-color: var(--border-color); color: var(--primary);">
                     <i class="ri-settings-3-line"></i> Manage / Approve OT
                 </a>
-                <a href="{% url 'attendance_import' %}" class="btn btn-outline" style="border-radius: 10px; font-weight: 600; font-size: 13.5px; border-color: #e2e8f0;">
+                <a href="{% url 'attendance_import' %}" class="btn btn-outline" style="border-radius: 10px; font-weight: 600; font-size: 13.5px; border-color: var(--border-color); color: var(--text-main);">
                     <i class="ri-upload-cloud-2-line"></i> Import Logs
                 </a>
                 <form action="{% url 'clear_attendance_logs' %}" method="post" onsubmit="return confirm('Clear ALL attendance logs?');">
                     {% csrf_token %}
-                    <button type="submit" class="btn" style="background: #fff1f2; color: #e11d48; border-radius: 10px; font-weight: 700; font-size: 13.5px; padding: 10px 16px; border: 1px solid #fee2e2;">
+                    <button type="submit" class="btn" style="background: var(--status-rejected-bg); color: var(--status-rejected-text); border-radius: 10px; font-weight: 700; font-size: 13.5px; padding: 10px 16px; border: 1px solid var(--status-rejected-bg);">
                         <i class="ri-delete-bin-line"></i> Clear All
                     </button>
                 </form>
@@ -42,7 +42,7 @@
         </div>
 
         <!-- Integrated Filter Bar -->
-        <div style="padding: 16px 32px; background: #fafafa; border-bottom: 1px solid var(--gray-100);">
+        <div style="padding: 16px 32px; background: var(--gray-50); border-bottom: 1px solid var(--border-color);">
             <form method="get" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
                 {% if user.is_staff or user.role == 'ADMIN' or user.role == 'HR_MANAGER' or user.role == 'CEO' %}
                 <div style="flex-grow: 1; max-width: 400px;">
@@ -50,7 +50,7 @@
                     <div style="position: relative;">
                         <i class="ri-search-line" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 18px;"></i>
                         <input type="text" name="search" value="{{ search_query }}" placeholder="Search Name, ID, or Date (YYYY-MM-DD)..." autocomplete="off"
-                               style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid #e2e8f0; padding-left: 40px; font-size: 13px; font-weight:500; transition: all 0.2s;"
+                               style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid var(--border-color); padding-left: 40px; font-size: 13px; font-weight:500; transition: all 0.2s; background: var(--input-bg); color: var(--text-main);"
                                onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 4px rgba(37,99,235,0.08)'"
                                onblur="setTimeout(() => { this.style.borderColor='#e2e8f0'; this.style.boxShadow='none' }, 200)">
                     </div>
@@ -59,7 +59,7 @@
 
                 <div style="min-width: 160px;">
                     <label style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">Status</label>
-                    <select name="status" style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid #e2e8f0; padding: 0 12px; font-size: 13px; font-weight: 600; cursor: pointer; appearance: none; background: white url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M5%207.5L10%2012.5L15%207.5%22%20stroke%3D%22%2364748B%22%20stroke-width%3D%221.66667%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E') no-repeat right 10px center; background-size: 16px;">
+                    <select name="status" style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid var(--border-color); padding: 0 12px; font-size: 13px; font-weight: 600; cursor: pointer; appearance: none; background: var(--input-bg) url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M5%207.5L10%2012.5L15%207.5%22%20stroke%3D%22%2364748B%22%20stroke-width%3D%221.66667%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E') no-repeat right 10px center; background-size: 16px; color: var(--text-main);">
                         <option value="">All Statuses</option>
                         <option value="present" {% if status_filter == 'present' %}selected{% endif %}>Present Only</option>
                         <option value="absent" {% if status_filter == 'absent' %}selected{% endif %}>Absent Only</option>
@@ -70,13 +70,13 @@
                 <div style="min-width: 130px;">
                     <label style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">From</label>
                     <input type="date" name="start_date" value="{{ start_date|default:'' }}" 
-                           style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid #e2e8f0; padding: 0 12px; font-size: 13px; font-weight: 600;">
+                           style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid var(--border-color); padding: 0 12px; font-size: 13px; font-weight: 600; background: var(--input-bg); color: var(--text-main);">
                 </div>
 
                 <div style="min-width: 130px;">
                     <label style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">To</label>
                     <input type="date" name="end_date" value="{{ end_date|default:'' }}" 
-                           style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid #e2e8f0; padding: 0 12px; font-size: 13px; font-weight: 600;">
+                           style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid var(--border-color); padding: 0 12px; font-size: 13px; font-weight: 600; background: var(--input-bg); color: var(--text-main);">
                 </div>
 
                 <div style="display: flex; gap: 8px;">
@@ -84,7 +84,7 @@
                         <i class="ri-filter-fill"></i> Filter
                     </button>
                     {% if search_query or status_filter or start_date or end_date %}
-                    <a href="{% url 'attendance_list' %}" class="btn" style="height: 38px; border-radius: 10px; background: white; border: 1px solid #e2e8f0; color: #64748b; font-weight: 600; display: flex; align-items: center; padding: 0 12px; font-size: 13px;">
+                    <a href="{% url 'attendance_list' %}" class="btn" style="height: 38px; border-radius: 10px; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; padding: 0 12px; font-size: 13px;">
                         Reset
                     </a>
                     {% endif %}
@@ -94,101 +94,101 @@
 
         <div class="card-body-scroll">
             <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
-                <thead style="background: #fdfdfd; position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 var(--gray-100);">
+                <thead style="background: var(--gray-50); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 var(--border-color);">
                     <tr>
-                        <th style="padding: 16px 32px; text-align: left; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Employee</th>
-                        <th style="padding: 16px 20px; text-align: left; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Work Date</th>
-                        <th style="padding: 16px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Total Duration</th>
-                        <th style="padding: 16px 20px; text-align: left; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Shortfall</th>
-                        <th style="padding: 16px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Compliance</th>
-                        <th style="padding: 16px 32px; text-align: right; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100);">Day Status</th>
+                        <th style="padding: 16px 32px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Employee</th>
+                        <th style="padding: 16px 20px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Work Date</th>
+                        <th style="padding: 16px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Total Duration</th>
+                        <th style="padding: 16px 20px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Shortfall</th>
+                        <th style="padding: 16px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Compliance</th>
+                        <th style="padding: 16px 32px; text-align: right; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Day Status</th>
                     </tr>
                 </thead>
-                <tbody style="background: white;">
+                <tbody style="background: var(--bg-surface);">
                     {% for log in logs %}
-                    <tr style="transition: all 0.25s ease;" onmouseover="this.style.background='#f8fafc'; this.style.transform='scale(1.002)';" onmouseout="this.style.background='white'; this.style.transform='scale(1)';">
-                        <td style="padding: 10px 32px; border-bottom: 1px solid #f1f5f9;">
+                    <tr style="transition: all 0.25s ease;">
+                        <td style="padding: 10px 32px; border-bottom: 1px solid var(--border-color);">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <div style="width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color: white;
                                     background: var(--primary); box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2); flex-shrink: 0; aspect-ratio: 1/1;">
                                     {{ log.employee.full_name|default:log.employee.username|slice:":1"|upper }}
                                 </div>
                                 <div>
-                                    <div style="font-weight: 700; color: #334155; font-size: 13.5px;">{{ log.employee.full_name|default:log.employee.username|upper }}</div>
-                                    <div style="font-size: 10.5px; color: #94a3b8; font-family: monospace; font-weight: 700;">
+                                    <div style="font-weight: 700; color: var(--text-main); font-size: 13.5px;">{{ log.employee.full_name|default:log.employee.username|upper }}</div>
+                                    <div style="font-size: 10.5px; color: var(--text-secondary); font-family: monospace; font-weight: 700;">
                                         {% if log.employee.employee_id %}{{ log.employee.employee_id }}{% else %}EMP-{{ log.employee.pk|stringformat:"03d" }}{% endif %}
                                     </div>
                                 </div>
                             </div>
                         </td>
-                        <td style="padding: 10px 20px; border-bottom: 1px solid #f1f5f9;">
-                            <div style="font-weight: 700; color: #475569; font-size: 13px;">{{ log.date|date:"D, d M Y" }}</div>
-                            <div style="font-size: 10.5px; color: #94a3b8; font-weight: 600;">{{ log.date|date:"l" }}</div>
+                        <td style="padding: 10px 20px; border-bottom: 1px solid var(--border-color);">
+                            <div style="font-weight: 700; color: var(--text-secondary); font-size: 13px;">{{ log.date|date:"D, d M Y" }}</div>
+                            <div style="font-size: 10.5px; color: var(--text-secondary); font-weight: 600;">{{ log.date|date:"l" }}</div>
                         </td>
-                        <td style="padding: 10px 20px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 10px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
                             <div style="font-weight: 800; color: var(--primary); font-size: 13.5px; letter-spacing: -0.01em;">
                                 {{ log.hours_str }}
                             </div>
                         </td>
-                        <td style="padding: 10px 20px; border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 10px 20px; border-bottom: 1px solid var(--border-color);">
                             {% if log.shortfall_minutes > 0 %}
-                                <div style="display: inline-flex; align-items: center; gap: 4px; color: #ef4444; font-weight: 700; font-size: 12px; background: #fef2f2; padding: 2px 8px; border-radius: 4px; border: 1px solid #fee2e2;">
+                                <div style="display: inline-flex; align-items: center; gap: 4px; color: var(--status-rejected-text); font-weight: 700; font-size: 12px; background: var(--status-rejected-bg); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--status-rejected-bg);">
                                     <i class="ri-time-line"></i> {{ log.shortfall_str }}
                                 </div>
                             {% else %}
                                 {% if log.status == 'Present' or log.status == 'HalfDay' %}
-                                    <span style="color: #059669; font-size: 11px; font-weight: 700;">Full Shift Done</span>
+                                    <span style="color: var(--status-approved-text); font-size: 11px; font-weight: 700;">Full Shift Done</span>
                                 {% else %}
-                                    <span style="color: #cbd5e1; font-weight: 800; font-size: 12px;">--</span>
+                                    <span style="color: var(--text-secondary); font-weight: 800; font-size: 12px;">--</span>
                                 {% endif %}
                             {% endif %}
                         </td>
-                        <td style="padding: 10px 20px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 10px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
                             {% if log.status == 'Present' or log.status == 'HalfDay' %}
                                 {% if log.is_compliant %}
-                                <div style="display: inline-flex; align-items: center; gap: 5px; background: #ecfdf5; color: #059669; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid #d1fae5;">
+                                <div style="display: inline-flex; align-items: center; gap: 5px; background: var(--status-approved-bg); color: var(--status-approved-text); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid var(--status-approved-bg);">
                                     <i class="ri-checkbox-circle-fill" style="font-size: 12px;"></i> COMPLIANT
                                 </div>
                                 {% else %}
                                     {% if not log.is_absent %}
-                                    <div style="display: inline-flex; align-items: center; gap: 5px; background: #fffcf0; color: #ca8a04; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid #fef3c7;">
+                                    <div style="display: inline-flex; align-items: center; gap: 5px; background: var(--status-pending-bg); color: var(--status-pending-text); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid var(--status-pending-bg);">
                                         <i class="ri-error-warning-fill" style="font-size: 12px;"></i> SHORT HOURS
                                     </div>
                                     {% else %}
-                                    <span style="color: #cbd5e1; font-weight: 800; font-size: 12px;">--</span>
+                                    <span style="color: var(--text-secondary); font-weight: 800; font-size: 12px;">--</span>
                                     {% endif %}
                                 {% endif %}
                             {% else %}
-                                <span style="color: #cbd5e1; font-weight: 800; font-size: 12px;">--</span>
+                                <span style="color: var(--text-secondary); font-weight: 800; font-size: 12px;">--</span>
                             {% endif %}
                         </td>
-                        <td style="padding: 10px 32px; text-align: right; border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 10px 32px; text-align: right; border-bottom: 1px solid var(--border-color);">
                             {% if log.status == 'Present' %}
-                            <div style="display: inline-flex; align-items: center; gap: 5px; background: #ecfdf5; color: #059669; padding: 4px 14px; border-radius: 20px; font-size: 10px; font-weight: 900; border: 1px solid #d1fae5;">
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: var(--status-approved-bg); color: var(--status-approved-text); padding: 4px 14px; border-radius: 20px; font-size: 10px; font-weight: 900; border: 1px solid var(--status-approved-bg);">
                                 <i class="ri-checkbox-circle-fill" style="font-size: 12px;"></i> PRESENT
                             </div>
                             {% elif log.status == 'Absent' or log.is_absent %}
-                            <div style="display: inline-flex; align-items: center; gap: 5px; background: #fff1f2; color: #be123c; padding: 4px 14px; border-radius: 20px; font-size: 10px; font-weight: 900; border: 1px solid #ffe4e6;">
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: var(--status-rejected-bg); color: var(--status-rejected-text); padding: 4px 14px; border-radius: 20px; font-size: 10px; font-weight: 900; border: 1px solid var(--status-rejected-bg);">
                                 <i class="ri-close-circle-fill" style="font-size: 12px;"></i> ABSENT
                             </div>
                             {% elif log.status == 'WeeklyOff' %}
-                            <div style="display: inline-flex; align-items: center; gap: 5px; background: #f8fafc; color: #64748b; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid #e2e8f0;">
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: var(--gray-50); color: var(--text-secondary); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid var(--border-color);">
                                 <i class="ri-calendar-event-line" style="font-size: 12px;"></i> WEEKLY OFF
                             </div>
                             {% elif log.status == 'Holiday' or log.is_holiday %}
-                            <div style="display: inline-flex; align-items: center; gap: 5px; background: #f0f9ff; color: #0369a1; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid #e0f2fe;">
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid rgba(37, 99, 235, 0.1);">
                                 <i class="ri-sun-fill" style="font-size: 12px;"></i> HOLIDAY
                             </div>
                             {% elif log.status == 'HalfDay' %}
-                            <div style="display: inline-flex; align-items: center; gap: 5px; background: #fffbeb; color: #92400e; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid #fef3c7;">
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: var(--status-pending-bg); color: var(--status-pending-text); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid var(--status-pending-bg);">
                                 <i class="ri-time-line" style="font-size: 12px;"></i> HALF DAY
                             </div>
                             {% elif log.status == 'DISPUTED' %}
-                            <div style="display: inline-flex; align-items: center; gap: 5px; background: #fff1f2; color: #e11d48; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800;">
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: var(--status-rejected-bg); color: var(--status-rejected-text); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800;">
                                 <i class="ri-error-warning-fill" style="font-size: 12px;"></i> DISPUTED
                             </div>
                             {% else %}
-                            <div style="display: inline-flex; align-items: center; gap: 5px; background: #f8fafc; color: #64748b; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800;">
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: var(--gray-50); color: var(--text-secondary); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800;">
                                 {{ log.status|upper }}
                             </div>
                             {% endif %}
@@ -197,11 +197,11 @@
                     {% empty %}
                     <tr>
                         <td colspan="7" style="padding: 100px 32px; text-align: center;">
-                            <div style="width: 80px; height: 80px; background: #f8fafc; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #cbd5e1;">
+                            <div style="width: 80px; height: 80px; background: var(--gray-50); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--gray-400);">
                                 <i class="ri-fingerprint-line" style="font-size: 40px;"></i>
                             </div>
-                            <h3 style="font-size: 18px; font-weight: 800; color: #334155; margin-bottom: 8px;">No Attendance Records</h3>
-                            <p style="color: #94a3b8; font-size: 14px; font-weight:500;">Try broadening your filter criteria or import new records.</p>
+                            <h3 style="font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">No Attendance Records</h3>
+                            <p style="color: var(--text-secondary); font-size: 14px; font-weight:500;">Try broadening your filter criteria or import new records.</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -228,8 +228,8 @@
     top: calc(100% + 8px);
     left: 0;
     right: 0;
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     max-height: 320px;
@@ -267,7 +267,7 @@
 
 .autocomplete-item:hover,
 .autocomplete-item.selected {
-    background: #f1f5f9;
+    background: var(--gray-50);
 }
 
 .autocomplete-avatar {
@@ -290,7 +290,7 @@
 
 .autocomplete-name {
     font-weight: 600;
-    color: var(--gray-900);
+    color: var(--text-main);
     font-size: 14px;
 }
 

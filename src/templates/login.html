@@ -18,6 +18,14 @@
     <!-- Remix Icons -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     
+    <!-- Theme Flash Protection -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('erp_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+    
     <style>
         * {
             margin: 0;
@@ -482,9 +490,204 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Dark Mode Support for Login */
+        html[data-theme="dark"] body {
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+        }
+
+        html[data-theme="dark"] .login-wrapper {
+            background: #1E293B;
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.5);
+        }
+
+        html[data-theme="dark"] .login-form-section {
+            background: #111827;
+        }
+
+        html[data-theme="dark"] .form-title {
+            color: #F8FAFC;
+        }
+
+        html[data-theme="dark"] .form-subtitle {
+            color: #94A3B8;
+        }
+
+        html[data-theme="dark"] .form-label {
+            color: #CBD5E1;
+        }
+
+        html[data-theme="dark"] .form-input {
+            background: #1F2937;
+            border-color: #374151;
+            color: #F1F5F9;
+        }
+
+        html[data-theme="dark"] .form-input:focus {
+            border-color: #3B82F6;
+        }
+
+        html[data-theme="dark"] .login-footer {
+            color: #64748B;
+        }
+
+        html[data-theme="dark"] .login-footer strong {
+            color: #94A3B8;
+        }
+
+        /* Floating Theme Toggle for Login */
+        .login-theme-toggle {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 100;
+        }
+
+        /* Sliding Toggle Styles for Login (Copied from base) */
+        .theme-toggle-slider {
+            width: 80px;
+            height: 40px;
+            background: #ffffff;
+            border-radius: 999px;
+            border: 2px solid #000000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            position: relative;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        html[data-theme="dark"] .theme-toggle-slider {
+            background: #ffffff;
+        }
+
+        .slider-track {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+            pointer-events: none;
+        }
+
+        .track-icon-sun {
+            width: 22px;
+            height: 22px;
+            stroke: #FDB813;
+            stroke-width: 2.5;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .track-icon-moon {
+            width: 20px;
+            height: 20px;
+            color: #000000;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .slider-knob {
+            position: absolute;
+            left: 3px;
+            width: 30px;
+            height: 30px;
+            background: #FDB813;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.4s ease;
+        }
+
+        .knob-icon-sun {
+            width: 18px;
+            height: 18px;
+            stroke: #ffffff;
+            opacity: 1; /* Visible in Light Mode */
+            transition: opacity 0.3s ease, transform 0.4s ease;
+        }
+
+        .knob-icon-moon {
+            width: 18px;
+            height: 18px;
+            color: #ffffff;
+            opacity: 0; /* Hidden in Light Mode */
+            position: absolute;
+            transform: rotate(-30deg);
+            transition: opacity 0.3s ease, transform 0.4s ease;
+        }
+
+        /* Dark State */
+        #loginThemeToggle.dark-mode .slider-knob {
+            transform: translateX(40px);
+            background: #000000;
+        }
+
+        #loginThemeToggle.dark-mode .track-icon-sun {
+            opacity: 1;
+        }
+
+        #loginThemeToggle.dark-mode .track-icon-moon {
+            opacity: 0;
+        }
+
+        #loginThemeToggle.dark-mode .knob-icon-moon {
+            opacity: 1;
+            transform: rotate(0deg);
+        }
+
+        #loginThemeToggle.dark-mode .knob-icon-sun {
+            opacity: 0;
+        }
     </style>
+
 </head>
 <body>
+
+<!-- Floating Theme Toggle for Login -->
+<div class="login-theme-toggle">
+    <div id="loginThemeToggle" class="theme-toggle-slider" title="Switch Theme">
+        <div class="slider-track">
+            <!-- Sun (Left) -->
+            <svg class="track-icon-sun" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <!-- Moon (Right) -->
+            <svg class="track-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </div>
+        <div class="slider-knob">
+            <!-- Sun Icon (Visible in Light Mode) -->
+            <svg class="knob-icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5" fill="white" stroke="none"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <!-- Moon Icon (Visible in Dark Mode) -->
+            <svg class="knob-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </div>
+    </div>
+</div>
 
 <!-- Animated Background Shapes -->
 <div class="bg-shape shape-1"></div>
@@ -584,6 +787,32 @@
 </div>
 
 <script>
+    // Theme Logic for Login
+    (function() {
+        const toggleBtn = document.getElementById('loginThemeToggle');
+        const html = document.documentElement;
+        
+        function applyTheme(theme) {
+            html.setAttribute('data-theme', theme);
+            if (theme === 'dark') {
+                toggleBtn.classList.add('dark-mode');
+            } else {
+                toggleBtn.classList.remove('dark-mode');
+            }
+        }
+
+        // Initialize from localStorage
+        let savedTheme = localStorage.getItem('erp_theme') || 'light';
+        applyTheme(savedTheme);
+
+        toggleBtn.addEventListener('click', function() {
+            let current = html.getAttribute('data-theme');
+            let next = current === 'dark' ? 'light' : 'dark';
+            applyTheme(next);
+            localStorage.setItem('erp_theme', next);
+        });
+    })();
+
     // Toggle Password Visibility
     const togglePassword = document.querySelector('#togglePassword');
     const password = document.querySelector('#passwordInput');

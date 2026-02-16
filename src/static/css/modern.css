@@ -71,12 +71,99 @@
 
     /* Sidebar */
     --sidebar-width: 260px;
-    --sidebar-bg: var(--white);
-    --sidebar-border: var(--gray-200);
+    --sidebar-bg: var(--bg-surface);
+    --sidebar-border: var(--border-color);
 
     /* Premium Touches */
     --glass-bg: rgba(255, 255, 255, 0.7);
     --glass-border: rgba(255, 255, 255, 0.4);
+
+    /* Theme Variables - Default (Light) */
+    --bg-body: var(--gray-50);
+    --bg-surface: var(--white);
+    --text-main: var(--gray-900);
+    --text-secondary: var(--gray-500);
+    --border-color: var(--gray-200);
+    --input-bg: var(--white);
+
+    /* HRM Specific Status Colors (Default/Light) */
+    --status-approved-bg: var(--success-light);
+    --status-approved-text: var(--success);
+    --status-pending-bg: var(--warning-light);
+    --status-pending-text: var(--warning);
+    --status-rejected-bg: var(--error-light);
+    --status-rejected-text: var(--error);
+}
+
+/* Dark Theme Overrides */
+/* Dark Theme Overrides - High Specificity */
+html[data-theme="dark"] {
+    /* Semantic Colors Redefinition */
+    --bg-body: #121212;
+    /* Deep Charcoal */
+    --bg-surface: #1E1E1E;
+    /* Slightly lighter for cards/sidebar */
+    --input-bg: #2A2A2A;
+
+    /* Text Colors */
+    --gray-900: #FFFFFF;
+    --gray-800: #F3F4F6;
+    --gray-700: #E5E7EB;
+    --gray-600: #D1D5DB;
+    --gray-500: #9CA3AF;
+    --gray-400: #6B7280;
+    --gray-300: #4B5563;
+    --gray-200: #374151;
+    /* Borders */
+    --gray-100: #262626;
+    /* Hover states */
+    --gray-50: #121212;
+
+    --text-main: var(--gray-900);
+    --text-secondary: var(--gray-500);
+    --border-color: var(--gray-200);
+
+    /* Sidebar & Glass Overrides */
+    --sidebar-bg: var(--bg-surface);
+    --glass-bg: rgba(30, 30, 30, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+
+    /* Status Badges - Dark Mode (More subtle backgrounds) */
+    --status-approved-bg: rgba(16, 185, 129, 0.2);
+    --status-approved-text: #34D399;
+    /* Lighter green */
+    --status-pending-bg: rgba(245, 158, 11, 0.2);
+    --status-pending-text: #FBBF24;
+    /* Lighter amber */
+    --status-rejected-bg: rgba(239, 68, 68, 0.2);
+    --status-rejected-text: #F87171;
+    /* Lighter red */
+
+    /* Other variable mappings to ensure compatibility */
+    --success-light: var(--status-approved-bg);
+    --success: var(--status-approved-text);
+    --warning-light: var(--status-pending-bg);
+    --warning: var(--status-pending-text);
+    --error-light: var(--status-rejected-bg);
+    --error: var(--status-rejected-text);
+
+    /* Ensure white text on primary buttons stays white */
+    --white: #1E1E1E;
+    /* Remap white to surface color for backgrounds */
+}
+
+/* Smooth Transition for Theme Switch */
+body,
+.sidebar,
+.card,
+.top-bar,
+.form-input,
+.input,
+table,
+th,
+td,
+.stat-card {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
 }
 
 /* ========================================
@@ -91,8 +178,8 @@
 
 body {
     font-family: var(--font-sans);
-    background: var(--gray-50);
-    color: var(--gray-900);
+    background: var(--bg-body);
+    color: var(--text-main);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -110,7 +197,7 @@ body {
 /* Glassmorphism Sidebar */
 .sidebar {
     width: var(--sidebar-width);
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--sidebar-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-right: 1px solid rgba(255, 255, 255, 0.3);
@@ -126,7 +213,7 @@ body {
 }
 
 .logged-in .sidebar {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
+    background: var(--sidebar-bg);
 }
 
 .sidebar-header {
@@ -324,7 +411,7 @@ body {
 
 .top-bar {
     height: 80px !important;
-    background: var(--white);
+    background: var(--bg-surface);
     border-bottom: 1px solid var(--gray-200);
     padding: 0 var(--spacing-lg);
     display: flex;
@@ -453,7 +540,7 @@ body:has(.viewport-fill) {
 .viewport-fill .content-area {
     overflow: hidden;
     /* Prevent page scrolling in viewport-fill mode */
-    background: #f8fafc;
+    background: var(--bg-body);
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -492,7 +579,7 @@ body:has(.viewport-fill) {
    CARDS & COMPONENTS
    ======================================== */
 .card {
-    background: var(--white);
+    background: var(--bg-surface);
     border-radius: var(--radius-lg);
     padding: var(--spacing-md);
     box-shadow: var(--shadow);
@@ -601,7 +688,7 @@ body:has(.viewport-fill) {
 }
 
 .stat-card {
-    background: var(--white);
+    background: var(--bg-surface);
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
@@ -702,7 +789,7 @@ body:has(.viewport-fill) {
 
 .btn-primary {
     background: var(--primary);
-    color: var(--white);
+    color: #FFFFFF;
 }
 
 .btn-primary:hover {
@@ -772,7 +859,7 @@ body:has(.viewport-fill) {
    ======================================== */
 
 .table-container {
-    background: var(--white);
+    background: var(--bg-surface);
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow);
@@ -785,7 +872,7 @@ body:has(.viewport-fill) {
     align-items: center;
     gap: 16px;
     margin-bottom: 24px;
-    background: white;
+    background: var(--bg-surface);
     padding: 16px;
     border-radius: var(--radius-lg);
     border: 1px solid var(--gray-200);
@@ -819,14 +906,14 @@ body:has(.viewport-fill) {
     border: 1px solid var(--gray-200);
     border-radius: 10px;
     font-size: 14px;
-    background: #F8FAFC;
+    background: var(--input-bg);
     transition: all 0.2s;
 }
 
 .search-input-wrapper input:focus {
     outline: none;
     border-color: var(--primary);
-    background: white;
+    background: var(--input-bg);
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.05);
 }
 
@@ -836,7 +923,7 @@ body:has(.viewport-fill) {
     border-radius: 10px;
     font-size: 14px;
     color: var(--gray-700);
-    background: white;
+    background: var(--input-bg);
     cursor: pointer;
     min-width: 150px;
     appearance: none;
@@ -872,7 +959,7 @@ body:has(.viewport-fill) {
 }
 
 .view-btn.active {
-    background: white;
+    background: var(--bg-surface);
     color: var(--primary);
     box-shadow: var(--shadow-sm);
 }
@@ -899,7 +986,7 @@ body:has(.viewport-fill) {
 .emp-id-text {
     font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
-    color: var(--gray-500);
+    color: var(--text-secondary);
     letter-spacing: -0.5px;
 }
 
@@ -1002,7 +1089,7 @@ body:has(.viewport-fill) {
     padding: 6px 12px;
     border: 1px solid var(--gray-200);
     border-radius: 6px;
-    background: white;
+    background: var(--bg-surface);
     color: var(--gray-700);
     font-size: 14px;
     cursor: pointer;
@@ -1097,18 +1184,18 @@ tr:hover {
 }
 
 .badge-success {
-    background: var(--success-light);
-    color: var(--success);
+    background: var(--status-approved-bg);
+    color: var(--status-approved-text);
 }
 
 .badge-warning {
-    background: var(--warning-light);
-    color: var(--warning);
+    background: var(--status-pending-bg);
+    color: var(--status-pending-text);
 }
 
 .badge-error {
-    background: var(--error-light);
-    color: var(--error);
+    background: var(--status-rejected-bg);
+    color: var(--status-rejected-text);
 }
 
 .badge-info {
@@ -1705,4 +1792,764 @@ tbody tr:hover {
 
 .shadow-strong {
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Theme Switcher Styles */
+.theme-select {
+    padding: 8px 12px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    background: var(--input-bg);
+    color: var(--text-main);
+    font-size: 14px;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+    min-width: 120px;
+}
+
+.theme-select:hover {
+    border-color: var(--primary);
+}
+
+.theme-select:focus {
+    border-color: var(--primary);
+}
+
+
+/* ========================================
+   PREMIUM THEME TOGGLE
+   ======================================== */
+
+/* Old button-style toggle (kept for reference) */
+.theme-toggle-btn {
+    margin-right: 16px;
+    position: relative;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #FFED4B 0%, #FFB800 100%);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 4px 12px rgba(255, 184, 0, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.theme-toggle-btn:hover {
+    transform: scale(1.05) rotate(10deg);
+    box-shadow: 0 6px 16px rgba(255, 184, 0, 0.5);
+}
+
+.theme-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+/* Icon Styles */
+.icon-sun,
+.icon-moon {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    color: #fff;
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.1));
+}
+
+/* Light Mode Default */
+.icon-sun {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+}
+
+.icon-moon {
+    opacity: 0;
+    transform: scale(0.5) rotate(-90deg);
+}
+
+.theme-toggle-btn.dark-mode {
+    background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
+    box-shadow: 0 4px 12px rgba(109, 40, 217, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
+}
+
+.theme-toggle-btn.dark-mode:hover {
+    box-shadow: 0 6px 16px rgba(109, 40, 217, 0.6);
+}
+
+.theme-toggle-btn.dark-mode .icon-sun {
+    opacity: 0;
+    transform: scale(0.5) rotate(90deg);
+}
+
+.theme-toggle-btn.dark-mode .icon-moon {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+}
+
+/* ========================================
+   BOLD SLIDING TOGGLE (ACTIVE)
+   ======================================== */
+.theme-toggle-slider {
+    margin-right: 16px;
+    position: relative;
+    width: 80px;
+    height: 40px;
+    background: #ffffff;
+    border-radius: 999px;
+    border: 2px solid #000000;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    box-shadow: none;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+/* Track Icons Layer */
+.slider-track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Sun on Track (Left) - Visible in Dark Mode */
+.track-icon-sun {
+    width: 22px;
+    height: 22px;
+    stroke: #FDB813;
+    stroke-width: 2.5;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Moon on Track (Right) - Visible in Light Mode */
+.track-icon-moon {
+    width: 20px;
+    height: 20px;
+    color: #000000;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+/* The Slider Knob */
+.slider-knob {
+    position: absolute;
+    left: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    background: #FDB813;
+    border-radius: 50%;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.4s ease;
+}
+
+/* Icons INSIDE Knob */
+.knob-icon-sun {
+    width: 18px;
+    height: 18px;
+    stroke: #ffffff;
+    opacity: 1;
+    /* Visible in Light Mode */
+    transition: opacity 0.3s ease, transform 0.4s ease;
+}
+
+.knob-icon-moon {
+    width: 18px;
+    height: 18px;
+    color: #ffffff;
+    opacity: 0;
+    /* Hidden in Light Mode */
+    position: absolute;
+    /* Stacked with sun */
+    transform: rotate(-30deg);
+    transition: opacity 0.3s ease, transform 0.4s ease;
+}
+
+/* Dark Mode State */
+.theme-toggle-slider.dark-mode {
+    border-color: #000000;
+}
+
+.theme-toggle-slider.dark-mode .slider-knob {
+    transform: translate(40px, -50%);
+    background: #000000;
+}
+
+.theme-toggle-slider.dark-mode .track-icon-sun {
+    opacity: 1;
+}
+
+.theme-toggle-slider.dark-mode .track-icon-moon {
+    opacity: 0;
+}
+
+.theme-toggle-slider.dark-mode .knob-icon-moon {
+    opacity: 1;
+    transform: rotate(0deg);
+}
+
+.theme-toggle-slider.dark-mode .knob-icon-sun {
+    opacity: 0;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+    .theme-btn span {
+        display: none;
+    }
+
+    .theme-btn {
+        padding: 0 10px;
+    }
+}
+
+/* ========================================
+   DARK MODE ENFORCEMENT (GLOBAL OVERRIDES)
+   Ensures visibility across all pages
+   ======================================== */
+
+html[data-theme="dark"] body {
+    background-color: #121212 !important;
+    color: #e0e0e0 !important;
+}
+
+/* Ensure inputs utilize dark theme variables */
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] .form-control,
+html[data-theme="dark"] .form-select,
+html[data-theme="dark"] .form-input {
+    background-color: #2A2A2A !important;
+    border-color: #4B5563 !important;
+    color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+    color: #9CA3AF !important;
+}
+
+/* Ensure cards utilize dark theme variables */
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .card-header,
+html[data-theme="dark"] .card-footer {
+    background-color: #1E1E1E !important;
+    border-color: #374151 !important;
+    color: #e0e0e0 !important;
+}
+
+/* Tables */
+html[data-theme="dark"] table,
+html[data-theme="dark"] th,
+html[data-theme="dark"] td {
+    border-color: #374151 !important;
+}
+
+html[data-theme="dark"] th {
+    background-color: #262626 !important;
+    color: #D1D5DB !important;
+}
+
+html[data-theme="dark"] td {
+    color: #9CA3AF !important;
+}
+
+html[data-theme="dark"] tr:hover {
+    background-color: #2A2A2A !important;
+}
+
+/* Modal / Dialog backgrounds */
+html[data-theme="dark"] .modal-content,
+html[data-theme="dark"] .dropdown-menu,
+html[data-theme="dark"] .popover {
+    background-color: #1E1E1E !important;
+    border-color: #374151 !important;
+}
+
+/* Typography Overrides for Visibility */
+html[data-theme="dark"] h1,
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3,
+html[data-theme="dark"] h4,
+html[data-theme="dark"] h5,
+html[data-theme="dark"] h6 {
+    color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] p,
+html[data-theme="dark"] span,
+html[data-theme="dark"] label,
+html[data-theme="dark"] .text-muted {
+    color: #D1D5DB !important;
+}
+
+html[data-theme="dark"] a {
+    color: #60A5FA;
+    /* Blue-400 */
+}
+
+/* Buttons */
+html[data-theme="dark"] .btn-secondary,
+html[data-theme="dark"] .btn-light {
+    background-color: #374151 !important;
+    color: #FFFFFF !important;
+    border-color: #4B5563 !important;
+}
+
+html[data-theme="dark"] .btn-primary {
+    color: #FFFFFF !important;
+}
+
+/* Scrollbars */
+html[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: #121212;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: #4B5563;
+    border-radius: 4px;
+}
+
+/* ========================================
+   EMPLOYEE DIRECTORY SPECIFIC DARK MODE OVERRIDES
+   Targeting inline styles and specific classes from employee_list.html
+   ======================================== */
+
+html[data-theme="dark"] .glass-card {
+    background: #1E1E1E !important;
+    border-color: #374151 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+/* Page Header Text */
+html[data-theme="dark"] .glass-card h1 {
+    color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] .glass-card p {
+    color: #9CA3AF !important;
+}
+
+/* Stat Pill in Header */
+html[data-theme="dark"] .stat-pill {
+    background: rgba(37, 99, 235, 0.1) !important;
+    border-color: rgba(37, 99, 235, 0.2) !important;
+}
+
+html[data-theme="dark"] .stat-pill span:last-child {
+    color: #FFFFFF !important;
+}
+
+/* Search Functionality */
+html[data-theme="dark"] .search-box-wrapper i {
+    color: #9CA3AF !important;
+}
+
+html[data-theme="dark"] .premium-input,
+html[data-theme="dark"] .premium-select {
+    background: #2A2A2A !important;
+    border-color: #4B5563 !important;
+    color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] .premium-input:focus,
+html[data-theme="dark"] .premium-select:focus {
+    border-color: #3B82F6 !important;
+}
+
+/* Premium Table Specifics */
+html[data-theme="dark"] .premium-table thead {
+    background: #262626 !important;
+    box-shadow: 0 1px 0 #374151 !important;
+}
+
+html[data-theme="dark"] .premium-table th {
+    background: #262626 !important;
+    color: #D1D5DB !important;
+    border-bottom: 1px solid #374151 !important;
+}
+
+html[data-theme="dark"] .premium-table td {
+    border-bottom-color: #374151 !important;
+    color: #D1D5DB !important;
+}
+
+html[data-theme="dark"] .premium-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Table Content Items */
+html[data-theme="dark"] .premium-table div[style*="color: var(--gray-900)"] {
+    color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] .premium-table div[style*="color: var(--gray-400)"] {
+    color: #9CA3AF !important;
+}
+
+html[data-theme="dark"] .badge.secondary,
+html[data-theme="dark"] .dept-pill {
+    background: #374151 !important;
+    color: #E5E7EB !important;
+}
+
+html[data-theme="dark"] .premium-avatar {
+    box-shadow: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Empty State */
+html[data-theme="dark"] .premium-table h4 {
+    color: #D1D5DB !important;
+}
+
+html[data-theme="dark"] .premium-table .ri-group-line {
+    color: #4B5563 !important;
+}
+
+/* ========================================
+   SYSTEM ADMINISTRATION DARK MODE OVERRIDES
+   ======================================== */
+
+html[data-theme="dark"] .admin-module-card {
+    background: #1E1E1E !important;
+    border-color: #374151 !important;
+}
+
+html[data-theme="dark"] .admin-module-card:hover {
+    border-color: #3B82F6 !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2) !important;
+}
+
+html[data-theme="dark"] .admin-module-info h4 {
+    color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] .admin-module-info p {
+    color: #9CA3AF !important;
+}
+
+html[data-theme="dark"] .section-title,
+html[data-theme="dark"] h3.section-title {
+    color: #FFFFFF !important;
+}
+
+/* Stat cards in admin page */
+html[data-theme="dark"] .stat-card .stat-value {
+    color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] .stat-card .stat-label {
+    color: #9CA3AF !important;
+}
+
+html[data-theme="dark"] .stat-card div[style*="color: var(--gray-500)"] {
+    color: #9CA3AF !important;
+}
+
+/* Button outline variant */
+html[data-theme="dark"] .btn-outline {
+    background: transparent !important;
+    border: 1px solid #4B5563 !important;
+    color: #E5E7EB !important;
+}
+
+html[data-theme="dark"] .btn-outline:hover {
+    background: #374151 !important;
+    border-color: #3B82F6 !important;
+}
+
+/* ========================================
+   DASHBOARD / ATTENDANCE / LEAVE OVERRIDES
+   ======================================== */
+
+/* Dashboard Tiles & Stat Cards */
+html[data-theme="dark"] .action-tile {
+    background: #2A2A2A !important;
+    border-color: #374151 !important;
+}
+
+html[data-theme="dark"] .action-tile span {
+    color: #D1D5DB !important;
+}
+
+/* Horizontal separators and indicator bars */
+html[data-theme="dark"] div[style*="background: var(--gray-50)"],
+html[data-theme="dark"] thead[style*="background: var(--gray-50)"],
+html[data-theme="dark"] section[style*="background: var(--gray-50)"] {
+    background: #262626 !important;
+}
+
+html[data-theme="dark"] div[style*="border-bottom: 1px solid var(--gray-100)"],
+html[data-theme="dark"] div[style*="border-bottom: 1px solid var(--border-color)"] {
+    border-bottom-color: #374151 !important;
+}
+
+/* Form controls padding for better integration */
+html[data-theme="dark"] .form-group label {
+    color: #9CA3AF !important;
+}
+
+/* Attendance & Status Visibility */
+html[data-theme="dark"] .status-pill,
+html[data-theme="dark"] .badge {
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Ensure secondary badges are visible */
+html[data-theme="dark"] .badge.secondary,
+html[data-theme="dark"] .badge-secondary {
+    background: #374151 !important;
+    color: #D1D5DB !important;
+}
+
+/* Timeline/Holiday items on dashboard */
+html[data-theme="dark"] div[style*="background: var(--gray-50)"] span[style*="color: var(--primary)"] {
+    color: #60A5FA !important;
+}
+
+/* Extra specificity for card headers with inline surface bg */
+html[data-theme="dark"] .card-header[style*="background: var(--bg-surface)"],
+html[data-theme="dark"] .card[style*="background: var(--bg-surface)"] {
+    background-color: #1E1E1E !important;
+}
+
+/* Text gray-700 and gray-900 in dark mode */
+html[data-theme="dark"] div[style*="color: var(--gray-700)"],
+html[data-theme="dark"] span[style*="color: var(--gray-700)"] {
+    color: #D1D5DB !important;
+}
+
+html[data-theme="dark"] div[style*="color: var(--gray-900)"],
+html[data-theme="dark"] span[style*="color: var(--gray-900)"] {
+    color: #FFFFFF !important;
+}
+
+/* Leave Balance Cards */
+html[data-theme="dark"] .stat-change.positive {
+    background: rgba(16, 185, 129, 0.1) !important;
+    color: #10B981 !important;
+}
+
+html[data-theme="dark"] .stat-change.negative {
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: #F87171 !important;
+}
+
+/* Overtime Manage Page (Tailwind fallback) */
+html[data-theme="dark"] .bg-blue-50 {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+html[data-theme="dark"] .text-blue-700 {
+    color: #60A5FA !important;
+}
+
+/* ========================================
+   BROAD INLINE STYLE OVERRIDES
+   Targeting common hardcoded light colors
+   ======================================== */
+
+html[data-theme="dark"] div[style*="background: #f8fafc"],
+html[data-theme="dark"] thead[style*="background: #f8fafc"],
+html[data-theme="dark"] section[style*="background: #f8fafc"],
+html[data-theme="dark"] div[style*="background: #FAFBFC"],
+html[data-theme="dark"] div[style*="background: #fafbfc"],
+html[data-theme="dark"] div[style*="background: white"],
+html[data-theme="dark"] div[style*="background: #FFFFFF"],
+html[data-theme="dark"] div[style*="background:#FFFFFF"],
+html[data-theme="dark"] .card-body-scroll {
+    background: #1E1E1E !important;
+}
+
+html[data-theme="dark"] div[style*="background: #f8fafc"] {
+    background: #262626 !important;
+}
+
+html[data-theme="dark"] div[style*="border: 1px solid #f1f5f9"],
+html[data-theme="dark"] div[style*="border: 1px solid #e2e8f0"],
+html[data-theme="dark"] td[style*="border-bottom: 1px solid #f1f5f9"],
+html[data-theme="dark"] th[style*="border-bottom: 1px solid #e2e8f0"],
+html[data-theme="dark"] div[style*="border-bottom: 1px solid #f1f5f9"] {
+    border-color: #374151 !important;
+}
+
+html[data-theme="dark"] h1[style*="color: #1e293b"],
+html[data-theme="dark"] h2[style*="color: #0F172A"],
+html[data-theme="dark"] h3[style*="color: #1e293b"],
+html[data-theme="dark"] h4[style*="color: #334155"],
+html[data-theme="dark"] div[style*="color: #1e293b"],
+html[data-theme="dark"] div[style*="color: #334155"],
+html[data-theme="dark"] div[style*="color: #0F172A"],
+html[data-theme="dark"] span[style*="color: #334155"] {
+    color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] p[style*="color: #64748b"],
+html[data-theme="dark"] div[style*="color: #64748b"],
+html[data-theme="dark"] span[style*="color: #64748b"],
+html[data-theme="dark"] label[style*="color: #64748b"] {
+    color: #9CA3AF !important;
+}
+
+html[data-theme="dark"] input[style*="border: 1px solid #e2e8f0"],
+html[data-theme="dark"] select[style*="border: 1px solid #e2e8f0"] {
+    background: #2A2A2A !important;
+    border-color: #4B5563 !important;
+    color: #FFFFFF !important;
+}
+
+/* Secondary Button Inlines */
+html[data-theme="dark"] a[style*="background: #f1f5f9"],
+html[data-theme="dark"] div[style*="background: #f1f5f9"],
+html[data-theme="dark"] span[style*="background: #f1f5f9"] {
+    background: #374151 !important;
+    color: #D1D5DB !important;
+}
+
+/* Specific button outline override for inlines */
+html[data-theme="dark"] a.btn-outline[style*="border-color: #e2e8f0"],
+html[data-theme="dark"] a.btn-outline[style*="border-color: var(--border-color)"] {
+    border-color: #4B5563 !important;
+    color: #E5E7EB !important;
+}
+
+/* Fix for table rows with onmouseover inlines */
+html[data-theme="dark"] tr:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Specific Badge colors in dark mode */
+html[data-theme="dark"] span[style*="background: #e0f2fe"] {
+    background: #0C4A6E !important;
+    color: #7DD3FC !important;
+}
+
+html[data-theme="dark"] span[style*="background: #f1f5f9"] {
+    background: #374151 !important;
+    color: #D1D5DB !important;
+}
+
+/* Utility buttons (like trash bin) */
+html[data-theme="dark"] button[style*="background: #fff1f2"] {
+    background: #4C0519 !important;
+    color: #FDA4AF !important;
+}
+
+/* Card titles and headers extra specificity */
+html[data-theme="dark"] .card-title,
+html[data-theme="dark"] .form-label {
+    color: #F8FAFC !important;
+}
+
+/* Ensure empty states are dark */
+html[data-theme="dark"] div[style*="background: #f8fafc"] i[style*="color: #cbd5e1"] {
+    color: #4B5563 !important;
+}
+
+/* Audit Logs & System Info Boxes */
+html[data-theme="dark"] div[style*="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)"] {
+    background: linear-gradient(135deg, #064E3B 0%, #065F46 100%) !important;
+    border-color: #065641 !important;
+}
+
+html[data-theme="dark"] h4[style*="color: #065F46"],
+html[data-theme="dark"] p[style*="color: #047857"] {
+    color: #D1FAE5 !important;
+}
+
+html[data-theme="dark"] div[style*="background: linear-gradient(135deg, #EFF6FF 0%, #F0F9FF 100%)"] {
+    background: #262626 !important;
+}
+
+/* Fix for Select inputs in system audit */
+html[data-theme="dark"] select.form-select[style*="background: white"] {
+    background: #2A2A2A !important;
+    color: #FFFFFF !important;
+    border-color: #4B5563 !important;
+}
+
+/* Detailed changes box in audit logs */
+html[data-theme="dark"] details div[style*="background: var(--gray-50)"] {
+    background: #121212 !important;
+    border-color: #374151 !important;
+}
+
+html[data-theme="dark"] details div div[style*="border-bottom: 1px solid var(--gray-200)"] {
+    border-bottom-color: #374151 !important;
+}
+
+/* Visibility for Audit text items */
+html[data-theme="dark"] div[style*="color: var(--gray-900)"],
+html[data-theme="dark"] td[style*="color: var(--gray-900)"] {
+    color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] td[style*="color: var(--gray-600)"],
+html[data-theme="dark"] span[style*="color: var(--gray-600)"] {
+    color: #D1D5DB !important;
+}
+
+/* Badge specific for audit logout */
+html[data-theme="dark"] span[style*="background: var(--gray-100)"][style*="color: var(--gray-700)"] {
+    background: #374151 !important;
+    color: #D1D5DB !important;
+}
+
+/* Ensure empty state icons are visible */
+html[data-theme="dark"] div[style*="background: white"] i[style*="color: var(--primary)"] {
+    color: #60A5FA !important;
+}
+
+/* Badge & Status Specific Dark Mode Fixes */
+html[data-theme="dark"] .badge-success {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #34D399 !important;
+}
+
+html[data-theme="dark"] .badge-warning {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #FBBF24 !important;
+}
+
+html[data-theme="dark"] .badge-error {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #F87171 !important;
+}
+
+html[data-theme="dark"] .badge-info {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #60A5FA !important;
+}
+
+/* Hardcoded info tags and module labels in Audit Logs */
+html[data-theme="dark"] span[style*="background: var(--info-light)"] {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #93C5FD !important;
+}
+
+html[data-theme="dark"] div[style*="background: #e0f2fe"],
+html[data-theme="dark"] span[style*="background: #e0f2fe"] {
+    background: #0C4A6E !important;
+    color: #7DD3FC !important;
 }

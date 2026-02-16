@@ -9,6 +9,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
     tailwind.config = {
+        darkMode: 'class',
         theme: {
             extend: {
                 colors: {
@@ -56,36 +57,36 @@
     
     <!-- Top Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 shrink-0">
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 text-xl">
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4 transition-colors">
+            <div class="w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-xl">
                 <i class="ri-team-line"></i>
             </div>
             <div>
-                <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">Total Staff W/ OT</p>
-                <h3 class="text-xl font-bold text-gray-900">{{ total_staff }}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider">Total Staff W/ OT</p>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ total_staff }}</h3>
             </div>
         </div>
         
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 text-xl">
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4 transition-colors">
+            <div class="w-12 h-12 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xl">
                  <i class="ri-time-line"></i>
             </div>
             <div>
-                <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">Approved OT (This Month)</p>
-                <h3 class="text-xl font-bold text-gray-900">
+                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider">Approved OT (This Month)</p>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">
                     <span id="total-ot-display">{{ total_ot_hours }}</span> hrs
                 </h3>
             </div>
         </div>
         
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 md:col-span-2">
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4 md:col-span-2 transition-colors">
             <div class="flex-1">
-                 <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Quick Actions</p>
+                 <p class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider mb-1">Quick Actions</p>
                  <div class="flex gap-2">
-                     <button type="button" onclick="autoFillOT()" class="px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-100 transition-colors">
+                     <button type="button" onclick="autoFillOT()" class="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-bold rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors">
                          <i class="ri-checkbox-multiple-line mr-1"></i> Toggle All
                      </button>
-                     <button type="button" onclick="clearUnsaved()" class="px-3 py-1.5 bg-gray-50 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-100 transition-colors">
+                     <button type="button" onclick="clearUnsaved()" class="px-3 py-1.5 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                          <i class="ri-refresh-line mr-1"></i> Reset
                      </button>
                  </div>
@@ -94,24 +95,24 @@
     </div>
 
     <!-- Filters Bar -->
-    <div class="flex flex-wrap gap-4 justify-between items-center mb-4 shrink-0 bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
+    <div class="flex flex-wrap gap-4 justify-between items-center mb-4 shrink-0 bg-white dark:bg-gray-800 p-2 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
         <form method="get" class="flex flex-wrap gap-2 items-center w-full md:w-auto">
              <div class="relative group">
                 <i class="ri-calendar-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
                 <input type="month" name="month" value="{{ selected_month }}" 
-                       class="pl-10 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all hover:bg-white"
+                       class="pl-10 pr-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 focus:border-blue-500 outline-none transition-all hover:bg-white dark:hover:bg-gray-800"
                        onchange="this.form.submit()">
             </div>
             
             <div class="relative group flex-1 md:w-64">
                  <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
                  <input type="text" name="search" value="{{ search_query }}" placeholder="Search by name or ID..." 
-                        class="w-full pl-10 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all hover:bg-white"
+                        class="w-full pl-10 pr-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 focus:border-blue-500 outline-none transition-all hover:bg-white dark:hover:bg-gray-800 dark:text-white"
                         onblur="this.form.submit()">
             </div>
         </form>
         
-        <div class="flex items-center gap-2 text-xs text-gray-500 font-medium px-2">
+        <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 font-medium px-2">
             <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Potential OT</span>
             <span class="flex items-center gap-1 ml-2"><span class="w-2 h-2 rounded-full bg-green-500"></span> Approved</span>
             <span class="flex items-center gap-1 ml-2"><span class="w-2 h-2 rounded-full bg-gray-400"></span> Paid/Locked</span>
@@ -119,27 +120,27 @@
     </div>
 
     <!-- Main Table -->
-    <form method="post" id="ot-form" class="flex-1 flex flex-col min-h-0 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative">
+    <form method="post" id="ot-form" class="flex-1 flex flex-col min-h-0 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden relative transition-colors">
         {% csrf_token %}
         
         <div class="overflow-auto custom-scrollbar flex-1 relative">
             <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-50/90 backdrop-blur sticky top-0 z-20 border-b border-gray-200">
+                <thead class="bg-gray-50/90 dark:bg-gray-900/90 backdrop-blur sticky top-0 z-20 border-b border-gray-200 dark:border-gray-700">
                     <tr>
-                        <th class="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider w-12 text-center">#</th>
-                        <th class="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Employee</th>
-                        <th class="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date & Shift</th>
-                        <th class="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Work Hrs</th>
-                        <th class="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">
+                        <th class="py-3 px-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12 text-center">#</th>
+                        <th class="py-3 px-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Employee</th>
+                        <th class="py-3 px-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date & Shift</th>
+                        <th class="py-3 px-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Work Hrs</th>
+                        <th class="py-3 px-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">
                             Extra Time <i class="ri-question-line text-gray-400 text-[10px]" title="Time worked beyond 8 hours"></i>
                         </th>
-                        <th class="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-40">Consider OT</th>
-                        <th class="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-24">Status</th>
+                        <th class="py-3 px-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center w-40">Consider OT</th>
+                        <th class="py-3 px-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center w-24">Status</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 bg-white">
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800 transition-colors">
                     {% for log in logs %}
-                    <tr class="hover:bg-gray-50/80 transition-colors group">
+                    <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-700/50 transition-colors group">
                         <td class="py-3 px-4 text-xs text-gray-400 text-center font-mono">
                             {{ forloop.counter }}
                         </td>
@@ -152,8 +153,8 @@
                                     {{ log.employee.full_name|default:log.employee.username|slice:":1"|upper }}
                                 </div>
                                 <div>
-                                    <div class="font-bold text-gray-800 text-sm leading-tight">{{ log.employee.full_name|default:log.employee.username }}</div>
-                                    <div class="text-[11px] text-gray-400 font-mono mt-0.5">{{ log.employee.employee_id|default:"-" }}</div>
+                                    <div class="font-bold text-gray-800 dark:text-gray-200 text-sm leading-tight">{{ log.employee.full_name|default:log.employee.username }}</div>
+                                    <div class="text-[11px] text-gray-400 dark:text-gray-500 font-mono mt-0.5">{{ log.employee.employee_id|default:"-" }}</div>
                                 </div>
                             </div>
                         </td>
@@ -161,12 +162,12 @@
                         <!-- Date -->
                         <td class="py-3 px-4">
                             <div class="flex flex-col">
-                                <span class="text-xs font-bold text-gray-700">{{ log.date|date:"D, M d" }}</span>
+                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">{{ log.date|date:"D, M d" }}</span>
                                 {% if log.check_in %}
                                 <div class="flex items-center gap-1.5 mt-1">
-                                    <span class="text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">{{ log.check_in|date:"H:i" }}</span>
-                                    <i class="ri-arrow-right-line text-gray-300 text-[10px]"></i>
-                                    <span class="text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">{{ log.check_out|default:"?" }}</span>
+                                    <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{{ log.check_in|date:"H:i" }}</span>
+                                    <i class="ri-arrow-right-line text-gray-300 dark:text-gray-600 text-[10px]"></i>
+                                    <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{{ log.check_out|default:"?" }}</span>
                                 </div>
                                 {% else %}
                                 <span class="text-[10px] text-red-400 font-medium">Missing Punch</span>
@@ -176,7 +177,7 @@
                         
                         <!-- Work Hrs -->
                         <td class="py-3 px-4 text-center">
-                            <span class="text-sm font-bold font-mono tracking-tight text-gray-700">
+                            <span class="text-sm font-bold font-mono tracking-tight text-gray-700 dark:text-gray-300">
                                 {{ log.hours_str }}
                             </span>
                         </td>
@@ -185,11 +186,11 @@
                         <td class="py-3 px-4 text-center">
                             {% with extra=log.total_work_minutes|add:"-480" %}
                                 {% if extra > 0 %}
-                                    <span class="inline-flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-full shadow-sm data-extra" data-val="{{ extra }}">
+                                    <span class="inline-flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40 border border-blue-100 dark:border-blue-800/50 px-2.5 py-1 rounded-full shadow-sm data-extra" data-val="{{ extra }}">
                                         +{{ extra }}m
                                     </span>
                                 {% else %}
-                                    <span class="text-gray-300 text-xs font-medium">-</span>
+                                    <span class="text-gray-300 dark:text-gray-600 text-xs font-medium">-</span>
                                 {% endif %}
                             {% endwith %}
                         </td>
@@ -199,8 +200,8 @@
                             <input type="hidden" name="log_ids" value="{{ log.id }}">
                              {% if log.is_locked %}
                                 <div class="text-right pr-2">
-                                     <span class="text-sm font-bold text-gray-700 font-mono">{{ log.approved_overtime_minutes }}</span>
-                                     <span class="text-[10px] text-gray-400 ml-1">mins</span>
+                                     <span class="text-sm font-bold text-gray-700 dark:text-gray-300 font-mono">{{ log.approved_overtime_minutes }}</span>
+                                     <span class="text-[10px] text-gray-400 dark:text-gray-500 ml-1">mins</span>
                                 </div>
                             {% else %}
                                 {% with extra=log.total_work_minutes|add:"-480" %}
@@ -213,13 +214,13 @@
                                                class="sr-only peer ot-checkbox"
                                                data-extra="{{ extra }}"
                                                {% if log.approved_overtime_minutes > 0 %}checked{% endif %}>
-                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none ring-offset-2 peer-focus:ring-2 peer-focus:ring-blue-100 rounded-full peer dark:bg-gray-200 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 shadow-sm transition-colors hover:bg-gray-300"></div>
-                                        <span class="ml-2 text-xs font-medium text-gray-400 peer-checked:text-blue-600 transition-colors hidden sm:inline-block w-16 group-hover/check:text-gray-500 peer-checked:font-bold">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none ring-offset-2 peer-focus:ring-2 peer-focus:ring-blue-100 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 shadow-sm transition-colors hover:bg-gray-300 dark:hover:bg-gray-600"></div>
+                                        <span class="ml-2 text-xs font-medium text-gray-400 dark:text-gray-500 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 transition-colors hidden sm:inline-block w-16 group-hover/check:text-gray-500 dark:group-hover/check:text-gray-300 peer-checked:font-bold">
                                             {% if log.approved_overtime_minutes > 0 %}Consider{% else %}Ignore{% endif %}
                                         </span>
                                     </label>
                                     {% else %}
-                                        <span class="text-xs text-gray-300 italic">No OT</span>
+                                        <span class="text-xs text-gray-300 dark:text-gray-600 italic">No OT</span>
                                     {% endif %}
                                 </div>
                                 {% endwith %}
@@ -229,11 +230,11 @@
                         <!-- Status -->
                         <td class="py-3 px-4 text-center">
                             {% if log.is_locked %}
-                                <div class="w-8 h-8 mx-auto bg-gray-100 text-gray-400 rounded-full flex items-center justify-center border border-gray-200" title="Paid/Locked">
+                                <div class="w-8 h-8 mx-auto bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 rounded-full flex items-center justify-center border border-gray-200 dark:border-gray-600" title="Paid/Locked">
                                     <i class="ri-lock-fill text-sm"></i>
                                 </div>
                             {% else %}
-                                <div class="status-icon w-8 h-8 mx-auto rounded-full flex items-center justify-center transition-all duration-300 {% if log.approved_overtime_minutes > 0 %}bg-green-100 text-green-600 scale-100 shadow-sm{% else %}bg-transparent text-gray-300 scale-90{% endif %}">
+                                <div class="status-icon w-8 h-8 mx-auto rounded-full flex items-center justify-center transition-all duration-300 {% if log.approved_overtime_minutes > 0 %}bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 scale-100 shadow-sm{% else %}bg-transparent text-gray-300 dark:text-gray-600 scale-90{% endif %}">
                                     <i class="{% if log.approved_overtime_minutes > 0 %}ri-check-line font-bold{% else %}ri-subtract-line{% endif %} text-lg"></i>
                                 </div>
                             {% endif %}
@@ -242,11 +243,11 @@
                     {% empty %}
                     <tr>
                         <td colspan="7" class="py-20 text-center">
-                            <div class="flex flex-col items-center justify-center text-gray-400">
-                                <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                                    <i class="ri-filter-off-line text-3xl text-gray-300"></i>
+                            <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
+                                <div class="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-full flex items-center justify-center mb-4">
+                                    <i class="ri-filter-off-line text-3xl text-gray-300 dark:text-gray-600"></i>
                                 </div>
-                                <h3 class="text-gray-900 font-bold mb-1">No Records Found</h3>
+                                <h3 class="text-gray-900 dark:text-gray-200 font-bold mb-1">No Records Found</h3>
                                 <p class="text-sm">Adjust your filters or select a different month.</p>
                             </div>
                         </td>
@@ -257,14 +258,14 @@
         </div>
         
         <!-- Sticky Footer -->
-        <div class="bg-white px-6 py-4 border-t border-gray-200 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-30">
-            <div class="text-sm text-gray-500 font-medium flex items-center gap-2">
+        <div class="bg-white dark:bg-gray-800 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-30 transition-colors">
+            <div class="text-sm text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
                 <i class="ri-information-line text-blue-500"></i>
                 <span id="save-hint">Review selection before saving.</span>
             </div>
             
             <div class="flex gap-3">
-                <button type="button" onclick="history.back()" class="px-5 py-2.5 rounded-xl font-bold text-sm text-gray-600 hover:bg-gray-50 border border-gray-200 hover:border-gray-300 transition-all">
+                <button type="button" onclick="history.back()" class="px-5 py-2.5 rounded-xl font-bold text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-gray-300 transition-all">
                     Cancel
                 </button>
                 <button type="submit" class="px-6 py-2.5 rounded-xl font-bold text-sm text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transform hover:-translate-y-0.5 active:translate-y-0 transition-all bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center gap-2">
@@ -291,15 +292,15 @@
                 
                 if (this.checked) {
                     labelText.textContent = 'Consider';
-                    labelText.classList.add('text-blue-600', 'font-bold');
+                    labelText.classList.add('text-blue-600', 'dark:text-blue-400', 'font-bold');
                     
-                    statusIconDiv.className = 'status-icon w-8 h-8 mx-auto rounded-full flex items-center justify-center transition-all duration-300 bg-green-100 text-green-600 scale-100 shadow-sm';
+                    statusIconDiv.className = 'status-icon w-8 h-8 mx-auto rounded-full flex items-center justify-center transition-all duration-300 bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 scale-100 shadow-sm';
                     statusIconDiv.innerHTML = '<i class="ri-check-line font-bold text-lg"></i>';
                 } else {
                     labelText.textContent = 'Ignore';
-                    labelText.classList.remove('text-blue-600', 'font-bold');
+                    labelText.classList.remove('text-blue-600', 'dark:text-blue-400', 'font-bold');
                     
-                    statusIconDiv.className = 'status-icon w-8 h-8 mx-auto rounded-full flex items-center justify-center transition-all duration-300 bg-transparent text-gray-300 scale-90';
+                    statusIconDiv.className = 'status-icon w-8 h-8 mx-auto rounded-full flex items-center justify-center transition-all duration-300 bg-transparent text-gray-300 dark:text-gray-600 scale-90';
                     statusIconDiv.innerHTML = '<i class="ri-subtract-line text-lg"></i>';
                 }
                 

@@ -20,17 +20,17 @@
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
                     <!-- Logo -->
-                    <div style="grid-column: span 2; padding: 20px; background: var(--gray-50); border-radius: var(--radius-lg); border: 1px solid var(--border);">
+                    <div style="grid-column: span 2; padding: 20px; background: var(--gray-50); border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
                         <label class="form-label" style="margin-bottom: 12px;">Company Logo</label>
                         <div style="display: flex; align-items: center; gap: 24px;">
                             {% if form.instance.logo %}
-                            <div style="background: white; padding: 8px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
+                            <div style="background: var(--bg-surface); padding: 8px; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
                                 <img src="{{ form.instance.logo.url }}" alt="Logo" style="height: 64px; object-fit: contain;">
                             </div>
                             {% endif %}
                             <div style="flex: 1;">
                                 {{ form.logo }}
-                                <p style="font-size: 12px; color: var(--gray-500); margin-top: 8px;">Upload a high-resolution PNG or JPG logo.</p>
+                                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">Upload a high-resolution PNG or JPG logo.</p>
                             </div>
                         </div>
                     </div>
@@ -46,15 +46,15 @@
                     </div>
 
                     <!-- HR Config -->
-                    <div style="grid-column: span 2; padding: 20px; background: #fafafa; border-radius: var(--radius-lg); border: 1px solid var(--border); margin: 10px 0;">
+                    <div style="grid-column: span 2; padding: 20px; background: var(--gray-50); border-radius: var(--radius-lg); border: 1px solid var(--border-color); margin: 10px 0;">
                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
                             <i class="ri-user-settings-line" style="color: var(--primary); font-size: 20px;"></i>
-                            <h4 style="margin: 0; font-size: 1rem; font-weight: 600;">Employee ID Configuration</h4>
+                            <h4 style="margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-main);">Employee ID Configuration</h4>
                         </div>
                         <div class="form-group" style="max-width: 400px;">
                             <label class="form-label">Employee ID Prefix</label>
                             {{ form.employee_id_prefix }}
-                            <p style="font-size: 12px; color: var(--gray-500); margin-top: 8px;">The default prefix for new employee IDs (e.g., NEX-, EMP-). While creating an employee, you only need to type the number.</p>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">The default prefix for new employee IDs (e.g., NEX-, EMP-). While creating an employee, you only need to type the number.</p>
                         </div>
                     </div>
 
@@ -79,10 +79,10 @@
                     </div>
                     
                     <!-- Working Days -->
-                    <div style="grid-column: span 2; margin-top: 10px; background: #F0F9FF; padding: 20px; border-radius: var(--radius-lg); border: 1px solid #BAE6FD;">
+                    <div style="grid-column: span 2; margin-top: 10px; background: rgba(37, 99, 235, 0.05); padding: 20px; border-radius: var(--radius-lg); border: 1px solid rgba(37, 99, 235, 0.1);">
                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
-                            <i class="ri-calendar-2-line" style="color: #0284C7; font-size: 20px;"></i>
-                            <h4 style="margin: 0; font-size: 1rem; font-weight: 600; color: #0C4A6E;">Standard Working Days</h4>
+                            <i class="ri-calendar-2-line" style="color: var(--primary); font-size: 20px;"></i>
+                            <h4 style="margin: 0; font-size: 1rem; font-weight: 600; color: var(--primary-dark);">Standard Working Days</h4>
                         </div>
                         <div style="display: flex; flex-wrap: wrap; gap: 12px;">
                             <label class="checkbox-pill">
@@ -114,13 +114,13 @@
                                 <span>Sunday</span>
                             </label>
                         </div>
-                        <div style="font-size: 0.8rem; color: #0369A1; margin-top: 12px; display: flex; align-items: center; gap: 4px;">
+                        <div style="font-size: 0.8rem; color: var(--primary); margin-top: 12px; display: flex; align-items: center; gap: 4px;">
                             <i class="ri-information-line"></i> Unchecked days will be treated as automated Weekly Offs.
                         </div>
                     </div>
                 </div>
 
-                <div style="margin-top: 32px; display: flex; gap: 12px; border-top: 1px solid var(--border); padding-top: 24px;">
+                <div style="margin-top: 32px; display: flex; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 24px;">
                     <button type="submit" class="btn btn-primary">Save Organization Profile</button>
                     <a href="{% url 'system_admin' %}" class="btn btn-outline">Return to Admin</a>
                 </div>
@@ -137,23 +137,23 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        background: white;
+        background: var(--bg-surface);
         padding: 8px 16px;
         border-radius: var(--radius-full);
-        border: 1px solid #BAE6FD;
+        border: 1px solid var(--border-color);
         cursor: pointer;
         transition: all 0.2s;
         font-size: 0.9rem;
         font-weight: 500;
-        color: #0369A1;
+        color: var(--text-main);
     }
     
     .checkbox-pill:hover {
-        background: #E0F2FE;
+        background: var(--gray-50);
     }
     
     .checkbox-pill input[type="checkbox"] {
-        accent-color: #0284C7;
+        accent-color: var(--primary);
         width: 16px;
         height: 16px;
     }

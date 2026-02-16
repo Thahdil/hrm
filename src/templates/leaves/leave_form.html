@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="form-page-container" style="padding-bottom: 0; animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);">
-    <div class="glass-card" style="max-width: 100%; margin: 0 auto; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.12); border-radius: 16px; background: rgba(255, 255, 255, 0.98); border: 1px solid rgba(255, 255, 255, 0.2);">
+    <div class="glass-card" style="max-width: 100%; margin: 0 auto; overflow: hidden; box-shadow: var(--shadow-lg); border-radius: 16px; background: var(--bg-surface); border: 1px solid var(--border-color);">
         
         <!-- Ultra-Slim Branded Header -->
         <div style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); padding: 12px 25px; color: white; position: relative; overflow: hidden;">
@@ -12,7 +12,7 @@
                 <i class="ri-calendar-event-fill"></i>
             </div>
             <div style="position: relative; z-index: 1; display: flex; align-items: center; gap: 15px;">
-                <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 2px 10px; border-radius: 99px; font-size: 9px; font-weight: 700; backdrop-filter: blur(4px);">
+                <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 2px 10px; border-radius: 99px; font-size: 9px; font-weight: 700; backdrop-filter: blur(4px); color: white;">
                     <i class="ri-lock-2-line"></i> SECURE LEAVE PORTAL
                 </div>
                 <h2 style="margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em;">Apply for Leave</h2>
@@ -29,7 +29,7 @@
                         <div class="form-grid-layout" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
                             {% for field in form %}
                             <div class="form-group" style="display: flex; flex-direction: column; gap: 5px; {% if field.name == 'reason' or field.name == 'assigned_manager' %}grid-column: span 3;{% endif %}">
-                                <label for="{{ field.id_for_label }}" style="font-size: 12px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;">
+                                <label for="{{ field.id_for_label }}" style="font-size: 12px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;">
                                     {{ field.label }}
                                     {% if field.field.disabled %}
                                     <span style="background: var(--primary-light); color: white; padding: 2px 8px; border-radius: 6px; font-size: 9px; letter-spacing: 0;">SYSTEM ASSIGNED</span>
@@ -41,11 +41,11 @@
                                                value="{% if field.field.initial %}{{ field.field.initial.full_name|default:field.field.initial.username|upper }}{% else %}NOT ASSIGNED - CONTACT HR{% endif %}" 
                                                readonly 
                                                class="form-input" 
-                                               style="background: #f8fafc; cursor: not-allowed; border: 2px solid {% if field.field.initial %}#e2e8f0{% else %}#fee2e2{% endif %} !important; border-radius: 12px; padding: 11px 44px 11px 16px; width: 100%; color: {% if field.field.initial %}#64748b{% else %}#ef4444{% endif %}; font-weight: 700; font-size: 13.5px;">
+                                               style="background: var(--gray-50); cursor: not-allowed; border: 2px solid {% if field.field.initial %}var(--border-color){% else %}var(--error-light){% endif %} !important; border-radius: 12px; padding: 11px 44px 11px 16px; width: 100%; color: {% if field.field.initial %}var(--text-secondary){% else %}var(--error){% endif %}; font-weight: 700; font-size: 13.5px;">
                                         {% if field.field.initial %}
                                             <i class="ri-lock-2-line" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 18px;"></i>
                                         {% else %}
-                                            <i class="ri-error-warning-line" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: #ef4444; font-size: 18px;"></i>
+                                            <i class="ri-error-warning-line" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--error); font-size: 18px;"></i>
                                         {% endif %}
                                     {% else %}
                                         {{ field }}
@@ -61,7 +61,7 @@
                                     {% endif %}
                                 </div>
                                 {% if field.help_text %}
-                                <span style="color: var(--gray-400); font-size: 12px; display: flex; align-items: center; gap: 6px; padding-left: 4px;">
+                                <span style="color: var(--text-secondary); font-size: 12px; display: flex; align-items: center; gap: 6px; padding-left: 4px;">
                                     <i class="ri-question-line" style="color: var(--primary);"></i> {{ field.help_text }}
                                 </span>
                                 {% endif %}
@@ -73,7 +73,7 @@
 
                             <!-- Advanced Duration Information -->
                             <div class="form-group" style="display: flex; flex-direction: column; gap: 5px; grid-column: span 3;">
-                                <label style="font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.08em;">
+                                <label style="font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em;">
                                     Final Calculated Scope
                                 </label>
                                 <div style="position: relative;">
@@ -82,7 +82,7 @@
                                         id="leaveDaysDisplay" 
                                         readonly 
                                         placeholder="Calculating based on selected window..."
-                                        style="padding: 8px 15px; border: 2px solid var(--gray-100); border-radius: 10px; font-family: inherit; width: 100%; background: #fafafa; cursor: not-allowed; font-weight: 800; color: var(--primary); font-size: 13px; letter-spacing: -0.01em;"
+                                        style="padding: 8px 15px; border: 2px solid var(--border-color); border-radius: 10px; font-family: inherit; width: 100%; background: var(--gray-50); cursor: not-allowed; font-weight: 800; color: var(--primary); font-size: 13px; letter-spacing: -0.01em;"
                                     >
                                     <div style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--primary-light); color: white; width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
                                         <i class="ri-time-fill" style="font-size: 14px;"></i>
@@ -109,17 +109,17 @@
                     {% if request.user.managers.exists %}
                     <div style="background: rgba(37, 99, 235, 0.03); padding: 12px 15px; border-radius: 14px; border: 1px solid rgba(37, 99, 235, 0.08);">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                            <div style="width: 28px; height: 28px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--primary); box-shadow: 0 4px 8px -2px rgba(0,0,0,0.05);">
+                            <div style="width: 28px; height: 28px; background: var(--bg-surface); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--primary); box-shadow: 0 4px 8px -2px rgba(0,0,0,0.05);">
                                 <i class="ri-shield-user-fill" style="font-size: 16px;"></i>
                             </div>
                             <h4 style="margin: 0; font-size: 10px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em;">Approver</h4>
                         </div>
-                        <div style="font-size: 12px; color: var(--gray-700); line-height: 1.4;">
+                        <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">
                             {% with managers=request.user.managers.all %}
                                 {% if managers.count == 1 %}
-                                    <strong style="color: var(--gray-900); font-weight: 700;">{{ managers.first.full_name|default:managers.first.username|upper }}</strong>
+                                    <strong style="color: var(--text-main); font-weight: 700;">{{ managers.first.full_name|default:managers.first.username|upper }}</strong>
                                 {% else %}
-                                    <strong style="color: var(--gray-900); font-weight: 700;">Select manager</strong> in form.
+                                    <strong style="color: var(--text-main); font-weight: 700;">Select manager</strong> in form.
                                 {% endif %}
                             {% endwith %}
                         </div>
@@ -130,26 +130,26 @@
                     {% if leave_balances %}
                     <div style="background: rgba(16, 185, 129, 0.03); padding: 12px 15px; border-radius: 14px; border: 1px solid rgba(16, 185, 129, 0.08);">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                            <div style="width: 28px; height: 28px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--success); box-shadow: 0 4px 8px -2px rgba(0,0,0,0.05);">
+                            <div style="width: 28px; height: 28px; background: var(--bg-surface); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--success); box-shadow: 0 4px 8px -2px rgba(0,0,0,0.05);">
                                 <i class="ri-pie-chart-2-fill" style="font-size: 16px;"></i>
                             </div>
                             <h4 style="margin: 0; font-size: 10px; font-weight: 800; color: var(--success); text-transform: uppercase; letter-spacing: 0.05em;">Quota Summary</h4>
                         </div>
                         <div style="display: grid; gap: 8px;">
                             {% for leave_type_id, balance in leave_balances.items %}
-                            <div style="background: white; padding: 8px 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(0,0,0,0.02);">
+                            <div style="background: var(--bg-surface); padding: 8px 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">
                                 <div>
-                                    <div style="font-weight: 800; font-size: 11px; color: var(--gray-900);">
+                                    <div style="font-weight: 800; font-size: 11px; color: var(--text-main);">
                                         {% for lt in form.leave_type.field.queryset %}
                                             {% if lt.id == leave_type_id %}{{ lt.name }}{% endif %}
                                         {% endfor %}
                                     </div>
-                                    <div style="font-size: 9px; color: var(--gray-400); font-weight: 600;">Used: {{ balance.used|floatformat:1 }}d</div>
+                                    <div style="font-size: 9px; color: var(--text-secondary); font-weight: 600;">Used: {{ balance.used|floatformat:1 }}d</div>
                                 </div>
                                 <div style="text-align: right;">
                                     {% if leave_type_id in unlimited_types_list %}
                                         <!-- Unlimited hidden per user request, just show dash or nothing -->
-                                        <div style="font-size: 15px; font-weight: 900; color: var(--gray-300);">-</div>
+                                        <div style="font-size: 15px; font-weight: 900; color: var(--text-secondary);">-</div>
                                     {% else %}
                                         <div style="font-size: 15px; font-weight: 900; color: var(--success); letter-spacing: -0.02em;">{{ balance.remaining|floatformat:1 }}</div>
                                         <div style="font-size: 8px; color: var(--success); font-weight: 800; text-transform: uppercase;">Days</div>
@@ -177,14 +177,14 @@
     .modern-form textarea {
         appearance: none;
         padding: 8px 35px 8px 12px !important;
-        border: 2px solid #f1f5f9 !important;
+        border: 2px solid var(--border-color) !important;
         border-radius: 10px !important;
         font-size: 13px !important;
         font-weight: 600 !important;
         transition: all 0.2s ease !important;
         width: 100%;
-        background: #fff !important;
-        color: #1e293b !important;
+        background: var(--input-bg) !important;
+        color: var(--text-main) !important;
     }
 
     .modern-form textarea {
@@ -251,14 +251,14 @@
     }
 
     .premium-button.secondary {
-        background: #f8fafc;
-        color: #64748b;
-        border: 1px solid #e2e8f0;
+        background: var(--gray-50);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
     }
 
     .premium-button.secondary:hover {
-        background: #f1f5f9;
-        color: #1e293b;
+        background: var(--border-color);
+        color: var(--text-main);
     }
 
     @media (max-width: 850px) {
@@ -273,8 +273,8 @@
 <style>
     /* Minimal Session Cards */
     .session-card-mini:hover {
-        border-color: #cbd5e1;
-        background: #f8fafc;
+        border-color: var(--text-secondary);
+        background: var(--gray-50);
     }
     .session-card-mini.active {
         border-color: var(--primary);
@@ -306,11 +306,11 @@
         durationWrapper.style.flexDirection = 'column';
         durationWrapper.style.gap = '5px';
         durationWrapper.innerHTML = `
-            <label style="font-size: 12px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;">
+            <label style="font-size: 12px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;">
                 Duration (Days)
             </label>
             <div class="input-wrapper" style="position: relative;">
-                <input type="number" id="manualDuration" min="1" value="1" class="form-input" style="padding: 13px 44px 13px 16px; border: 2px solid #f1f5f9; border-radius: 14px; width: 100%;">
+                <input type="number" id="manualDuration" min="1" value="1" class="form-input" style="padding: 13px 44px 13px 16px; border: 2px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: 14px; width: 100%;">
                 <i class="ri-hourglass-fill" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 18px;"></i>
             </div>
         `;
@@ -331,24 +331,24 @@
             
             // Minimal UI HTML
             halfDayWrapper.innerHTML = `
-                <label style="font-size: 12px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 12px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;">
                     Half Day
                 </label>
                 <div style="position: relative;">
-                    <div style="display: flex; gap: 8px; align-items: center; padding: 8px 12px; border: 2px solid #f1f5f9; border-radius: 10px; background: white; transition: all 0.2s;">
+                    <div style="display: flex; gap: 8px; align-items: center; padding: 8px 12px; border: 2px solid var(--border-color); border-radius: 10px; background: var(--input-bg); transition: all 0.2s;">
                         <!-- Toggle (clickable div) -->
-                        <div id="customHalfDayToggle" style="position: relative; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0; background-color: #cbd5e1; border-radius: 34px; transition: .3s;">
+                        <div id="customHalfDayToggle" style="position: relative; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0; background-color: var(--gray-400); border-radius: 34px; transition: .3s;">
                             <div id="toggleCircle" style="position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"></div>
                         </div>
                         
                         <!-- Session Selector (inline) -->
                         <div id="sessionSelectionPanel" style="display: none; flex: 1; gap: 6px;">
                             <div style="display: flex; gap: 6px; width: 100%;">
-                                <div class="session-card-mini" data-value="MORNING" onclick="window.selectHalfDaySession('MORNING')" style="flex: 1; padding: 6px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; background: white; font-size: 12px; font-weight: 600; color: #64748b;">
+                                <div class="session-card-mini" data-value="MORNING" onclick="window.selectHalfDaySession('MORNING')" style="flex: 1; padding: 6px 10px; border: 1.5px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; background: var(--bg-surface); font-size: 12px; font-weight: 600; color: var(--text-secondary);">
                                     <i class="ri-sun-line" style="font-size: 14px;"></i>
                                     <span>Morning</span>
                                 </div>
-                                <div class="session-card-mini" data-value="AFTERNOON" onclick="window.selectHalfDaySession('AFTERNOON')" style="flex: 1; padding: 6px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; background: white; font-size: 12px; font-weight: 600; color: #64748b;">
+                                <div class="session-card-mini" data-value="AFTERNOON" onclick="window.selectHalfDaySession('AFTERNOON')" style="flex: 1; padding: 6px 10px; border: 1.5px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; background: var(--bg-surface); font-size: 12px; font-weight: 600; color: var(--text-secondary);">
                                     <i class="ri-moon-line" style="font-size: 14px;"></i>
                                     <span>Afternoon</span>
                                 </div>
@@ -356,7 +356,7 @@
                         </div>
                         
                         <!-- Placeholder when off -->
-                        <div id="halfDayPlaceholder" style="flex: 1; font-size: 13px; color: #94a3b8; font-weight: 500;">
+                        <div id="halfDayPlaceholder" style="flex: 1; font-size: 13px; color: var(--text-secondary); font-weight: 500;">
                             Enable for 0.5 day leave
                         </div>
                     </div>
@@ -413,7 +413,7 @@
                         selectSession('MORNING');
                     }
                 } else {
-                    customToggle.style.backgroundColor = '#cbd5e1';
+                    customToggle.style.backgroundColor = 'var(--gray-400)';
                     toggleCircle.style.transform = 'translateX(0)';
                     sessionPanel.style.display = 'none';
                     halfDayPlaceholder.style.display = 'block';
@@ -467,9 +467,9 @@
                     } else {
                         c.classList.remove('active');
                         // Reset inline styles
-                        c.style.borderColor = '#e2e8f0';
-                        c.style.background = 'white';
-                        c.style.color = '#64748b';
+                        c.style.borderColor = 'var(--border-color)';
+                        c.style.background = 'var(--bg-surface)';
+                        c.style.color = 'var(--text-secondary)';
                         c.style.fontWeight = '600';
                     }
                 });
@@ -497,7 +497,7 @@
         
         const warningDiv = document.createElement('div');
         warningDiv.id = 'balanceWarning';
-        warningDiv.style.cssText = 'display: none; background: #FEF2F2; padding: 20px; border-radius: 16px; border-left: 6px solid #EF4444; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.08);';
+        warningDiv.style.cssText = 'display: none; background: var(--error-light); padding: 20px; border-radius: 16px; border-left: 6px solid var(--error); margin-bottom: 30px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.08);';
         document.querySelector('.modern-form').prepend(warningDiv);
 
         function checkBalance(finalDuration) {
@@ -531,8 +531,8 @@
                 <div style="display: flex; align-items: start; gap: 12px;">
                     <i class="ri-error-warning-line" style="color: var(--error); font-size: 24px; margin-top: 2px;"></i>
                     <div style="flex: 1;">
-                        <div style="font-weight: 600; color: var(--gray-900); margin-bottom: 4px;">Insufficient Leave Balance</div>
-                        <div style="font-size: 14px; color: var(--gray-700);">
+                        <div style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">Insufficient Leave Balance</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">
                             You are requesting <strong>${req} days</strong> but only have <strong>${rem} days</strong> remaining.
                         </div>
                     </div>
@@ -623,7 +623,7 @@
                     const toggleCircle = document.getElementById('toggleCircle');
                     if (customToggle && toggleCircle && halfDayCheckbox) {
                         // Reset visual state
-                        customToggle.style.backgroundColor = '#cbd5e1';
+                        customToggle.style.backgroundColor = 'var(--gray-400)';
                         toggleCircle.style.transform = 'translateX(0)';
                         // Reset hidden checkbox
                         halfDayCheckbox.checked = false;

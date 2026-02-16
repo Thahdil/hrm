@@ -12,7 +12,7 @@
             <h3 class="section-title">Payroll Management</h3>
             <p style="color: var(--gray-500); font-size: 0.875rem; margin-top: 4px;">
                 Generate salary sheets and download Bank Transfer export files.
-                <span style="font-size: 11px; margin-left: 8px; padding: 2px 6px; background: #dcfce7; color: #166534; border-radius: 4px; font-weight: 600;">Startup Model Active</span>
+                <span style="font-size: 11px; margin-left: 8px; padding: 2px 6px; background: var(--status-approved-bg); color: var(--status-approved-text); border-radius: 4px; font-weight: 600;">Startup Model Active</span>
             </p>
         </div>
 
@@ -81,9 +81,9 @@
                 {% if batch.status == 'FINALIZED' %}
                 <span class="badge badge-success">Generated</span>
                 {% elif batch.status == 'VOID' %}
-                <span class="badge" style="background: #f1f5f9; color: #64748b;">Voided</span>
+                <span class="badge" style="background: var(--status-rejected-bg); color: var(--status-rejected-text);">Voided</span>
                 {% else %}
-                <span class="badge" style="background: #fef3c7; color: #92400e;">Draft</span>
+                <span class="badge" style="background: var(--status-pending-bg); color: var(--status-pending-text);">Draft</span>
                 {% endif %}
             </div>
 
@@ -95,21 +95,21 @@
                 {% if batch.status == 'DRAFT' %}
                 <form action="{% url 'payroll_batch_delete' batch.id %}" method="POST" onsubmit="return confirm('Delete this payroll draft for {{ batch.month|date:'F Y' }}?');">
                     {% csrf_token %}
-                    <button type="submit" class="btn" style="background: #fff1f2; color: #e11d48; border: 1px solid #fee2e2; padding: 10px; border-radius: 8px;" title="Delete Draft">
+                    <button type="submit" class="btn" style="background: var(--status-rejected-bg); color: var(--status-rejected-text); border: 1px solid var(--status-rejected-bg); padding: 10px; border-radius: 8px;" title="Delete Draft">
                         <i class="ri-delete-bin-line"></i>
                     </button>
                 </form>
                 {% elif batch.status == 'VOID' %}
                 <form action="{% url 'payroll_batch_delete' batch.id %}" method="POST" onsubmit="return confirm('Delete this voided payroll record for {{ batch.month|date:'F Y' }}? This cannot be undone.');">
                     {% csrf_token %}
-                    <button type="submit" class="btn" style="background: #fff1f2; color: #e11d48; border: 1px solid #fee2e2; padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 6px;" title="Delete Record">
+                    <button type="submit" class="btn" style="background: var(--status-rejected-bg); color: var(--status-rejected-text); border: 1px solid var(--status-rejected-bg); padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 6px;" title="Delete Record">
                         <i class="ri-delete-bin-line"></i> Delete
                     </button>
                 </form>
                 {% elif batch.status == 'FINALIZED' %}
                 <form action="{% url 'payroll_batch_void' batch.id %}" method="POST" onsubmit="return confirm('Void this payroll batch? This will keep the record but mark it as invalid.')">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-outline" style="color: #64748b; padding: 10px; border-radius: 8px;" title="Void Batch">
+                    <button type="submit" class="btn btn-outline" style="color: var(--text-secondary); padding: 10px; border-radius: 8px;" title="Void Batch">
                         <i class="ri-prohibit-line"></i> Void
                     </button>
                 </form>
