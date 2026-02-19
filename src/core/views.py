@@ -222,14 +222,14 @@ def dashboard(request):
         ).select_related('employee', 'leave_type')
         on_leave_count = on_leave_today.count()
         
-        pending_approvals_count = LeaveRequest.objects.filter(status=LeaveRequest.Status.PENDING).count()
+        pending_approvals_count = LeaveRequest.objects.filter(status=LeaveRequest.Status.PENDING, assigned_manager=user).count()
         
         # 4. Expiring Documents (Next 30 days)
         expiry_threshold = today + timedelta(days=30)
         expiring_docs_count = DocumentVault.objects.filter(expiry_date__range=[today, expiry_threshold]).count()
         
         # Pending Leave Requests List
-        pending_leave_requests = LeaveRequest.objects.filter(status=LeaveRequest.Status.PENDING).select_related('employee', 'leave_type').order_by('-created_at')[:10]
+        pending_leave_requests = LeaveRequest.objects.filter(status=LeaveRequest.Status.PENDING, assigned_manager=user).select_related('employee', 'leave_type').order_by('-created_at')[:10]
         pending_leaves = pending_leave_requests # Use the queryset for iteration in template
         
         # Upcoming Holidays
