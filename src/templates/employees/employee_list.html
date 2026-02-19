@@ -107,7 +107,7 @@
                         <td style="padding-right: 32px; text-align: right;">
                             <div style="display: flex; justify-content: flex-end; gap: 10px;">
                                 {% if emp.status == 'ARCHIVED' %}
-                                    <form action="{% url 'employee_restore' emp.pk %}" method="post">
+                                    <form action="{% url 'employee_restore' emp.pk %}" method="post" class="restore-form" onsubmit="handleRestore(event, this)">
                                         {% csrf_token %}
                                         <button type="submit" class="action-btn success" title="Restore"><i class="ri-refresh-line"></i></button>
                                     </form>
@@ -117,7 +117,7 @@
                                     </form>
                                 {% else %}
                                     <a href="{% url 'employee_edit' emp.pk %}" class="action-btn info" title="Edit"><i class="ri-pencil-fill"></i></a>
-                                    <form action="{% url 'employee_delete' emp.pk %}" method="post">
+                                    <form action="{% url 'employee_delete' emp.pk %}" method="post" class="archive-form" onsubmit="handleArchive(event, this)">
                                         {% csrf_token %}
                                         <button type="submit" class="action-btn danger" title="Archive"><i class="ri-archive-fill"></i></button>
                                     </form>
@@ -368,5 +368,152 @@
             }
         });
     });
+
+    // AJAX Archive Handler
+    function handleArchive(event, form) {
+        event.preventDefault();
+        
+        const row = form.closest('tr');
+        const btn = form.querySelector('button');
+        const originalContent = btn.innerHTML;
+        
+        // Show loading state
+        btn.innerHTML = '<i class="ri-loader-4-line" style="animation: spin 1s linear infinite;"></i>';
+        btn.disabled = true;
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok');
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                // Animate row removal
+                row.style.transition = 'all 0.5s ease';
+                row.style.transform = 'translateX(100px)';
+                row.style.opacity = '0';
+                
+                setTimeout(() => {
+                    row.remove();
+                    // Show success toast
+                    showToast(data.message || 'Employee archived successfully', 'success');
+                    
+                    // Update count if possible (optional)
+                    // const countEl = document.querySelector('.stat-pill span:last-child');
+                    // if(countEl) countEl.textContent = parseInt(countEl.textContent) - 1;
+                }, 500);
+            } else {
+                alert(data.message || 'Error archiving employee');
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while archiving.');
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        });
+    }
+
+    // AJAX Restore Handler
+    function handleRestore(event, form) {
+        event.preventDefault();
+        
+        const row = form.closest('tr');
+        const btn = form.querySelector('button');
+        const originalContent = btn.innerHTML;
+        
+        // Show loading state
+        btn.innerHTML = '<i class="ri-loader-4-line" style="animation: spin 1s linear infinite;"></i>';
+        btn.disabled = true;
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok');
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                // Animate row removal
+                row.style.transition = 'all 0.5s ease';
+                row.style.transform = 'translateX(-100px)';
+                row.style.opacity = '0';
+                
+                setTimeout(() => {
+                    row.remove();
+                    showToast(data.message || 'Employee restored successfully', 'success');
+                }, 500);
+            } else {
+                alert(data.message || 'Error restoring employee');
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while restoring.');
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        });
+    }
+
+    // Simple Toast Notification
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${type}`;
+        toast.style.position = 'fixed';
+        toast.style.bottom = '20px';
+        toast.style.right = '20px';
+        toast.style.background = type === 'success' ? 'var(--success)' : 'var(--error)';
+        toast.style.color = 'white';
+        toast.style.padding = '12px 24px';
+        toast.style.borderRadius = '12px';
+        toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        toast.style.zIndex = '9999';
+        toast.style.animation = 'slideInRight 0.3s ease-out';
+        toast.style.display = 'flex';
+        toast.style.alignItems = 'center';
+        toast.style.gap = '10px';
+        toast.innerHTML = `<i class="${type === 'success' ? 'ri-checkbox-circle-fill' : 'ri-error-warning-fill'}"></i> ${message}`;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideOutRight 0.3s ease-in forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+    
+    // Keyframes for Toast
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = `
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    `;
+    document.head.appendChild(styleSheet);
 </script>
 {% endblock %}

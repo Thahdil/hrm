@@ -218,6 +218,9 @@ def employee_delete(request, pk):
         username = employee.username
         # Safety: Prevent deleting self
         if employee.id == request.user.id:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                from django.http import JsonResponse
+                return JsonResponse({'status': 'error', 'message': "You cannot delete your own account."}, status=403)
             messages.error(request, "You cannot delete your own account.")
             return redirect('employee_list')
             
@@ -225,6 +228,10 @@ def employee_delete(request, pk):
         employee.is_active = False
         employee.status = User.Status.ARCHIVED
         employee.save()
+        
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            from django.http import JsonResponse
+            return JsonResponse({'status': 'success', 'message': f"Employee {username} has been archived successfully."})
         
         messages.success(request, f"Employee {username} has been archived successfully.")
     
@@ -244,6 +251,11 @@ def employee_restore(request, pk):
         employee.is_active = True
         employee.status = User.Status.ACTIVE
         employee.save()
+        
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            from django.http import JsonResponse
+            return JsonResponse({'status': 'success', 'message': f"Employee {employee.username} restored successfully."})
+            
         messages.success(request, f"Employee {employee.username} restored successfully.")
         
     return redirect('employee_list')

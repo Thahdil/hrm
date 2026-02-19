@@ -42,6 +42,25 @@ def attendance_list(request):
     # Filter logs to show only Active employees
     logs = AttendanceLog.objects.select_related('employee').filter(employee__is_active=True).exclude(employee__status='ARCHIVED').exclude(employee__role='CEO')
     
+    # Handle Manual Entry Form Submission
+    manual_entry_form = None
+    if request.method == 'POST' and 'manual_entry_submit' in request.POST:
+        if request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO']):
+            manual_entry_form = AttendanceManualEntryForm(request.POST)
+            if manual_entry_form.is_valid():
+                log = manual_entry_form.save(commit=False)
+                log.entry_type = AttendanceLog.EntryType.MANUAL
+                log.save()
+                messages.success(request, "Attendance manually logged successfully.")
+                return redirect('attendance_list')
+            else:
+                messages.error(request, "Please correct the errors in the manual entry form.")
+        else:
+            messages.error(request, "Permission denied.")
+            
+    if manual_entry_form is None:
+        manual_entry_form = AttendanceManualEntryForm()
+    
     # SECURITY: Regular employees should ONLY see their own logs
     if not (request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO'])):
         logs = logs.filter(employee=request.user)
@@ -106,7 +125,8 @@ def attendance_list(request):
         'search_query': search_query,
         'status_filter': status_filter,
         'start_date': start_date_str,
-        'end_date': end_date_str
+        'end_date': end_date_str,
+        'manual_entry_form': manual_entry_form
     })
 
 @login_required

@@ -4,79 +4,272 @@
 {% block header_title %}Manual Attendance Entry{% endblock %}
 {% block page_subtitle %}Log attendance manually for employees.{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* smooth fade in for proper entrance */
+    @keyframes slideUpFade {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .main-entry-container {
+        animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        max-width: 700px; 
+        margin: 0 auto; 
+        padding-bottom: 40px;
+    }
+
+    .entry-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 20px 40px -4px rgba(0, 0, 0, 0.08); /* Elevated feel */
+        border-radius: 24px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Glassy/Gradient Header */
+    .card-header-styled {
+        padding: 32px 40px; 
+        border-bottom: 1px solid var(--border-color); 
+        background: cubic-bezier(0.4, 0, 0.2, 1);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.03) 0%, rgba(37, 99, 235, 0) 100%);
+    }
+
+    .icon-box {
+        width: 52px; 
+        height: 52px; 
+        background: var(--primary-light); 
+        color: white; 
+        border-radius: 18px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        font-size: 26px; 
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    }
+
+    /* Form Typography */
+    .form-group label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        color: var(--text-main);
+        font-size: 13px;
+        margin-bottom: 10px;
+        letter-spacing: -0.01em;
+    }
+    
+    .form-group label i {
+        color: var(--primary);
+        font-size: 16px;
+        opacity: 0.9;
+    }
+    
+    /* Input Styling */
+    input[type="text"],
+    input[type="date"],
+    input[type="time"],
+    input[type="number"],
+    select,
+    textarea {
+        width: 100%;
+        padding: 14px 18px;
+        border: 1px solid var(--border-color);
+        border-radius: 14px; /* More rounded */
+        background: var(--input-bg);
+        color: var(--text-main);
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease-in-out;
+        outline: none;
+    }
+
+    /* Focus State with Ring */
+    input:focus, select:focus, textarea:focus {
+        border-color: var(--primary);
+        background: var(--bg-surface);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        transform: translateY(-1px);
+    }
+
+    input::placeholder {
+        color: var(--gray-400);
+    }
+
+    /* Custom Select Arrow */
+    select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='18' height='18' fill='%236B7280'%3E%3Cpath d='M12 16L6 10H18L12 16Z'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+    }
+    
+    /* Buttons */
+    .btn-cancel {
+        padding: 14px 28px; 
+        font-weight: 600; 
+        color: var(--text-secondary); 
+        background: transparent;
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-cancel:hover {
+        background: var(--gray-50);
+        color: var(--text-main);
+    }
+
+    .btn-gradient {
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        padding: 14px 32px;
+        border-radius: 14px;
+        font-weight: 700;
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(37, 99, 235, 0.3);
+    }
+    
+    .btn-gradient:active {
+        transform: translateY(0);
+    }
+
+    /* Helper text */
+    .help-text {
+        font-size: 12px; 
+        color: var(--text-secondary); 
+        margin-top: 8px; 
+        font-style: italic; 
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .help-text::before {
+        content: '';
+        display: block;
+        width: 16px;
+        height: 1px;
+        background: var(--border-color);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="card" style="max-width: 600px; margin: 0 auto;">
-    <div class="card-header">
-        <div>
-            <h3 class="card-title">New Entry</h3>
-            <p class="card-subtitle">Fill in the details below</p>
+<div class="main-entry-container">
+    
+    <div style="margin-bottom: 24px;">
+        <a href="{% url 'attendance_list' %}" style="display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 13px; font-weight: 600; text-decoration: none; padding: 8px 0; transition: color 0.2s;">
+            <i class="ri-arrow-left-line"></i> Back to Attendance
+        </a>
+    </div>
+
+    <div class="entry-card">
+        <div class="card-header-styled">
+            <div style="display: flex; gap: 20px; align-items: center;">
+                <div class="icon-box">
+                    <i class="ri-edit-circle-line"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em;">New Entry</h3>
+                    <p style="margin: 6px 0 0; font-size: 14px; color: var(--text-secondary);">Record attendance manually for an employee</p>
+                </div>
+            </div>
+        </div>
+        
+        <div style="padding: 40px;">
+            <form method="post">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div style="padding: 16px; background: var(--error-light); color: var(--error); border-radius: 12px; margin-bottom: 32px; border: 1px solid rgba(239, 68, 68, 0.2); display: flex; align-items: flex-start; gap: 12px;">
+                    <i class="ri-error-warning-fill" style="font-size: 20px; margin-top: 2px;"></i>
+                    <div style="font-size: 14px; font-weight: 500;">{{ form.non_field_errors }}</div>
+                </div>
+                {% endif %}
+
+                <!-- Section 1: Who & When -->
+                <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; margin-bottom: 24px;">
+                    <div class="form-group">
+                        <label class="form-label"><i class="ri-user-search-line"></i> Employee</label>
+                        {{ form.employee }}
+                        {% if form.employee.errors %}
+                        <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.employee.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="ri-calendar-event-line"></i> Date</label>
+                        {{ form.date }}
+                        {% if form.date.errors %}
+                        <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Section 2: Time & Status -->
+                <div style="background: var(--gray-50); padding: 24px; border-radius: 18px; border: 1px dashed var(--border-color); margin-bottom: 32px;">
+                    <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--gray-500); margin-bottom: 20px; letter-spacing: 0.05em;">Time Details</div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                         <div class="form-group">
+                            <label class="form-label"><i class="ri-flag-line"></i> Status</label>
+                            {{ form.status }}
+                             {% if form.status.errors %}
+                            <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.status.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label"><i class="ri-login-circle-line"></i> In Time</label>
+                            {{ form.check_in }}
+                            {% if form.check_in.errors %}
+                            <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.check_in.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label"><i class="ri-logout-circle-line"></i> Out Time</label>
+                            {{ form.check_out }}
+                            {% if form.check_out.errors %}
+                            <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.check_out.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Section 3: Reason -->
+                <div class="form-group" style="margin-bottom: 40px;">
+                    <label class="form-label"><i class="ri-text-spacing"></i> Remarks / Justification</label>
+                    {{ form.remarks }}
+                    {% if form.remarks.errors %}
+                    <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.remarks.errors.0 }}</div>
+                    {% endif %}
+                    <div class="help-text">Reason for manual entry (e.g. WFH, Forgot Punch)</div>
+                </div>
+                
+                <!-- Footer Actions -->
+                <div style="display: flex; gap: 16px; padding-top: 32px; border-top: 1px solid var(--border-color); justify-content: space-between; align-items: center;">
+                    <a href="{% url 'attendance_list' %}" class="btn-cancel">Cancel</a>
+                    <button type="submit" class="btn-gradient">
+                        <span>Save Entry</span> <i class="ri-arrow-right-line"></i>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
-    
-    <form method="post">
-        {% csrf_token %}
-        
-        {% if form.non_field_errors %}
-        <div style="padding: 12px; background: var(--error-light); color: var(--error); border-radius: 8px; margin-bottom: 20px;">
-            {{ form.non_field_errors }}
-        </div>
-        {% endif %}
-
-        <div class="form-group">
-            <label class="form-label">Employee</label>
-            {{ form.employee }}
-            {% if form.employee.errors %}
-            <div style="color: var(--error); font-size: 12px; margin-top: 4px;">{{ form.employee.errors.0 }}</div>
-            {% endif %}
-        </div>
-        
-        <div class="form-group">
-            <label class="form-label">Date</label>
-            {{ form.date }}
-            {% if form.date.errors %}
-            <div style="color: var(--error); font-size: 12px; margin-top: 4px;">{{ form.date.errors.0 }}</div>
-            {% endif %}
-        </div>
-        
-        <div class="form-group">
-            <label class="form-label">Status</label>
-            {{ form.status }}
-            {% if form.status.errors %}
-            <div style="color: var(--error); font-size: 12px; margin-top: 4px;">{{ form.status.errors.0 }}</div>
-            {% endif %}
-        </div>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-            <div class="form-group">
-                <label class="form-label">Check-in Time</label>
-                {{ form.check_in }}
-                {% if form.check_in.errors %}
-                <div style="color: var(--error); font-size: 12px; margin-top: 4px;">{{ form.check_in.errors.0 }}</div>
-                {% endif %}
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Check-out Time</label>
-                {{ form.check_out }}
-                {% if form.check_out.errors %}
-                <div style="color: var(--error); font-size: 12px; margin-top: 4px;">{{ form.check_out.errors.0 }}</div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label class="form-label">Remarks / Justification</label>
-            {{ form.remarks }}
-            {% if form.remarks.errors %}
-            <div style="color: var(--error); font-size: 12px; margin-top: 4px;">{{ form.remarks.errors.0 }}</div>
-            {% endif %}
-            <div style="font-size: 12px; color: var(--gray-500); margin-top: 4px;">Reason for manual entry (e.g. WFH, Forgot Punch)</div>
-        </div>
-        
-        <div style="display: flex; gap: 12px; margin-top: 24px;">
-            <a href="{% url 'attendance_list' %}" class="btn btn-secondary">Cancel</a>
-            <button type="submit" class="btn btn-primary">Save Entry</button>
-        </div>
-    </form>
 </div>
 {% endblock %}
