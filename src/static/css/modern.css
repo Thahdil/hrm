@@ -190,7 +190,6 @@ a.action-tile {
     display: grid;
     grid-template-columns: 1fr 360px;
     gap: var(--spacing-lg);
-    align-items: start;
 }
 
 /* Dark Theme Variable Overrides */
@@ -1324,6 +1323,14 @@ tr:hover {
     border-radius: var(--radius-full);
     font-size: 12px;
     font-weight: 600;
+    border: 1px solid transparent;
+    /* Prevent layout shift in dark mode */
+}
+
+/* Ensure other elements don't shift */
+.status-pill,
+.premium-avatar {
+    border: 1px solid transparent;
 }
 
 .badge-success {

@@ -6,32 +6,55 @@
 {% block page_subtitle %}{% if is_admin %}Manage and approve employee leave requests.{% else %}Track your leave balances and history.{% endif %}{% endblock %}
 
 {% block content %}
-<div style="width: 100%; min-height: 0; display: flex; flex-direction: column; gap: 24px; flex: 1;">
+<div style="width: 100%; min-height: 0; display: flex; flex-direction: column; gap: 24px; flex: 1; padding-bottom: 80px;">
     <!-- Left Column: Stats & Table -->
     <div style="display: flex; flex-direction: column; min-width: 0; min-height: 0; flex: 1;">
     <!-- Leave Balances (Employees Only) -->
     {% if not is_admin and balances %}
-    <div class="stats-grid" style="margin-bottom: var(--spacing-lg);">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
         {% for balance in balances %}
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon" style="background: rgba(37, 99, 235, 0.1); color: var(--primary);">
-                    <i class="ri-calendar-event-line"></i>
+        <div class="stat-card" style="padding: 16px; min-height: auto; border: 1px solid var(--border-color); background: var(--gray-50); border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <!-- Icon -->
+                    <div style="width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px;
+                        {% if 'SICK' in balance.leave_type.name|upper %}background: rgba(239, 68, 68, 0.1); color: #ef4444;
+                        {% elif 'NORMAL' in balance.leave_type.name|upper or 'CASUAL' in balance.leave_type.name|upper %}background: rgba(16, 185, 129, 0.1); color: #10b981;
+                        {% else %}background: rgba(37, 99, 235, 0.1); color: #2563eb;{% endif %}">
+                        {% if 'SICK' in balance.leave_type.name|upper %}<i class="ri-pulse-line"></i>
+                        {% elif 'NORMAL' in balance.leave_type.name|upper or 'CASUAL' in balance.leave_type.name|upper %}<i class="ri-thumb-up-line"></i>
+                        {% else %}<i class="ri-calendar-line"></i>{% endif %}
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 800; color: var(--text-main); text-transform: uppercase;">{{ balance.leave_type.name }}</div>
+                        <div style="font-size: 9px; font-weight: 600; color: var(--text-secondary);">{{ balance.leave_type.code|default:'LVE' }}</div>
+                    </div>
                 </div>
-                {% if not balance.leave_type.allow_unlimited %}
-                <div class="stat-change {% if balance.remaining > 5 %}positive{% else %}negative{% endif %}">
-                    {{ balance.total_entitlement|floatformat:0 }} Total
+                <div style="text-align: right;">
+                    {% if not balance.leave_type.allow_unlimited %}
+                    <div style="font-size: 18px; font-weight: 800; color: var(--text-main); line-height: 1;">{{ balance.remaining|floatformat:1 }}</div>
+                    <div style="font-size: 8px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Rem</div>
+                    {% endif %}
                 </div>
-                {% endif %}
             </div>
             
-            {% if balance.leave_type.allow_unlimited %}
-                <div class="stat-value">{{ balance.days_used|floatformat:0 }}</div>
-                <div class="stat-label">{{ balance.leave_type.name }} Used</div>
-            {% else %}
-                <div class="stat-value">{{ balance.remaining|floatformat:0 }}</div>
-                <div class="stat-label">{{ balance.leave_type.name }} Remaining</div>
+            <!-- Progress -->
+            {% if not balance.leave_type.allow_unlimited and balance.total_entitlement > 0 %}
+            <div style="height: 4px; width: 100%; background: var(--border-color); border-radius: 2px; overflow: hidden; margin-bottom: 8px;">
+                <div style="height: 100%; border-radius: 2px; width: {% widthratio balance.days_used balance.total_entitlement 100 %}%;
+                    {% if 'SICK' in balance.leave_type.name|upper %}background: #ef4444;
+                    {% elif 'NORMAL' in balance.leave_type.name|upper %}background: #10b981;
+                    {% else %}background: #2563eb;{% endif %}">
+                </div>
+            </div>
             {% endif %}
+            
+            <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: 600; color: var(--text-secondary); font-family: monospace;">
+                <span>USED: {{ balance.days_used|floatformat:1 }}</span>
+                {% if not balance.leave_type.allow_unlimited %}
+                <span>TOTAL: {{ balance.total_entitlement|floatformat:1 }}</span>
+                {% endif %}
+            </div>
         </div>
         {% endfor %}
     </div>
@@ -89,7 +112,7 @@
 
         <div class="card-body-scroll">
             <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
-                <thead>
+                <thead style="background: var(--bg-surface); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 var(--border-color);">
                     <tr style="background: var(--gray-50);">
                         {% if is_admin %}
                         <th style="padding: 16px 32px; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color); width: 200px;">EMPLOYEE</th>
@@ -485,6 +508,23 @@
     visibility: visible;
     opacity: 1;
     transform: translateY(0);
+}
+
+/* Disable hover effect for the main container card */
+.card:hover {
+    transform: none !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+/* Disable Stat Card Hover Effect */
+.stat-card:hover {
+    transform: none !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
+    cursor: default !important;
+    transition: none !important;
+}
+.stat-card:hover i {
+    transform: none !important;
 }
 </style>
 

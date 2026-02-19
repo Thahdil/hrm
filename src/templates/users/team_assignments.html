@@ -7,7 +7,7 @@
 {% block page_subtitle %}Manage your team members and leave request approvals{% endblock %}
 
 {% block content %}
-<div class="flex-1 dashboard-grid">
+<div class="flex-1 dashboard-grid" style="padding-bottom: 80px;">
 
     <!-- Main Assignment Card -->
     <div class="card full-height-card no-padding overflow-hidden">
@@ -338,11 +338,14 @@
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        display: inline-flex;
-        align-items: center;
         box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
     }
 
+    /* Disable hover effect for cards */
+    .card:hover {
+        transform: none !important;
+        box-shadow: var(--shadow) !important;
+    }
 </style>
 
 <script>

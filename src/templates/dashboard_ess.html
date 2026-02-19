@@ -8,7 +8,7 @@
 {% block page_subtitle %}Welcome back, {{ user.full_name|default:user.username|upper }}. Here's what's happening today.{% endblock %}
 
 {% block content %}
-<div style="flex: 1; display: flex; flex-direction: column; gap: 20px; padding-bottom: 24px; min-height: 0;">
+<div style="flex: 1; display: flex; flex-direction: column; gap: var(--spacing-lg); padding-bottom: var(--spacing-lg); min-height: 0;">
     <!-- Compact Stats Row -->
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; flex-shrink: 0;">
         <div class="stat-card" style="padding: 18px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-surface); box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
@@ -88,7 +88,7 @@
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
                     {% for balance in leave_balances %}
-                    <div style="padding: 16px; border-radius: 16px; border: 1px solid var(--border-color); background: var(--gray-50);">
+                    <div class="balance-card" style="padding: 16px; border-radius: 16px; border: 1px solid var(--border-color); background: var(--gray-50);">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                             <div style="display: flex; gap: 10px; align-items: center;">
                                 <div style="width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px;
@@ -318,18 +318,96 @@
     </div>
 </div>
 
+
+
 <style>
+    /* Scrollbar Styling */
     .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
     .custom-scroll::-webkit-scrollbar-track { background: transparent; }
     .custom-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
     
-    .action-tile:hover {
-        background: var(--bg-surface) !important;
-        border-color: var(--primary) !important;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+    /* GLOBAL DISABLES: Static Design Base */
+    /* Disable generic container card hover */
+    .card:hover {
+        transform: none !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
+        transition: none !important;
     }
-    .action-tile:hover i { color: var(--primary-dark) !important; }
+    /* Disable table row hover */
+    tr:hover { background-color: transparent !important; }
+
+
+    /* SPECIFIC ENABLES: Interactive Elements */
+
+    /* Quick Actions Hover - Matches Modern Dashboard */
+    .action-tile:hover {
+        transform: translateY(-4px) !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    /* Color-coded highlights for each tile on hover */
+    .action-tile:nth-child(1):hover { border-color: #2563eb !important; background: #eff6ff !important; }
+    .action-tile:nth-child(2):hover { border-color: #10b981 !important; background: #ecfdf5 !important; }
+    .action-tile:nth-child(3):hover { border-color: #f59e0b !important; background: #fffbeb !important; }
+    .action-tile:nth-child(4):hover { border-color: #8b5cf6 !important; background: #f5f3ff !important; }
+
+    /* Dark Mode specific hover refinements */
+    [data-theme="dark"] .action-tile:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    [data-theme="dark"] .action-tile:nth-child(1):hover { background: rgba(37, 99, 235, 0.15) !important; }
+    [data-theme="dark"] .action-tile:nth-child(2):hover { background: rgba(16, 185, 129, 0.15) !important; }
+    [data-theme="dark"] .action-tile:nth-child(3):hover { background: rgba(245, 158, 11, 0.15) !important; }
+    [data-theme="dark"] .action-tile:nth-child(4):hover { background: rgba(139, 92, 246, 0.15) !important; }
+
+    .action-tile:hover i { transform: scale(1.1) rotate(5deg); transition: all 0.3s ease; }
+    .action-tile:hover span { color: var(--text-main) !important; }
+
+    /* Top Stats: Colorful Hover Effects */
+    .stat-card {
+        cursor: pointer !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12) !important;
+    }
+
+    .stat-card i { transition: all 0.3s ease !important; }
+    .stat-card:hover i { transform: scale(1.15) rotate(5deg) !important; }
+
+    /* Color Specifics for Stats */
+    /* Attendance (Month) - Green */
+    .stat-card:first-child:hover { box-shadow: 0 12px 30px rgba(16, 185, 129, 0.2) !important; border-color: rgba(16, 185, 129, 0.3) !important; }
+    
+    /* Pending - Yellow */
+    .stat-card:nth-child(2):hover { box-shadow: 0 12px 30px rgba(245, 158, 11, 0.2) !important; border-color: rgba(245, 158, 11, 0.3) !important; }
+    
+    /* Avg Attendance - Purple */
+    .stat-card:nth-child(3):hover { box-shadow: 0 12px 30px rgba(139, 92, 246, 0.2) !important; border-color: rgba(139, 92, 246, 0.3) !important; }
+    
+    /* Work Days - Blue */
+    .stat-card:last-child:hover { box-shadow: 0 12px 30px rgba(59, 130, 246, 0.2) !important; border-color: rgba(59, 130, 246, 0.3) !important; }
+
+
+    /* Leave Balance Cards Hover */
+    .balance-card {
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    .balance-card:hover {
+        transform: translateY(-4px) !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+        background: var(--bg-surface) !important;
+        border-color: var(--border-color) !important;
+    }
+    [data-theme="dark"] .balance-card:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+        background: var(--input-bg) !important;
+    }
 </style>
 {% endblock %}

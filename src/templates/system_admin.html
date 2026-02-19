@@ -4,7 +4,7 @@
 {% block header_title %}System Administration{% endblock %}
 
 {% block content %}
-<div class="flex-1" style="width: 100%; display: flex; flex-direction: column; animation: fadeIn 0.5s ease-out;">
+<div class="flex-1" style="width: 100%; display: flex; flex-direction: column; animation: fadeIn 0.5s ease-out; padding-bottom: 80px;">
     <!-- Stats Grid -->
     <div class="stats-grid" style="margin-bottom: var(--spacing-lg);">
         <!-- User Management Card -->
@@ -201,9 +201,15 @@
     }
     
     .admin-module-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-md);
-        border-color: var(--primary-light);
+        transform: none !important;
+        box-shadow: var(--shadow-sm) !important;
+        border-color: var(--border-color) !important;
+    }
+
+    /* Disable hover for stats cards */
+    .stat-card:hover {
+        transform: none !important;
+        box-shadow: var(--shadow) !important;
     }
     
     .admin-module-icon {

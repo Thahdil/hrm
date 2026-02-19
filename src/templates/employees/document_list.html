@@ -4,7 +4,7 @@
 {% block header_title %}Document Vault{% endblock %}
 
 {% block content %}
-<div class="flex-1" style="width: 100%; display: flex; flex-direction: column;">
+<div class="flex-1" style="width: 100%; display: flex; flex-direction: column; padding-bottom: 80px;">
     <!-- Page Header -->
     <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
         <div>
@@ -90,4 +90,27 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Disable hover effect for cards and section wrappers */
+    .card:hover, .section-wrapper:hover {
+        transform: none !important;
+        box-shadow: var(--shadow-md) !important;
+    }
+
+    /* Standardize row appearance */
+    tr {
+        background-color: transparent !important;
+    }
+</style>
+
+<script>
+    // Remove inline hover effects from rows
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('tr[onmouseover]').forEach(tr => {
+            tr.removeAttribute('onmouseover');
+            tr.removeAttribute('onmouseout');
+        });
+    });
+</script>
 {% endblock %}

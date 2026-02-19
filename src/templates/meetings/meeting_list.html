@@ -6,7 +6,7 @@
 {% block page_subtitle %}Manage your appointments and team schedules{% endblock %}
 
 {% block content %}
-<div style="display: flex; flex-direction: column; gap: 24px; flex: 1; min-height: 0;">
+<div style="display: flex; flex-direction: column; gap: 24px; flex: 1; min-height: 0; padding-bottom: 80px;">
 
     <!-- Toolbar -->
     <div class="card" style="padding: 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">
@@ -196,6 +196,12 @@
     @keyframes modalIn {
         from { opacity: 0; transform: scale(0.95) translateY(20px); }
         to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* Disable hover effect for cards */
+    .card:hover {
+        transform: none !important;
+        box-shadow: var(--shadow) !important;
     }
 </style>
 {% endblock %}

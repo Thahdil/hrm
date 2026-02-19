@@ -6,7 +6,7 @@
 {% block page_subtitle %}Manage system users and access control.{% endblock %}
 
 {% block content %}
-<div class="flex-1 dashboard-grid">
+<div class="flex-1 dashboard-grid" style="padding-bottom: 80px;">
     <div class="card full-height-card no-padding overflow-hidden">
         <div class="card-header-actions p-6 border-bottom mb-0">
             <div>
@@ -21,8 +21,8 @@
         <div class="card-body-scroll">
             <div class="table-container shadow-none border-0 radius-0">
                 <table class="w-full">
-                    <thead>
-                        <tr>
+                    <thead style="position: sticky; top: 0; z-index: 10; background: var(--bg-surface); box-shadow: 0 1px 0 var(--border-color);">
+                        <tr style="background: var(--gray-50);">
                             <th>Username</th>
                             <th>Email</th>
 

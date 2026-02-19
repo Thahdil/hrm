@@ -5,7 +5,7 @@
 {% block header_title %}Employee Directory{% endblock %}
 
 {% block content %}
-<div class="employee-directory-container flex-1" style="animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column;">
+<div class="employee-directory-container flex-1" style="animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; padding-bottom: 40px;">
     <!-- Page Header Card -->
     <div class="glass-card" style="margin-bottom: 32px; padding: 32px; border-radius: 24px; background: var(--bg-surface); box-shadow: 0 10px 40px rgba(0,0,0,0.04); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -309,6 +309,17 @@
         border-radius: 8px;
         font-family: monospace;
         font-weight: 700;
+    }
+
+    /* Disable hover effects for cards */
+    .glass-card:hover {
+        transform: none !important;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.04) !important;
+    }
+
+    /* Remove table row hover highlight */
+    .premium-table tr:hover td {
+        background: transparent !important;
     }
 </style>
 
