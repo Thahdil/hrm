@@ -222,7 +222,7 @@
                                     <form method="POST" action="{% url 'leave_approve' leave.pk %}" style="display: inline;">
                                         {% csrf_token %}
                                         <input type="hidden" name="action" value="cancel">
-                                        <button type="submit" style="height: 28px; border-radius: 6px; background: var(--bg-surface); border: 1px solid var(--gray-300); color: var(--text-secondary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; padding: 0 10px;" title="Cancel Request" onclick="return confirm('Are you sure you want to cancel this leave request?');">
+                                        <button type="submit" style="height: 28px; border-radius: 6px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; padding: 0 10px;" title="Cancel Request" onclick="return confirm('Are you sure you want to cancel this leave request?');" onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'">
                                             <i class="ri-close-circle-line"></i>
                                             <span style="font-size: 10px; font-weight: 700;">Cancel</span>
                                         </button>
@@ -284,7 +284,7 @@
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="cancel">
                                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                    <button type="submit" style="height: 32px; border-radius: 8px; background: var(--status-pending-bg); border: 1px solid var(--status-pending-text); color: var(--status-pending-text); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; padding: 0 12px;" title="Cancel Request" onclick="return confirm('Are you sure you want to cancel this leave request?');">
+                                    <button type="submit" style="height: 32px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; padding: 0 12px;" title="Cancel Request" onclick="return confirm('Are you sure you want to cancel this leave request?');" onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'">
                                         <i class="ri-close-circle-line"></i>
                                         <span style="font-size: 11px; font-weight: 700;">Cancel</span>
                                     </button>
