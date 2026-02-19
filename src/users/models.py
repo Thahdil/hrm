@@ -52,11 +52,36 @@ class CustomUser(AbstractUser):
     date_of_joining = models.DateField(null=True, blank=True)
     
     class Designation(models.TextChoices):
-        FRONTEND_DEV = "FRONTEND", "Frontend Developer"
-        BACKEND_DEV = "BACKEND", "Backend Developer"
-        DESIGN = "DESIGN", "Design"
+        # IT
+        FRONTEND_DEV    = "FRONTEND",        "Frontend Developer"
+        BACKEND_DEV     = "BACKEND",         "Backend Developer"
+        DESIGNER        = "DESIGNER",        "Designer"
+        PROJECT_MANAGER = "PROJECT_MANAGER", "Project Manager"
+        QC              = "QC",              "QC (Quality Control)"
+        # HR
+        HR_EXECUTIVE    = "HR_EXECUTIVE",    "HR Executive"
+        HR_MANAGER      = "HR_MANAGER",      "HR Manager"
+        RECRUITER       = "RECRUITER",       "Recruiter"
+        PAYROLL_SPEC    = "PAYROLL_SPEC",    "Payroll Specialist"
+        # Sales & Marketing
+        SALES_EXEC      = "SALES_EXEC",      "Sales Executive"
+        SALES_MANAGER   = "SALES_MANAGER",   "Sales Manager"
+        MARKETING_EXEC  = "MARKETING_EXEC",  "Marketing Executive"
+        BIZ_DEV         = "BIZ_DEV",         "Business Development"
+        # Finance
+        ACCOUNTANT      = "ACCOUNTANT",      "Accountant"
+        FINANCE_MANAGER = "FINANCE_MANAGER", "Finance Manager"
+        AUDITOR         = "AUDITOR",         "Auditor"
+        # Operations
+        OPS_EXECUTIVE   = "OPS_EXECUTIVE",   "Operations Executive"
+        OPS_MANAGER     = "OPS_MANAGER",     "Operations Manager"
+        LOGISTICS_COORD = "LOGISTICS_COORD", "Logistics Coordinator"
+        # Administration
+        ADMIN_EXECUTIVE = "ADMIN_EXECUTIVE", "Admin Executive"
+        OFFICE_MANAGER  = "OFFICE_MANAGER",  "Office Manager"
+        RECEPTIONIST    = "RECEPTIONIST",    "Receptionist"
 
-    designation = models.CharField(max_length=100, choices=Designation.choices, default=Designation.BACKEND_DEV)
+    designation = models.CharField(max_length=100, choices=Designation.choices, blank=True, null=True, default=None)
     salary_basic = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Basic Salary in INR")
     salary_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Total Allowances in INR")
 
@@ -115,6 +140,12 @@ class CustomUser(AbstractUser):
         
     def is_employee(self):
         return self.role == self.Role.EMPLOYEE # Employee is default/base, typically no additional_role check needed unless we want inclusive checking
+
+    def __str__(self):
+        if self.full_name: return self.full_name
+        if self.username: return self.username
+        if self.employee_id: return f"Employee {self.employee_id}"
+        return f"User #{self.pk}" if self.pk else "New User"
 
     @property
     def total_salary(self):

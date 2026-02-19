@@ -50,10 +50,12 @@
                     <span class="label">Employee ID:</span>
                     <span class="value">{{ entry.employee.employee_id|default:entry.employee.pk }}</span>
                 </div>
+                {% if entry.employee.designation %}
                 <div class="field-row">
                     <span class="label">Designation:</span>
-                    <span class="value">{{ entry.employee.designation|default:"-" }}</span>
+                    <span class="value">{{ entry.employee.get_designation_display }}</span>
                 </div>
+                {% endif %}
                 <div class="field-row">
                     <span class="label">Department:</span>
                     <span class="value">{{ entry.employee.department|default:"-" }}</span>

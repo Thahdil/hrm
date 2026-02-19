@@ -107,6 +107,16 @@ def log_model_save(sender, instance, created, **kwargs):
     changes = None
     if not created and hasattr(instance, '_old_instance'):
         changes = get_model_changes(instance, instance._old_instance)
+        
+        # Smart action detection (e.g. for approvals)
+        if changes and 'status' in changes:
+            new_status = changes['status'].get('new', '').upper()
+            if 'APPROVED' in new_status:
+                action = AuditLog.Action.APPROVE
+            elif 'REJECTED' in new_status:
+                action = AuditLog.Action.REJECT
+            elif 'CANCELLED' in new_status:
+                action = AuditLog.Action.CANCELLED
     
     # Log the action
     try:

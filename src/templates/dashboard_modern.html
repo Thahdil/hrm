@@ -20,7 +20,7 @@
                         <i class="ri-arrow-up-circle-fill"></i> +{{ new_emp_percentage }}%
                     </div>
                 </div>
-                <div style="width: 44px; height: 44px; background: rgba(37, 99, 235, 0.1); color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                <div style="width: 44px; height: 44px; background: var(--badge-blue-bg); color: var(--badge-blue-text); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
                     <i class="ri-group-fill"></i>
                 </div>
             </div>
@@ -35,7 +35,7 @@
                         <i class="ri-checkbox-circle-fill"></i> {{ attendance_rate }}% Rate
                     </div>
                 </div>
-                <div style="width: 44px; height: 44px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                <div style="width: 44px; height: 44px; background: var(--badge-green-bg); color: var(--badge-green-text); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
                     <i class="ri-fingerprint-fill"></i>
                 </div>
             </div>
@@ -50,7 +50,7 @@
                         <span style="background: rgba(245, 158, 11, 0.1); padding: 2px 8px; border-radius: 4px;">{{ pending_approvals_count }} Pending</span>
                     </div>
                 </div>
-                <div style="width: 44px; height: 44px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                <div style="width: 44px; height: 44px; background: var(--badge-yellow-bg); color: var(--badge-yellow-text); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
                     <i class="ri-user-unfollow-fill"></i>
                 </div>
             </div>
@@ -65,18 +65,18 @@
                         Total Accrued
                     </div>
                 </div>
-                <div style="width: 44px; height: 44px; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                <div style="width: 44px; height: 44px; background: var(--badge-purple-bg); color: var(--badge-purple-text); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
                     <i class="ri-wallet-3-fill"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Grid -->
-    <div class="dashboard-main-grid">
+    <!-- Main Grid - Full Height Flex -->
+    <div class="dashboard-main-grid" style="display: flex; gap: 16px; flex: 1; min-height: 0; align-items: stretch !important; grid-template-columns: none !important;">
         <!-- Left: Activity & Leave Container -->
-        <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0;">
-            <div class="card" style="height: 420px; display: flex; flex-direction: column; overflow: hidden; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-surface);">
+        <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0; flex: 1;">
+            <div class="card" style="flex: 3; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-surface);">
                 <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface);">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <i class="ri-flashlight-line" style="color: var(--primary); font-size: 16px;"></i>
@@ -109,13 +109,13 @@
                 </div>
             </div>
 
-            <div class="card" style="height: 380px; display: flex; flex-direction: column; overflow: hidden; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-surface);">
+            <div class="card" style="flex: 2; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-surface);">
                 <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface);">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <i class="ri-user-unfollow-line" style="color: #f59e0b; font-size: 16px;"></i>
+                        <i class="ri-user-unfollow-line" style="color: var(--status-pending-text); font-size: 16px;"></i>
                         <h3 style="margin: 0; font-size: 14px; font-weight: 800; color: var(--text-main); letter-spacing: -0.01em;">On Leave Today</h3>
                     </div>
-                    <span style="font-size: 10px; font-weight: 800; color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 4px 10px; border-radius: 6px;">{{ on_leave_count }} ACTIVE</span>
+                    <span style="font-size: 10px; font-weight: 800; color: var(--status-pending-text); background: var(--status-pending-bg); padding: 4px 10px; border-radius: 6px;">{{ on_leave_count }} ACTIVE</span>
                 </div>
                 <div style="flex: 1; overflow-y: auto; padding: 0 20px;" class="custom-scroll">
                     {% for req in on_leave_today %}
@@ -132,7 +132,7 @@
                         </div>
                         <div style="text-align: right; flex-shrink: 0;">
                             <div style="font-size: 9px; color: var(--text-secondary); font-weight: 800; text-transform: uppercase;">Until</div>
-                            <div style="font-size: 11px; font-weight: 800; color: #f59e0b;">{{ req.end_date|date:"d M" }}</div>
+                            <div style="font-size: 11px; font-weight: 800; color: var(--status-pending-text);">{{ req.end_date|date:"d M" }}</div>
                         </div>
                     </div>
                     {% empty %}
@@ -146,64 +146,108 @@
         </div>
 
         <!-- Right: Actions & Timeline -->
-        <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0;">
+        <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0; width: 340px; flex-shrink: 0;">
             <!-- Actions -->
-            <div class="card" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-surface); flex-shrink: 0;">
-                <h3 style="margin: 0 0 16px; font-size: 11px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em;">Operations Hub</h3>
-                <div class="responsive-grid" style="grid-template-columns: 1fr 1fr;">
-                    <a href="{% url 'employee_add' %}" class="action-tile" style="text-decoration: none; padding: 12px; background: var(--gray-50); border-radius: 12px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                        <div style="width: 32px; height: 32px; background: rgba(37, 99, 235, 0.1); color: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+            <div class="card" style="padding: 12px 16px; border-radius: 16px; border: 1px solid var(--border-color); background: var(--bg-surface); flex-shrink: 0;">
+                <h3 style="margin: 0 0 12px; font-size: 10px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em;">Operations Hub</h3>
+                <div class="responsive-grid" style="grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <a href="{% url 'employee_add' %}" class="action-tile" style="text-decoration: none; padding: 10px; background: var(--gray-50); border-radius: 10px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                        <div style="width: 28px; height: 28px; background: var(--badge-blue-bg); color: var(--badge-blue-text); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">
                             <i class="ri-user-add-line"></i>
                         </div>
-                        <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Add Employee</span>
+                        <span style="font-size: 10px; font-weight: 700; color: var(--text-secondary);">Add Employee</span>
                     </a>
-                    <a href="{% url 'attendance_list' %}" class="action-tile" style="text-decoration: none; padding: 12px; background: var(--gray-50); border-radius: 12px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                        <div style="width: 32px; height: 32px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                    <a href="{% url 'attendance_list' %}" class="action-tile" style="text-decoration: none; padding: 10px; background: var(--gray-50); border-radius: 10px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                        <div style="width: 28px; height: 28px; background: var(--badge-green-bg); color: var(--badge-green-text); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">
                             <i class="ri-fingerprint-line"></i>
                         </div>
-                        <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Attendance</span>
+                        <span style="font-size: 10px; font-weight: 700; color: var(--text-secondary);">Attendance</span>
                     </a>
-                    <a href="{% url 'payroll_list' %}" class="action-tile" style="text-decoration: none; padding: 12px; background: var(--gray-50); border-radius: 12px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                        <div style="width: 32px; height: 32px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                    <a href="{% url 'payroll_list' %}" class="action-tile" style="text-decoration: none; padding: 10px; background: var(--gray-50); border-radius: 10px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                        <div style="width: 28px; height: 28px; background: var(--badge-yellow-bg); color: var(--badge-yellow-text); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">
                             <i class="ri-bank-card-line"></i>
                         </div>
-                        <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Payroll</span>
+                        <span style="font-size: 10px; font-weight: 700; color: var(--text-secondary);">Payroll</span>
                     </a>
-                    <a href="{% url 'document_list' %}" class="action-tile" style="text-decoration: none; padding: 12px; background: var(--gray-50); border-radius: 12px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                        <div style="width: 32px; height: 32px; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                    <a href="{% url 'document_list' %}" class="action-tile" style="text-decoration: none; padding: 10px; background: var(--gray-50); border-radius: 10px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                        <div style="width: 28px; height: 28px; background: var(--badge-purple-bg); color: var(--badge-purple-text); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">
                             <i class="ri-shield-keyhole-line"></i>
                         </div>
-                        <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Vault</span>
+                        <span style="font-size: 10px; font-weight: 700; color: var(--text-secondary);">Vault</span>
                     </a>
                 </div>
             </div>
 
-            <!-- Holidays Timeline -->
-            <div class="card" style="height: 480px; display: flex; flex-direction: column; overflow: hidden; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-surface);">
-                <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 8px; background: var(--bg-surface);">
-                    <i class="ri-calendar-event-fill" style="color: #f59e0b; font-size: 16px;"></i>
-                    <h3 style="margin: 0; font-size: 11px; font-weight: 900; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em;">Upcoming Holidays</h3>
+            <!-- Upcoming Meetings -->
+            <div class="card" style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; border: 1px solid var(--border-color); background: var(--bg-surface);">
+                <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface);">
+                    <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: var(--text-main);">Upcoming Meetings</h3>
+                    {% if user.is_staff or user.is_admin or user.is_hr or user.is_ceo or user.is_project_manager %}
+                    <a href="{% url 'meeting_list' %}" style="font-size: 10px; font-weight: 600; text-decoration: none; color: var(--primary);">View All</a>
+                    {% endif %}
                 </div>
-                <div style="flex: 1; overflow-y: auto; padding: 12px 16px;" class="custom-scroll">
+                
+                <div style="display: flex; flex-direction: column; background: var(--bg-surface);">
+                    {% if upcoming_meetings %}
+                        {% for meeting in upcoming_meetings %}
+                        <div style="display: flex; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border-color); align-items: center; transition: background 0.2s;" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background='transparent'">
+                            <!-- Time -->
+                            <div style="min-width: 45px; text-align: right;">
+                                <div style="font-weight: 700; color: var(--text-main); font-size: 12px;">{{ meeting.start_time|date:"H:i" }}</div>
+                                <div style="font-size: 9px; color: var(--text-secondary); margin-top: 1px;">{{ meeting.start_time|date:"M d" }}</div>
+                            </div>
+
+                            <div style="width: 2px; height: 28px; background: var(--primary-light); border-radius: 2px;"></div>
+                            
+                            <!-- Info -->
+                            <div style="flex: 1; min-width: 0;">
+                                 <h4 style="margin: 0 0 2px; font-size: 12px; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ meeting.title }}</h4>
+                                 <div style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-secondary);">
+                                     <div style="display: flex; align-items: center; gap: 3px;">
+                                         <div style="width: 14px; height: 14px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700;">
+                                             {{ meeting.organizer.username|make_list|first|upper }}
+                                         </div>
+                                         <span style="font-size: 10px;">{{ meeting.organizer.first_name|default:meeting.organizer.username }}</span>
+                                     </div>
+                                 </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 0; opacity: 0.6;">
+                            <i class="ri-calendar-check-line" style="font-size: 20px; color: var(--gray-400); margin-bottom: 6px;"></i>
+                            <span style="font-size: 11px; font-weight: 500; color: var(--text-secondary);">No meetings scheduled</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Holidays Timeline -->
+            <div class="card" style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; border: 1px solid var(--border-color); background: var(--bg-surface);">
+                <div style="padding: 10px 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 8px; background: var(--bg-surface);">
+                    <i class="ri-calendar-event-fill" style="color: var(--status-pending-text); font-size: 14px;"></i>
+                    <h3 style="margin: 0; font-size: 10px; font-weight: 900; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em;">Upcoming Holidays</h3>
+                </div>
+                <div style="flex: 1; overflow-y: auto; padding: 10px 16px;" class="custom-scroll">
                     {% if upcoming_holidays %}
-                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
                         {% for holiday in upcoming_holidays %}
-                            <div style="display: flex; gap: 12px; align-items: center; padding-bottom: 10px; border-bottom: 1px dashed var(--border-color);">
-                                <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--gray-50); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid var(--border-color); flex-shrink: 0;">
-                                    <span style="font-size: 12px; font-weight: 900; color: var(--primary); line-height: 1;">{{ holiday.date|date:"d" }}</span>
-                                    <span style="font-size: 8px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">{{ holiday.date|date:"M" }}</span>
+                            <div style="display: flex; gap: 10px; align-items: center; padding-bottom: 8px; border-bottom: 1px dashed var(--border-color);">
+                                <div style="width: 32px; height: 32px; border-radius: 8px; background: var(--gray-50); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid var(--border-color); flex-shrink: 0;">
+                                    <span style="font-size: 10px; font-weight: 900; color: var(--primary); line-height: 1;">{{ holiday.date|date:"d" }}</span>
+                                    <span style="font-size: 7px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">{{ holiday.date|date:"M" }}</span>
                                 </div>
                                 <div style="flex: 1; min-width: 0;">
-                                    <div style="font-size: 12px; font-weight: 700; color: var(--gray-700); margin-bottom: 1px;">{{ holiday.name }}</div>
-                                    <div style="font-size: 10px; color: var(--text-secondary); font-weight: 600;">{{ holiday.date|date:"l" }}</div>
+                                    <div style="font-size: 11px; font-weight: 700; color: var(--gray-700); margin-bottom: 0;">{{ holiday.name }}</div>
+                                    <div style="font-size: 9px; color: var(--text-secondary); font-weight: 600;">{{ holiday.date|date:"l" }}</div>
                                 </div>
                             </div>
                         {% endfor %}
                         </div>
                     {% else %}
                         <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3;">
-                            <i class="ri-calendar-line" style="font-size: 24px; margin-bottom: 4px;"></i>
-                            <span style="font-size: 11px; font-weight: 600;">No upcoming dates</span>
+                            <i class="ri-calendar-line" style="font-size: 20px; margin-bottom: 4px;"></i>
+                            <span style="font-size: 10px; font-weight: 600;">No upcoming dates</span>
                         </div>
                     {% endif %}
                 </div>

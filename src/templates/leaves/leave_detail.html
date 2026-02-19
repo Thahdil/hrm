@@ -4,20 +4,54 @@
 {% block header_title %}Leave Request Details{% endblock %}
 
 {% block content %}
-<div class="section-wrapper" style="max-width: 800px; margin: 0 auto;">
+<div class="card full-height-card flex-1" style="padding: 32px; width: 100%; display: flex; flex-direction: column;">
     <!-- Status Banner -->
     <div
-        style="margin-bottom: 24px; padding: 16px; border-radius: 8px; background: {% if leave.status == 'APPROVED' %}var(--status-approved-bg){% elif leave.status == 'REJECTED' %}var(--status-rejected-bg){% else %}var(--status-pending-bg){% endif %};">
-        <div
-            style="font-weight: 600; color: {% if leave.status == 'APPROVED' %}var(--status-approved-text){% elif leave.status == 'REJECTED' %}var(--status-rejected-text){% else %}var(--status-pending-text){% endif %}; display: flex; align-items: center; gap: 8px;">
-            {% if leave.status == 'APPROVED' %}
-                <i class="ri-checkbox-circle-line"></i>
-            {% elif leave.status == 'REJECTED' %}
-                <i class="ri-close-circle-line"></i>
-            {% else %}
-                <i class="ri-time-line"></i>
+        style="margin-bottom: 24px; padding: 16px; border-radius: 8px; background: 
+        {% if leave.status == 'APPROVED' %}
+            {% if leave.leave_type.requires_document and leave.document_status != 'VERIFIED' and leave.payment_status != 'LOP' %}var(--status-pending-bg)
+            {% elif leave.payment_status == 'LOP' %}var(--status-lop-bg)
+            {% else %}var(--status-verified-bg)
             {% endif %}
-            {{ leave.get_status_display }}
+        {% elif leave.status == 'REJECTED' %}var(--status-rejected-bg)
+        {% else %}var(--status-pending-bg)
+        {% endif %}; border: 1px solid 
+        {% if leave.status == 'APPROVED' %}
+            {% if leave.leave_type.requires_document and leave.document_status != 'VERIFIED' and leave.payment_status != 'LOP' %}var(--status-pending-border)
+            {% elif leave.payment_status == 'LOP' %}var(--status-lop-border)
+            {% else %}var(--status-verified-border)
+            {% endif %}
+        {% elif leave.status == 'REJECTED' %}var(--status-rejected-border)
+        {% else %}var(--status-pending-border)
+        {% endif %};">
+        <div
+            style="font-weight: 600; color: 
+            {% if leave.status == 'APPROVED' %}
+                {% if leave.leave_type.requires_document and leave.document_status != 'VERIFIED' and leave.payment_status != 'LOP' %}var(--status-pending-text)
+                {% elif leave.payment_status == 'LOP' %}var(--status-lop-text)
+                {% else %}var(--status-verified-text)
+                {% endif %}
+            {% elif leave.status == 'REJECTED' %}var(--status-rejected-text)
+            {% else %}var(--status-pending-text)
+            {% endif %}; display: flex; align-items: center; gap: 8px;">
+            
+            {% if leave.status == 'APPROVED' %}
+                {% if leave.leave_type.requires_document %}
+                    {% if leave.document_status == 'VERIFIED' %}
+                         <i class="ri-checkbox-circle-line"></i> Approved & Verified
+                    {% elif leave.payment_status == 'LOP' %}
+                         <i class="ri-error-warning-line"></i> Approved - Loss of Pay
+                    {% else %}
+                         <i class="ri-time-line"></i> Approved - Verification Pending
+                    {% endif %}
+                {% else %}
+                    <i class="ri-checkbox-circle-line"></i> Approved
+                {% endif %}
+            {% elif leave.status == 'REJECTED' %}
+                <i class="ri-close-circle-line"></i> Rejected
+            {% else %}
+                <i class="ri-time-line"></i> {{ leave.get_status_display }}
+            {% endif %}
         </div>
     </div>
 
@@ -58,6 +92,26 @@
                     {% endif %}
                 </div>
             </div>
+            
+            {% if leave.leave_type.requires_document %}
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary);">Document Status</label>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span class="badge {% if leave.document_status == 'VERIFIED' %}badge-success{% elif leave.document_status == 'REJECTED' %}badge-error{% else %}badge-warning{% endif %}">
+                        {{ leave.get_document_status_display }}
+                    </span>
+                    {% if leave.attachment %}
+                        <a href="{{ leave.attachment.url }}" target="_blank" style="font-size: 12px; color: var(--primary); text-decoration: underline;">View File</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary);">Payment Impact</label>
+                <div style="font-weight: 600; color: {% if leave.payment_status == 'LOP' %}var(--error){% elif leave.payment_status == 'PAID' %}var(--success){% else %}var(--text-secondary){% endif %};">
+                    {{ leave.get_payment_status_display }}
+                </div>
+            </div>
+            {% endif %}
 
             <div style="margin-bottom: 12px;">
                 <label style="display: block; font-size: 0.85rem; color: var(--text-secondary);">Assigned Manager</label>
@@ -70,6 +124,24 @@
                     {{ leave.reason|default:"No reason provided." }}
                 </div>
             </div>
+
+            {% if leave.rejection_reason %}
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--status-rejected-text); font-weight: 600;">Rejection Reason (Loss of Pay)</label>
+                <div style="background: var(--status-rejected-bg); padding: 12px; border: 1px solid var(--status-rejected-border); border-radius: 6px; font-size: 0.95rem; color: var(--status-rejected-text);">
+                    {{ leave.rejection_reason }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if leave.manager_comment %}
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">Manager Comment</label>
+                <div style="background: var(--gray-50); padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; color: var(--text-main);">
+                    {{ leave.manager_comment }}
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Actions -->
@@ -79,8 +151,8 @@
             </h4>
 
             {% if leave.status == 'PENDING' %}
+                <!-- APPROVAL WORKFLOW -->
                 {% if leave.assigned_manager == user %}
-                    <!-- ASSIGNED MANAGER ACTIONS -->
                     <div style="background: var(--bg-surface); padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <form method="post" action="{% url 'leave_approve' leave.id %}">
                             {% csrf_token %}
@@ -99,7 +171,6 @@
                         </form>
                     </div>
                 {% elif leave.employee == user %}
-                     <!-- EMPLOYEE ACTIONS -->
                     <div style="background: var(--bg-surface); padding: 20px; border: 1px solid var(--border-color); border-radius: 8px;">
                         <p style="margin-bottom: 16px; color: var(--text-secondary);">You can cancel this request while it is still pending.</p>
                         <form method="post" action="{% url 'leave_approve' leave.id %}">
@@ -110,17 +181,107 @@
                         </form>
                     </div>
                 {% else %}
-                    <!-- OTHERS (ADMIN/HR NOT ASSIGNED) -->
                     <div style="padding: 20px; text-align: center; color: var(--text-secondary); background: var(--gray-50); border-radius: 8px; border: 1px dashed var(--border-color);">
                         <i class="ri-time-line" style="font-size: 24px; color: var(--text-secondary); margin-bottom: 8px; display: block;"></i>
                         Waiting for action by <strong>{{ leave.assigned_manager|default:"Assigned Manager" }}</strong>.
                     </div>
                 {% endif %}
 
+            {% elif leave.status == 'APPROVED' %}
+                <!-- POST-APPROVAL WORKFLOW (DOCS) -->
+                {% if leave.leave_type.requires_document %}
+                    
+                    {% if leave.document_status == 'PENDING' %}
+                        {% if leave.employee == user %}
+                        <div style="background: var(--status-pending-bg); padding: 20px; border: 1px solid var(--status-pending-border); border-radius: 8px;">
+                            <h5 style="color: var(--status-pending-text); margin-top: 0;">Action Required: Upload Document</h5>
+                            <p style="font-size: 13px; color: var(--text-main); margin-bottom: 12px;">
+                                Please upload your {{ leave.leave_type.name }} certificate. 
+                                {% if leave.document_status == 'REJECTED' %}
+                                <br><strong>Note: previous document was rejected.</strong>
+                                {% endif %}
+                            </p>
+                            <form method="post" action="{% url 'leave_upload_document' leave.id %}" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <input type="file" name="attachment" accept=".pdf,.jpg,.jpeg,.png" required style="margin-bottom: 12px; width: 100%; color: var(--text-main);">
+                                <button type="submit" class="btn" style="background: var(--primary); color: white; border: none; width: 100%; cursor: pointer;">
+                                    <i class="ri-upload-cloud-line"></i> Upload Certificate
+                                </button>
+                            </form>
+                        </div>
+                        {% else %}
+                        <div style="padding: 20px; text-align: center; color: var(--text-secondary); background: var(--gray-50); border-radius: 8px;">
+                            <i class="ri-file-search-line" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+                            Waiting for employee to upload document.
+                        </div>
+                        {% endif %}
+                    
+                    {% elif leave.document_status == 'UPLOADED' %}
+                        
+                            <div style="background: var(--status-verified-bg); padding: 20px; border: 1px solid var(--status-verified-border); border-radius: 8px; margin-bottom: 16px;">
+                                <h5 style="color: var(--status-verified-text); margin-top: 0;">Document Uploaded</h5>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                                    <i class="ri-file-text-line" style="font-size: 20px; color: var(--status-verified-text);"></i>
+                                    <a href="{{ leave.attachment.url }}" target="_blank" style="color: var(--status-verified-text); font-weight: 600; text-decoration: underline;">
+                                        View Attached Certificate
+                                    </a>
+                                </div>
+                                
+                                {% if user.is_staff or user.is_admin or user.is_hr or user == leave.assigned_manager %}
+                                <form method="post" action="{% url 'leave_verify_document' leave.id %}">
+                                    {% csrf_token %}
+                                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Verify this document to authorize payment.</p>
+                                    
+                                    <div style="margin-bottom: 12px;">
+                                        <textarea name="rejection_reason" id="rejection_reason" rows="2" placeholder="Rejection Reason (Required for Reject/LOP)" style="width: 100%; background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; font-size: 13px; resize: vertical; box-sizing: border-box;"></textarea>
+                                    </div>
+
+                                    <div style="display: flex; gap: 12px;">
+                                        <button type="submit" name="action" value="verify" class="btn" style="background: #059669; color: white; border: none; flex: 1; cursor: pointer;">
+                                            <i class="ri-checkbox-circle-fill"></i> Verify & Pay
+                                        </button>
+                                        <button type="submit" name="action" value="reject" class="btn" onclick="return validateReject()" style="background: #dc2626; color: white; border: none; flex: 1; cursor: pointer;">
+                                            <i class="ri-close-circle-fill"></i> Reject (LOP)
+                                        </button>
+                                    </div>
+                                </form>
+                                <script>
+                                function validateReject() {
+                                    var reason = document.getElementById('rejection_reason').value;
+                                    if (!reason.trim()) {
+                                        alert("Please provide a reason for rejection.");
+                                        document.getElementById('rejection_reason').focus();
+                                        return false;
+                                    }
+                                    return confirm("Confirm rejection and Loss of Pay?");
+                                }
+                                </script>
+                                {% else %}
+                                <p style="font-size: 13px; color: #059669;">Waiting for HR/Manager verification.</p>
+                                {% endif %}
+                            </div>
+                        
+                    {% elif leave.document_status == 'VERIFIED' %}
+                        <div style="padding: 20px; text-align: center; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534;">
+                            <i class="ri-shield-check-line" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+                            <strong>Document Verified</strong><br>
+                            Approved by {{ leave.verified_by.full_name|default:"HR" }}<br>
+                            <span style="font-size: 12px;">on {{ leave.verification_date|date:"M d, Y" }}</span>
+                        </div>
+                    {% endif %}
+
+                {% else %}
+                    <!-- Normal Leave (No Docs Required) -->
+                    <div style="padding: 20px; text-align: center; color: var(--text-secondary); background: var(--gray-50); border-radius: 8px;">
+                         Request is approved and closed.<br>
+                        <strong>Decided by:</strong> {{ leave.approved_by|default:"System" }}
+                    </div>
+                {% endif %}
+
             {% else %}
-                <!-- PROCESSED -->
+                <!-- REJECTED/CANCELLED -->
                 <div style="padding: 20px; text-align: center; color: var(--text-secondary); background: var(--gray-50); border-radius: 8px;">
-                     Request has been processed.<br>
+                     Request is {{ leave.get_status_display|lower }}.<br>
                     <strong>Decided by:</strong> {{ leave.approved_by|default:"System" }}
                 </div>
             {% endif %}

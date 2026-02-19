@@ -102,16 +102,6 @@ def employee_create(request):
         form = EmployeeForm(request.POST)
         if form.is_valid():
             emp = form.save()
-            
-            AuditLog.log(
-                user=request.user,
-                action=AuditLog.Action.CREATE,
-                obj=emp,
-                request=request,
-                module=AuditLog.Module.EMPLOYEES,
-                object_repr=emp.full_name or emp.username
-            )
-            
             messages.success(request, "Employee created successfully!")
             return redirect('employee_list')
     else:
@@ -159,16 +149,6 @@ def document_upload(request):
             if not (request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'CEO'])):
                 doc.employee = request.user
             doc.save()
-            
-            AuditLog.log(
-                user=request.user,
-                action=AuditLog.Action.CREATE,
-                obj=doc,
-                request=request,
-                module=AuditLog.Module.DOCUMENTS,
-                object_repr=f"{doc.document_type} for {doc.employee}"
-            )
-            
             messages.success(request, "Document uploaded successfully!")
             return redirect('document_list')
     else:

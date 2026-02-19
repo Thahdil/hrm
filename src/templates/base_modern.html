@@ -19,7 +19,7 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     
     <!-- Modern Design System CSS -->
-    <link rel="stylesheet" href="{% static 'css/modern.css' %}?v=4.3">
+    <link rel="stylesheet" href="{% static 'css/modern.css' %}?v=4.4">
     
     <!-- Theme Flash Protection -->
     <script>
@@ -42,7 +42,14 @@
             <!-- Logo Header -->
             <div class="sidebar-header">
                 <a href="{% url 'dashboard' %}" class="sidebar-logo" style="display: flex; justify-content: center; width: 100%; padding: 0;">
-                    <img src="{% static 'img/logo_color.png' %}" alt="EONS HRM" style="width: 100%; height: auto; max-width: 100%; object-fit: contain;">
+                    <img src="{% static 'img/logo_color.png' %}" alt="EONS HRM" class="logo-light" style="width: 100%; height: auto; max-width: 100%; object-fit: contain;">
+                    
+                    <!-- Dark Mode: Smart Overlay Strategy -->
+                    <!-- Bottom: White Filtered Logo (White Icon + White Text) -->
+                    <!-- Top 1: Original Color Icon (Clipped Left) -->
+                    <!-- Top 2: Original Color 'X' (Clipped Middle) -->
+                    <!-- Dark Mode: Dedicated Logo -->
+                    <img src="{% static 'img/logo_dark.png' %}" alt="EONS HRM" class="logo-dark" style="width: 100%; height: auto; max-width: 100%; object-fit: contain; display: none;">
                 </a>
                 <button class="mobile-close-sidebar" onclick="toggleSidebar()">
                     <i class="ri-close-line"></i>
@@ -84,6 +91,13 @@
                         <i class="ri-time-line"></i>
                         <span>{% if user.is_admin or user.is_ceo %}Leave Management{% else %}My Leaves{% endif %}</span>
                     </a>
+
+                    {% if user.is_staff or user.is_admin or user.is_hr or user.is_ceo or user.is_project_manager %}
+                    <a href="{% url 'meeting_list' %}" class="nav-item {% if 'meetings' in request.path %}active{% endif %}">
+                        <i class="ri-calendar-event-line"></i>
+                        <span>Meetings</span>
+                    </a>
+                    {% endif %}
                 </div>
                 
                 <!-- Team Management (Project Managers Only) -->
@@ -203,7 +217,7 @@
                         </div>
 
                         <!-- User Dropdown Menu -->
-                        <div id="user-menu" style="display: none; position: absolute; top: calc(100% + 12px); right: 0; min-width: 200px; background: white; border-radius: var(--radius-md); padding: 8px; box-shadow: var(--shadow-lg); border: 1px solid var(--gray-200); z-index: 1000;">
+                        <div id="user-menu" style="display: none; position: absolute; top: calc(100% + 12px); right: 0; min-width: 200px; background: var(--bg-surface); border-radius: var(--radius-md); padding: 8px; box-shadow: var(--shadow-lg); border: 1px solid var(--gray-200); z-index: 1000;">
                             {% if not user.is_admin %}
                             <a href="{% url 'my_profile' %}" class="dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-sm); text-decoration: none; color: var(--gray-700); font-size: 14px; transition: background 0.2s;">
                                 <i class="ri-user-line"></i>

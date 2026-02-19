@@ -1,0 +1,40 @@
+{% extends 'base_modern.html' %}
+{% load static %}
+
+{% block title %}Meeting Details{% endblock %}
+{% block header_title %}Meeting Details{% endblock %}
+{% block page_subtitle %}View appointment information{% endblock %}
+
+{% block content %}
+    <div style="padding-top: 20px;">
+        {% include 'meetings/includes/meeting_detail_content.html' %}
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+@keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+#userList::-webkit-scrollbar { width: 6px; }
+#userList::-webkit-scrollbar-track { background: transparent; }
+#userList::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 10px; }
+
+.avatar-circle {
+    background: var(--primary);
+    color: white;
+    border: none;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // These functions might be needed if they are shared but for now they are in the include
+    function closeMeetingDetail() {
+        // standalone page doesn't need to close itself but might redirect
+        window.location.href = "{% url 'meeting_list' %}";
+    }
+</script>
+{% endblock %}

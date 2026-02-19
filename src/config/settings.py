@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'employees.apps.EmployeesConfig',
     'payroll.apps.PayrollConfig',
     'leaves.apps.LeavesConfig',
+    'meetings.apps.MeetingsConfig',
 ]
 
 MIDDLEWARE = [
@@ -66,7 +67,6 @@ MIDDLEWARE = [
     
     # Custom audit logging middleware
     'core.signals.CurrentRequestMiddleware',  # Must be after AuthenticationMiddleware
-    'core.middleware.AuditLogMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'

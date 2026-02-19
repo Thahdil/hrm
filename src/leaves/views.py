@@ -127,7 +127,24 @@ def leave_list(request):
              # Regular Employee (shows all their requests including cancelled)
             leaves = LeaveRequest.objects.filter(employee=user).order_by('-created_at')
              
-    return render(request, 'leaves/leave_list.html', {'leaves': leaves, 'is_admin': is_admin, 'balances': balances})
+    # Upcoming Meetings (Add-on for UI)
+    from meetings.models import Meeting
+    from django.utils import timezone
+    # Show all meetings for today and future (include passed meetings of today)
+    from datetime import datetime, time
+    today_start = timezone.make_aware(datetime.combine(timezone.localdate(), time.min))
+    
+    upcoming_meetings = Meeting.objects.filter(
+        Q(participants=user) | Q(organizer=user),
+        start_time__gte=today_start
+    ).distinct().order_by('start_time')[:5]
+
+    return render(request, 'leaves/leave_list.html', {
+        'leaves': leaves, 
+        'is_admin': is_admin, 
+        'balances': balances,
+        'upcoming_meetings': upcoming_meetings
+    })
 
 @login_required
 def leave_create(request):
@@ -287,15 +304,6 @@ def leave_create(request):
             
             leave.save()
             
-            # Log activity
-            from core.models import AuditLog
-            AuditLog.log(
-                user=request.user,
-                action=AuditLog.Action.CREATE,
-                obj=leave,
-                request=request
-            )
-            
             messages.success(request, f"Leave request submitted for {requested_days} days.")
             return redirect('leave_list')
     else:
@@ -379,17 +387,6 @@ def ticket_create(request):
                 ticket.employee = request.user
                 
             ticket.save()
-            
-            from core.models import AuditLog
-            AuditLog.log(
-                user=request.user,
-                action=AuditLog.Action.CREATE,
-                obj=ticket,
-                request=request,
-                module=AuditLog.Module.TICKETS,
-                object_repr=f"Ticket to {ticket.destination}"
-            )
-            
             messages.success(request, "Ticket request submitted.")
             return redirect('ticket_list')
     else:
@@ -452,9 +449,6 @@ def leave_approve(request, pk):
                     leave.approved_by = request.user
                     leave.manager_comment = comment
                     leave.save()
-                    
-                    from core.models import AuditLog
-                    AuditLog.log(user=request.user, action=AuditLog.Action.APPROVE, obj=leave, request=request)
                     messages.success(request, "Leave request approved.")
                 else:
                     messages.error(request, "Only the assigned manager can approve this request.")
@@ -494,10 +488,6 @@ def leave_approve(request, pk):
              leave.approved_by = request.user
              leave.manager_comment = comment
              leave.save()
-             
-             from core.models import AuditLog
-             AuditLog.log(user=request.user, action=AuditLog.Action.REJECT, obj=leave, request=request)
-             
              messages.warning(request, "Leave rejected.")
 
         elif action == 'cancel':
@@ -520,7 +510,12 @@ def leave_approve(request, pk):
                 leave.status = LeaveRequest.Status.CANCELLED
                 leave.save()
                 messages.info(request, "Leave request cancelled.")
-    
+
+    # Redirect logic: prefer 'next' param, then referrer for better UX
+    next_url = request.GET.get('next') or request.POST.get('next')
+    if next_url:
+        return redirect(next_url)
+        
     return redirect('leave_detail', pk=pk)
 from .forms import LeaveRequestForm, LeaveTypeForm
 

@@ -123,6 +123,7 @@ class AuditLog(models.Model):
         USERS = 'USERS', 'Users'
         DOCUMENTS = 'DOCUMENTS', 'Documents'
         TICKETS = 'TICKETS', 'Air Tickets'
+        MEETINGS = 'MEETINGS', 'Meetings'
         SYSTEM = 'SYSTEM', 'System'
         OTHER = 'OTHER', 'Other'
     
@@ -176,38 +177,126 @@ class AuditLog(models.Model):
                 else:
                     parts.append(f"{k}: {v}")
         return ", ".join(parts)
+    
+    def _get_change_vals(self, field_name):
+        """Helper to extract old/new values and resolve choices to human labels"""
+        if not self.changes or not isinstance(self.changes, dict):
+            return "Unknown", "Unknown"
+        
+        val = self.changes.get(field_name)
+        if val is None:
+            return "Unknown", "Unknown"
+        
+        # 1. Extract raw values (handle both dict and list formats)
+        if isinstance(val, dict):
+            old = val.get('old')
+            new = val.get('new')
+        elif isinstance(val, list) and len(val) == 2:
+            old, new = val[0], val[1]
+        else:
+            old, new = None, str(val)
+            
+        # 2. Try to resolve codes to labels using model choices
+        if self.content_type:
+            try:
+                model_cls = self.content_type.model_class()
+                if model_cls:
+                    field = model_cls._meta.get_field(field_name)
+                    if field and field.choices:
+                        choices_dict = {str(c_val): str(c_label) for c_val, c_label in field.choices}
+                        if old is not None: old = choices_dict.get(str(old), old)
+                        if new is not None: new = choices_dict.get(str(new), new)
+            except:
+                pass
+        
+        # 3. Final formatting for UI
+        def format_val(v):
+            if v is None or str(v).lower() in ['none', 'nan', 'null', '']:
+                return "Not set"
+            return str(v)
+            
+        return format_val(old), format_val(new)
 
     @property
     def description(self):
         """Returns a human-readable description matching specific user requirements"""
         user_name = self.user.full_name if (self.user and hasattr(self.user, 'full_name') and self.user.full_name) else (self.user.username if self.user else "System")
-        obj_name = self.object_repr if self.object_repr else "Unknown"
+        
+        # --- Live Recovery & Healing Strategy ---
+        # If the stored name is generic or missing, try to find the real identity
+        obj_name = self.object_repr
+        # Define what we consider "junk" or "placeholder" names
+        placeholders = ['unknown', 'new record', 'customuser object', 'none', '', 'entry', 'system record']
+        
+        def is_junk(name):
+            return not name or str(name).lower().strip() in placeholders
+
+        if is_junk(obj_name):
+            # 1. Try Live Object lookup (if not deleted from DB)
+            if self.content_object:
+                try:
+                    obj_name = str(self.content_object)
+                except:
+                    pass
+            
+            # 2. Deep Recovery from JSON changes history
+            if is_junk(obj_name) and self.changes:
+                # A. Check top-level (Signal logs)
+                # B. Check nested 'new_values' (Old Middleware logs)
+                targets = [self.changes]
+                if 'new_values' in self.changes:
+                    targets.append(self.changes['new_values'])
+                
+                name_keys = ['full_name', 'username', 'employee_id', 'name', 'title']
+                for target in targets:
+                    for key in name_keys:
+                        if key in target:
+                            val = target[key]
+                            # Handle different value formats: [old, new], {'new': x}, or simple string
+                            if isinstance(val, list) and len(val) >= 2:
+                                obj_name = val[1]
+                            elif isinstance(val, dict):
+                                obj_name = val.get('new') or val.get('value')
+                            else:
+                                obj_name = str(val)
+                            
+                            if not is_junk(obj_name): break
+                    if not is_junk(obj_name): break
+        
+        # FINAL SANITY: If it's still generic, don't show "Entry", 
+        # use the ID if available, else a very generic but honest label
+        if is_junk(obj_name):
+            if self.object_id:
+                obj_name = f"Item #{self.object_id}"
+            else:
+                obj_name = "Record"
         
         # 1. Employee Management
         if self.module == self.Module.EMPLOYEES:
             if self.action == self.Action.CREATE:
-                return f"New employee {obj_name} was onboarded by {user_name}."
+                return f"New employee '{obj_name}' was onboarded by {user_name}."
             
             if self.action == self.Action.UPDATE and self.changes and isinstance(self.changes, dict):
                 # Check for specific interesting fields
                 if 'department' in self.changes:
-                    old, new = self.changes['department'] if isinstance(self.changes['department'], list) else ("Unknown", self.changes['department'])
+                    old, new = self._get_change_vals('department')
                     return f"Department for {obj_name} changed from {old} to {new}."
                 
                 if 'designation' in self.changes:
-                    old, new = self.changes['designation'] if isinstance(self.changes['designation'], list) else ("Unknown", self.changes['designation'])
+                    old, new = self._get_change_vals('designation')
                     return f"Designation for {obj_name} changed from {old} to {new}."
                 
                 if 'salary_basic' in self.changes:
                     return f"Basic Salary for {obj_name} was updated by {user_name}."
                 
                 if 'status' in self.changes:
-                    old, new = self.changes['status'] if isinstance(self.changes['status'], list) else ("Unknown", self.changes['status'])
-                    if new in ['INACTIVE', 'RESIGNED', 'TERMINATED']:
+                    old, new = self._get_change_vals('status')
+                    if str(new).upper() in ['INACTIVE', 'RESIGNED', 'TERMINATED']:
                         return f"{obj_name} has been marked as '{new}' as of today."
                     return f"Status for {obj_name} changed to '{new}'."
-                    
-                # If update is not interesting, return None to hide it
+                
+                # If we have any other change but it's not one of the above, still try to show something
+                # unless we want to hide "technical" changes.
                 return None
 
         if self.module == self.Module.LEAVES:
@@ -282,6 +371,22 @@ class AuditLog(models.Model):
         if self.module == self.Module.SYSTEM and self.action == self.Action.UPDATE:
              return f"{user_name} updated System Settings."
 
+        # 5. Meetings Management
+        if self.module == self.Module.MEETINGS:
+            meeting_title = obj_name
+            if self.action == self.Action.CREATE:
+                # Get meeting time from changes if available
+                scheduled_time = ""
+                if self.changes and 'start_time' in self.changes:
+                    scheduled_time = f" for {self.changes['start_time']}"
+                return f"{user_name} scheduled a new meeting '{meeting_title}'{scheduled_time}."
+            
+            if self.action == self.Action.UPDATE:
+                return f"{user_name} updated the meeting '{meeting_title}'."
+            
+            if self.action == self.Action.DELETE or self.action == self.Action.CANCELLED:
+                return f"{user_name} cancelled the meeting '{meeting_title}'."
+
         # Return None for everything else to filter it out
         return None
     
@@ -306,45 +411,46 @@ class AuditLog(models.Model):
                 module = cls.Module.TICKETS
             elif 'holiday' in model_name:
                 module = cls.Module.SYSTEM
+            elif 'meeting' in model_name:
+                module = cls.Module.MEETINGS
             else:
                 module = cls.Module.OTHER
         
         # Determine object_repr if not provided
         if not object_repr:
             if obj:
-                model_name = obj.__class__.__name__.lower()
-                if 'attendance' in model_name and hasattr(obj, 'employee'):
-                    object_repr = f"Attendance for {obj.employee.full_name or obj.employee.username} on {obj.date}"
-                elif 'leaverequest' in model_name and hasattr(obj, 'employee'):
-                    # Use only name for leave requests as the type is in the description
-                    object_repr = obj.employee.full_name or obj.employee.username
-                elif hasattr(obj, 'full_name') and obj.full_name:
-                    object_repr = obj.full_name
-                elif hasattr(obj, 'username'):
-                    object_repr = obj.username
-                elif hasattr(obj, 'name'):
-                    object_repr = obj.name
-                else:
-                    object_repr = str(obj)
-            elif request:
-                # Fallback to request path if no object
-                object_repr = "" # description will use user_name
-            
-            # Enrich changes for CREATE actions of specific models
-            if action == cls.Action.CREATE:
-                if not changes:
-                    changes = {}
+                # 1. Try common identity fields
+                for attr in ['full_name', 'username', 'name', 'title', 'label']:
+                    val = getattr(obj, attr, None)
+                    if val:
+                        object_repr = str(val)
+                        break
                 
-                model_name = obj.__class__.__name__.lower()
-                if 'leaverequest' in model_name:
-                    changes['leave_type'] = str(obj.leave_type.name)
-                    changes['start_date'] = str(obj.start_date)
-                    changes['end_date'] = str(obj.end_date)
-                    # Capture duration for accurate logging
-                    if hasattr(obj, 'duration_days'):
-                        changes['duration'] = str(obj.duration_days)
-                elif 'documentvault' in model_name:
-                    changes['document_type'] = str(obj.document_type)
+                # 2. Special handling for User model if fields were empty
+                if not object_repr and hasattr(obj, 'get_full_name'):
+                    f_name = obj.get_full_name()
+                    if f_name: object_repr = f_name
+                
+                # 3. Fallback to string representation
+                if not object_repr:
+                    object_repr = str(obj)
+                
+                # 4. Final safety fallback
+                if not object_repr or str(object_repr).strip().lower() in ['', 'none', 'unknown']:
+                    object_repr = f"{obj.__class__.__name__} #{obj.pk}"
+            
+            elif request:
+                # Use request path as a last resort
+                object_repr = f"{request.method} {request.path}"
+            else:
+                object_repr = "Unknown"
+            
+        # Enrich changes for CREATE actions to capture identity for future recovery
+        if action == cls.Action.CREATE and obj:
+            if not changes: changes = {}
+            for attr in ['full_name', 'username', 'name', 'title']:
+                val = getattr(obj, attr, None)
+                if val: changes[attr] = str(val)
         
         log_entry = cls(
             user=user,

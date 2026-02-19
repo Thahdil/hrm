@@ -1,0 +1,270 @@
+{% extends 'base_modern.html' %}
+{% load static %}
+
+{% block title %}Meeting Scheduler{% endblock %}
+{% block header_title %}Meetings{% endblock %}
+{% block page_subtitle %}Manage your appointments and team schedules{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 24px; flex: 1; min-height: 0;">
+
+    <!-- Toolbar -->
+    <div class="card" style="padding: 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">
+        <div style="display: flex; gap: 12px;">
+            <a href="?filter=upcoming" class="btn {% if filter_type == 'upcoming' %}btn-primary{% else %}btn-outline{% endif %}" style="border-radius: 8px;">
+                Upcoming
+            </a>
+            <a href="?filter=past" class="btn {% if filter_type == 'past' %}btn-primary{% else %}btn-outline{% endif %}" style="border-radius: 8px;">
+                Past
+            </a>
+        </div>
+        
+        {% if user.is_ceo or user.is_project_manager %}
+        <a href="{% url 'meeting_schedule' %}" class="btn btn-primary" style="border-radius: 12px; gap: 8px;">
+            <i class="ri-add-line"></i> Schedule Meeting
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Meeting List -->
+    <div class="card" style="border-radius: 20px; border: 1px solid var(--border-color); overflow: hidden; flex: 1; display: flex; flex-direction: column;">
+        <div style="flex: 1; overflow: auto; background: var(--bg-surface); position: relative;">
+            <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: var(--gray-50); border-bottom: 1px solid var(--border-color);">
+                <tr>
+                    <th style="padding: 16px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Topic</th>
+                    <th style="padding: 16px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Date & Time</th>
+                    <th style="padding: 16px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Organizer</th>
+                    <th style="padding: 16px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Participants</th>
+                    {% if request.user.role != 'EMPLOYEE' %}
+                    <th style="padding: 16px 24px; text-align: right; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Action</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for meeting in meetings %}
+                <tr style="border-bottom: 1px solid var(--border-color); transition: background 0.2s;" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 16px 24px; vertical-align: middle;">
+                        <a href="{% url 'meeting_detail' meeting.pk %}" style="text-decoration: none; color: inherit;">
+                            <div style="font-weight: 700; color: var(--text-main); font-size: 14px;">{{ meeting.title }}</div>
+                            {% if meeting.room %}
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
+                                <i class="ri-map-pin-line"></i> {{ meeting.room }}
+                            </div>
+                            {% endif %}
+                        </a>
+                    </td>
+                    <td style="padding: 16px 24px; vertical-align: middle;">
+                        <div style="font-weight: 600; font-size: 13px; color: var(--text-main);">
+                            {{ meeting.start_time|date:"D, d M Y" }}
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">
+                            {{ meeting.start_time|time:"H:i" }} - {{ meeting.end_time|time:"H:i" }}
+                        </div>
+                    </td>
+                    <td style="padding: 16px 24px; vertical-align: middle;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            {% with initials=meeting.organizer.first_name|first|default:meeting.organizer.username|first|upper %}
+                            <div class="avatar-circle" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800;">
+                                {{ initials }}
+                            </div>
+                            {% endwith %}
+                            <div style="display: flex; flex-direction: column;">
+                                <span style="font-size: 13.5px; font-weight: 600; color: var(--text-main);">{{ meeting.organizer.get_full_name|default:meeting.organizer.username }}</span>
+                                <span style="font-size: 11px; color: var(--text-secondary);">Organizer</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding: 16px 24px; vertical-align: middle;">
+                        <div class="participant-group" style="display: flex; align-items: center; position: relative; cursor: pointer;">
+                            <div style="display: flex; margin-left: 8px;">
+                                {% for p in meeting.participants.all|slice:":4" %}
+                                <div style="width: 30px; height: 30px; background: var(--bg-surface); border: 2px solid var(--bg-surface); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; margin-left: -8px; position: relative; z-index: {{ forloop.revcounter }};">
+                                    <div class="avatar-circle" style="width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                        {{ p.first_name|first|default:p.username|first|upper }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% if meeting.participants.count > 4 %}
+                                <div style="width: 30px; height: 30px; background: var(--primary); border: 2px solid var(--bg-surface); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; margin-left: -8px; color: white; z-index: 0; box-shadow: 0 2px 6px rgba(37,99,235,0.2);">
+                                    +{{ meeting.participants.count|add:"-4" }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div style="margin-left: 12px; font-size: 11px; font-weight: 500; color: var(--text-secondary);">
+                                {{ meeting.participants.count }} participants
+                            </div>
+
+                            <!-- Floating Participant names popup -->
+                            <div class="name-popup">
+                                <div style="font-weight: 800; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">Attendance List</div>
+                                {% for p in meeting.participants.all %}
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                    <div class="avatar-circle" style="width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; line-height: 1;">{{ p.first_name|first|default:p.username|first|upper }}</div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-main);">{{ p.get_full_name|default:p.username }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </td>
+                    {% if request.user.role != 'EMPLOYEE' %}
+                    <td style="padding: 16px 24px; text-align: right; vertical-align: middle;">
+                         <button onclick="openMeetingDetail('{{ meeting.pk }}')" class="btn" style="width: 36px; height: 36px; border-radius: 12px; background: rgba(37, 99, 235, 0.1); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: none; cursor: pointer;" onmouseover="this.style.transform='translateX(4px) scale(1.05)'; this.style.background='var(--primary)'; this.style.color='white'" onmouseout="this.style.transform='translateX(0) scale(1)'; this.style.background='rgba(37, 99, 235, 0.1)'; this.style.color='var(--primary)'">
+                            <i class="ri-arrow-right-line" style="font-size: 18px; color: inherit;"></i>
+                        </button>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{% if request.user.role == 'EMPLOYEE' %}4{% else %}5{% endif %}" style="padding: 48px; text-align: center; vertical-align: middle;">
+                        <div style="width: 64px; height: 64px; background: var(--gray-50); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: var(--gray-400);">
+                            <i class="ri-calendar-event-line" style="font-size: 32px;"></i>
+                        </div>
+                        <h3 style="font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">No Meetings Found</h3>
+                        <p style="color: var(--text-secondary); font-size: 13px;">No upcoming meetings scheduled.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        </div>
+    </div>
+
+    <!-- Meeting Detail Popup Container -->
+    <div id="meetingDetailPopup" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 9998; align-items: center; justify-content: center; padding: 20px;">
+        <div id="meetingDetailContent" style="width: 100%; max-width: 600px; animation: modalIn 0.3s ease-out;">
+            <!-- Content will be loaded here via AJAX -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .name-popup {
+        visibility: hidden;
+        width: 190px;
+        background-color: var(--bg-surface);
+        color: var(--text-main);
+        text-align: left;
+        border-radius: 12px;
+        padding: 16px;
+        position: absolute;
+        z-index: 1000;
+        top: 125%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        pointer-events: none;
+        border: 1px solid var(--border-color);
+    }
+    
+    .name-popup::after {
+        content: "";
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        margin-left: -6px;
+        border-width: 6px;
+        border-style: solid;
+        border-color: transparent transparent var(--bg-surface) transparent;
+    }
+    
+    .participant-group:hover .name-popup {
+        visibility: visible;
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    /* Avatar Theme Support */
+    .avatar-circle {
+        background: var(--primary);
+        color: white;
+        border: none;
+    }
+
+    /* Keep it consistent in dark mode */
+    [data-theme="dark"] .avatar-circle {
+        background: var(--primary) !important;
+        color: white !important;
+    }
+
+    @keyframes modalIn {
+        from { opacity: 0; transform: scale(0.95) translateY(20px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openMeetingDetail(meetingId) {
+        const popup = document.getElementById('meetingDetailPopup');
+        const content = document.getElementById('meetingDetailContent');
+        
+        // Show loading state
+        content.innerHTML = `
+            <div class="card" style="padding: 48px; text-align: center; border-radius: 20px; background: var(--bg-surface);">
+                <div style="display: inline-block; width: 40px; height: 40px; border: 3px solid var(--primary-light); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <div style="margin-top: 16px; font-weight: 600; color: var(--text-secondary);">Loading details...</div>
+            </div>
+        `;
+        popup.style.display = 'flex';
+        
+        fetch(`/meetings/${meetingId}/?ajax=1`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            content.innerHTML = html;
+            // Reveal the close button which is hidden by default for standalone page
+            const closeBtn = document.getElementById('detailModalClose');
+            if (closeBtn) closeBtn.style.display = 'block';
+            
+            // Re-initialize any scripts in the loaded HTML if necessary
+            // (The include already has a self-executing script block)
+        })
+        .catch(err => {
+            content.innerHTML = `
+                <div class="card" style="padding: 48px; text-align: center; border-radius: 20px; background: var(--bg-surface);">
+                    <i class="ri-error-warning-line" style="font-size: 40px; color: #ef4444;"></i>
+                    <div style="margin-top: 16px; font-weight: 700; color: var(--text-main);">Error loading details</div>
+                    <button onclick="closeMeetingDetail()" class="btn btn-outline" style="margin-top: 16px;">Close</button>
+                </div>
+            `;
+        });
+    }
+
+    function closeMeetingDetail() {
+        document.getElementById('meetingDetailPopup').style.display = 'none';
+        document.getElementById('meetingDetailContent').innerHTML = '';
+    }
+
+    // Close on background click
+    window.addEventListener('click', function(event) {
+        const popup = document.getElementById('meetingDetailPopup');
+        if (event.target === popup) {
+            closeMeetingDetail();
+        }
+    });
+
+    // Handle escape key
+    window.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeMeetingDetail();
+        }
+    });
+</script>
+
+<style>
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}

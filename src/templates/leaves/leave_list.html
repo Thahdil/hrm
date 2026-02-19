@@ -6,7 +6,9 @@
 {% block page_subtitle %}{% if is_admin %}Manage and approve employee leave requests.{% else %}Track your leave balances and history.{% endif %}{% endblock %}
 
 {% block content %}
-<div class="flex-1" style="width: 100%; display: flex; flex-direction: column;">
+<div style="width: 100%; min-height: 0; display: flex; flex-direction: column; gap: 24px; flex: 1;">
+    <!-- Left Column: Stats & Table -->
+    <div style="display: flex; flex-direction: column; min-width: 0; min-height: 0; flex: 1;">
     <!-- Leave Balances (Employees Only) -->
     {% if not is_admin and balances %}
     <div class="stats-grid" style="margin-bottom: var(--spacing-lg);">
@@ -45,8 +47,8 @@
                 </div>
                 
                 {% if not is_admin %}
-                <a href="{% url 'leave_add' %}" class="btn btn-primary" style="border-radius: 12px; font-weight: 700; padding: 12px 24px;">
-                    <i class="ri-add-line"></i> New Request
+                <a href="{% url 'leave_add' %}" class="btn btn-primary" style="border-radius: 12px; font-weight: 700; padding: 12px 24px; color: var(--white); display: flex; align-items: center; gap: 8px;">
+                    <i class="ri-add-line"></i> <span>New Request</span>
                 </a>
                 {% endif %}
             </div>
@@ -89,19 +91,25 @@
             <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
                 <thead>
                     <tr style="background: var(--gray-50);">
+                        {% if is_admin %}
                         <th style="padding: 16px 32px; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color); width: 200px;">EMPLOYEE</th>
+                        {% endif %}
                         <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">LEAVE TYPE</th>
                         <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">DURATION</th>
                         <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">DATES</th>
                         <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">REASON</th>
                         <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">PROCESSED BY</th>
+                        <th style="padding: 16px 20px; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">DOC STATUS</th>
                         <th style="padding: 16px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">STATUS</th>
+                        {% if is_admin %}
                         <th style="padding: 16px 32px; text-align: right; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">ACTIONS</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody style="background: var(--bg-surface);">
                     {% for leave in leaves %}
                     <tr style="transition: all 0.25s ease;">
+                        {% if is_admin %}
                         <td style="padding: 16px 32px; border-bottom: 1px solid var(--border-color);">
                             <div style="display: flex; align-items: center; gap: 14px;">
                                 <div style="width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: white; background: var(--primary); box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2); flex-shrink: 0; aspect-ratio: 1/1;">
@@ -113,6 +121,7 @@
                                 </div>
                             </div>
                         </td>
+                        {% endif %}
                         
                         <td style="padding: 16px 20px; border-bottom: 1px solid var(--border-color);">
                             <span style="display: inline-block; padding: 6px 14px; background: rgba(37, 99, 235, 0.1); color: var(--primary); border-radius: 8px; font-size: 12px; font-weight: 700;">{{ leave.leave_type.name }}</span>
@@ -150,6 +159,36 @@
                             {% endif %}
                         </td>
                         
+                        <td style="padding: 16px 20px; border-bottom: 1px solid var(--border-color);">
+                            {% if leave.is_sick_leave and leave.leave_type.requires_document %}
+                                {% if leave.document_status == 'VERIFIED' %}
+                                    <span style="color: var(--success); font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="ri-checkbox-circle-fill"></i> Accepted
+                                    </span>
+                                {% elif leave.document_status == 'REJECTED' %}
+                                    <div class="status-tooltip-wrapper" style="position: relative; display: inline-flex;">
+                                        <span style="color: #ef4444 !important; font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; cursor: help;">
+                                            <i class="ri-close-circle-fill"></i> Rejected
+                                        </span>
+                                        <div class="status-tooltip-content">
+                                            {{ leave.rejection_reason|default:"No reason provided" }}
+                                        </div>
+                                    </div>
+                                {% elif leave.document_status == 'UPLOADED' %}
+                                    <span style="color: var(--primary); font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="ri-file-text-fill"></i> Uploaded
+                                    </span>
+                                {% elif leave.document_status == 'PENDING' %}
+                                    <span style="color: #f59e0b; font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="ri-time-fill"></i> Pending
+                                    </span>
+                                {% else %}
+                                    <span style="color: var(--text-secondary); font-size: 11px;">--</span>
+                                {% endif %}
+                            {% else %}
+                                <span style="color: var(--text-secondary); font-size: 11px; font-style: italic;">Not Required</span>
+                            {% endif %}
+                        
                         <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
                             {% if leave.status == 'PENDING' %}
                                 <span style="display: inline-flex; align-items: center; gap: 6px; background: var(--status-pending-bg); color: var(--status-pending-text); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;">
@@ -168,14 +207,64 @@
                                     {{ leave.status|upper }}
                                 </span>
                             {% endif %}
+
+
+                            <!-- Actions for Employees (Moved from Actions Column) -->
+                            {% if not is_admin %}
+                                <div style="margin-top: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    {% if leave.status == 'APPROVED' and leave.leave_type.requires_document and leave.document_status == 'PENDING' and leave.employee == request.user %}
+                                        <a href="{% url 'leave_detail' leave.pk %}" class="btn" style="height: 28px; padding: 0 10px; border-radius: 6px; background: #fff7ed; border: 1px solid #ffedd5; color: #c2410c; display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; text-decoration: none;" title="Upload Document">
+                                            <i class="ri-upload-cloud-line"></i> Upload
+                                        </a>
+                                    {% endif %}
+                                    
+                                    {% if leave.status == 'PENDING' and leave.employee == request.user %}
+                                    <form method="POST" action="{% url 'leave_approve' leave.pk %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="cancel">
+                                        <button type="submit" style="height: 28px; border-radius: 6px; background: var(--bg-surface); border: 1px solid var(--gray-300); color: var(--text-secondary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; padding: 0 10px;" title="Cancel Request" onclick="return confirm('Are you sure you want to cancel this leave request?');">
+                                            <i class="ri-close-circle-line"></i>
+                                            <span style="font-size: 10px; font-weight: 700;">Cancel</span>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+
+                                    {% if leave.status == 'CANCELLED' and leave.employee == request.user %}
+                                    <form method="POST" action="{% url 'leave_delete' leave.pk %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" style="width: 28px; height: 28px; border-radius: 6px; background: var(--gray-50); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Delete">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
                         </td>
                         
+                        {% if is_admin %}
                         <td style="padding: 16px 32px; text-align: right; border-bottom: 1px solid var(--border-color);">
                             <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                                <!-- Upload Action (Priority) -->
+                                <!-- Action Logic: Show Upload if required, else Show View -->
+                                {% if leave.status == 'APPROVED' and leave.leave_type.requires_document and leave.document_status == 'PENDING' and leave.employee == request.user %}
+                                    <!-- Uplod Action (Replaces View) -->
+                                    <a href="{% url 'leave_detail' leave.pk %}" class="btn" style="height: 32px; padding: 0 12px; border-radius: 8px; background: #fff7ed; border: 1px solid #ffedd5; color: #c2410c; display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-decoration: none;" title="Upload Document">
+                                        <i class="ri-upload-cloud-line"></i> Upload
+                                    </a>
+                                {% else %}
+                                    <!-- View Details (Restricted: Hide from employees as per request) -->
+                                    {% if request.user != leave.employee and leave.status == 'APPROVED' %}
+                                    <a href="{% url 'leave_detail' leave.pk %}" class="btn" style="width: 32px; height: 32px; border-radius: 8px; background: var(--gray-50); border: 1px solid var(--border-color); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; text-decoration: none;" title="View Details">
+                                        <i class="ri-eye-line"></i>
+                                    </a>
+                                    {% endif %}
+                                {% endif %}
+
                                 {% if leave.status == 'PENDING' and leave.assigned_manager == request.user %}
                                 <form method="POST" action="{% url 'leave_approve' leave.pk %}" style="display: inline;">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="approve">
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                     <button type="submit" style="width: 32px; height: 32px; border-radius: 8px; background: var(--status-approved-bg); border: none; color: var(--status-approved-text); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Approve">
                                         <i class="ri-check-line" style="font-size: 18px; font-weight: bold;"></i>
                                     </button>
@@ -183,6 +272,7 @@
                                 <form method="POST" action="{% url 'leave_approve' leave.pk %}" style="display: inline;">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="reject">
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                     <button type="submit" style="width: 32px; height: 32px; border-radius: 8px; background: var(--status-rejected-bg); border: none; color: var(--status-rejected-text); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Reject">
                                         <i class="ri-close-line" style="font-size: 18px; font-weight: bold;"></i>
                                     </button>
@@ -193,7 +283,8 @@
                                 <form method="POST" action="{% url 'leave_approve' leave.pk %}" style="display: inline;">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="cancel">
-                                    <button type="submit" style="min-width: 80px; height: 32px; border-radius: 8px; background: var(--status-pending-bg); border: 1px solid var(--status-pending-text); color: var(--status-pending-text); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; padding: 0 12px;" title="Cancel Request" onclick="return confirm('Are you sure you want to cancel this leave request?');">
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" style="height: 32px; border-radius: 8px; background: var(--status-pending-bg); border: 1px solid var(--status-pending-text); color: var(--status-pending-text); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; padding: 0 12px;" title="Cancel Request" onclick="return confirm('Are you sure you want to cancel this leave request?');">
                                         <i class="ri-close-circle-line"></i>
                                         <span style="font-size: 11px; font-weight: 700;">Cancel</span>
                                     </button>
@@ -210,10 +301,11 @@
                                 {% endif %}
                             </div>
                         </td>
+                        {% endif %}
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" style="padding: 100px 32px; text-align: center;">
+                        <td colspan="{% if is_admin %}9{% else %}7{% endif %}" style="padding: 100px 32px; text-align: center;">
                             <div style="width: 80px; height: 80px; background: var(--gray-50); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--gray-400);">
                                 <i class="ri-calendar-event-line" style="font-size: 40px;"></i>
                             </div>
@@ -226,6 +318,9 @@
             </table>
         </div>
     </div>
+    </div>
+
+
 </div>
 
 </style>
@@ -322,6 +417,98 @@
         // Initial check to prime the hash
         checkForUpdates();
 
+    });
+</script>
+
+<!-- LOP Reason Modal -->
+<div id="lopModal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: white; width: 100%; max-width: 400px; border-radius: 16px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); margin: 20px; animation: modalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; color: #dc2626;">
+            <div style="width: 36px; height: 36px; background: #fef2f2; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="ri-error-warning-fill" style="font-size: 18px;"></i>
+            </div>
+            <h3 style="margin: 0; font-size: 16px; font-weight: 700;">Loss of Pay Reason</h3>
+        </div>
+        
+        <div style="background: #f9fafb; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; margin-bottom: 24px;">
+            <p id="lopReasonText" style="margin: 0; color: #374151; font-size: 14px; line-height: 1.5;"></p>
+        </div>
+
+        <button onclick="closeLopModal()" style="width: 100%; padding: 10px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+            Close
+        </button>
+    </div>
+</div>
+
+<style>
+@keyframes modalSlideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tooltip Styles */
+.status-tooltip-content {
+    visibility: hidden;
+    width: 200px;
+    background-color: #1f2937;
+    color: #f9fafb;
+    text-align: center;
+    border-radius: 8px;
+    padding: 8px 12px;
+    position: absolute;
+    z-index: 50;
+    bottom: 135%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    pointer-events: none;
+    transform: translateY(4px);
+}
+
+.status-tooltip-content::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: #1f2937 transparent transparent transparent;
+}
+
+.status-tooltip-wrapper:hover .status-tooltip-content {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+</style>
+
+<script>
+    function showLopReason(reason) {
+        const modal = document.getElementById('lopModal');
+        const text = document.getElementById('lopReasonText');
+        text.innerText = reason || "No reason provided.";
+        modal.style.display = 'flex';
+        // Prevent scrolling on body
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLopModal() {
+        const modal = document.getElementById('lopModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    // Close on outside click
+    document.getElementById('lopModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeLopModal();
+        }
     });
 </script>
 {% endblock %}

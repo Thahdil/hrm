@@ -1,0 +1,24 @@
+{% extends 'base_modern.html' %}
+{% load static %}
+
+{% block title %}Cancel Meeting{% endblock %}
+{% block header_title %}Cancel Meeting{% endblock %}
+
+{% block content %}
+<div class="card" style="padding: 32px; border-radius: 20px; border: 1px solid var(--border-color); max-width: 480px; margin: 0 auto; background: var(--bg-surface); text-align: center;">
+    <div style="width: 64px; height: 64px; background: var(--error-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; color: var(--error);">
+        <i class="ri-delete-bin-line" style="font-size: 32px;"></i>
+    </div>
+    
+    <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 12px;">Are you sure?</h2>
+    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 32px; line-height: 1.6;">
+        You are about to cancel the meeting <strong>"{{ meeting.title }}"</strong> on {{ meeting.start_time|date:"D, d M" }}. This action cannot be undone.
+    </p>
+
+    <form method="post" style="display: flex; gap: 16px; justify-content: center;">
+        {% csrf_token %}
+        <a href="{% url 'meeting_list' %}" class="btn" style="background: var(--gray-100); color: var(--text-secondary); border-radius: 12px; padding: 12px 24px; font-weight: 700; text-decoration: none;">Keep It</a>
+        <button type="submit" class="btn" style="background: var(--error); color: white; border: none; border-radius: 12px; padding: 12px 24px; font-weight: 700; cursor: pointer;">Yes, Cancel It</button>
+    </form>
+</div>
+{% endblock %}

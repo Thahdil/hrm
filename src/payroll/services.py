@@ -24,9 +24,14 @@ class GratuityService:
         self.unpaid_leave_days = 0 
         # Indian Gratuity Act: Daily wage is calculated as (Basic Salary / 26)
         # We use 15 days per completed year of service
-        self.daily_basis = self.employee.salary_basic / Decimal('26.00')
 
     def calculate(self) -> dict:
+        if not self.start_date or not self.employee.salary_basic:
+            return {
+                "service_years": 0.0,
+                "amount": Decimal('0.00')
+            }
+            
         total_days = (self.end_date - self.start_date).days + 1
         active_days = total_days - self.unpaid_leave_days
         service_years = active_days / 365.25
@@ -39,7 +44,8 @@ class GratuityService:
             
         # Rule 2: Formula: (Basic / 26) * 15 * service_years
         else:
-            amount = (self.daily_basis * 15 * Decimal(service_years))
+            daily_basis = self.employee.salary_basic / Decimal('26.00')
+            amount = (daily_basis * 15 * Decimal(service_years))
 
         return {
             "service_years": round(service_years, 2),

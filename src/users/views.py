@@ -93,14 +93,16 @@ def manage_team_assignments(request):
     # Get currently assigned employees (those who have this user in their managers list)
     assigned_employees = User.objects.filter(managers=request.user)
     
-    # Create designation map for the template
+    # Create designation and department maps for the template
     designation_map = {str(user.id): user.get_designation_display() for user in form.fields['employees'].queryset}
+    department_map = {str(user.id): user.department for user in form.fields['employees'].queryset}
     
     context = {
         'form': form,
         'assigned_employees': assigned_employees,
         'total_assigned': assigned_employees.count(),
-        'designation_map': designation_map
+        'designation_map': designation_map,
+        'department_map': department_map
     }
     
     return render(request, 'users/team_assignments.html', context)

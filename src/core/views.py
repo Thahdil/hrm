@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from meetings.models import Meeting
 from django.contrib.auth.decorators import login_required
 from employees.models import DocumentVault
 from leaves.models import LeaveRequest
@@ -154,17 +155,6 @@ def public_holiday_add(request):
         form = PublicHolidayForm(request.POST)
         if form.is_valid():
             holiday = form.save()
-            
-            from .models import AuditLog
-            AuditLog.log(
-                user=request.user,
-                action=AuditLog.Action.CREATE,
-                obj=holiday,
-                request=request,
-                module=AuditLog.Module.SYSTEM,
-                object_repr=holiday.name
-            )
-            
             messages.success(request, "Holiday added.")
         else:
             messages.error(request, "Error adding holiday.")
@@ -181,19 +171,7 @@ def public_holiday_delete(request, pk):
     
     try:
         holiday = PublicHoliday.objects.get(pk=pk)
-        holiday_name = holiday.name
         holiday.delete()
-        
-        from .models import AuditLog
-        AuditLog.log(
-            user=request.user,
-            action=AuditLog.Action.DELETE,
-            obj=None, # Object deleted
-            request=request,
-            module=AuditLog.Module.SYSTEM,
-            object_repr=holiday_name
-        )
-        
         messages.success(request, "Holiday removed.")
     except PublicHoliday.DoesNotExist:
         pass
@@ -208,6 +186,8 @@ def dashboard(request):
     if user.is_staff or user.is_admin() or user.is_hr() or user.is_ceo():
         from django.contrib.auth import get_user_model
         from .models import PublicHoliday
+        from meetings.models import Meeting
+        from django.db.models import Q
         User = get_user_model()
         
         # Statistics for the Admin Dashboard
@@ -269,14 +249,22 @@ def dashboard(request):
         # Recent Activities from Audit Log
         from .models import AuditLog
         
-        # Fetch more logs initially to allow for filtering
-        raw_activities = AuditLog.objects.select_related('user').order_by('-timestamp')[:50]
-        
         recent_activities = []
+        seen_messages = set()
+        
+        # Sort by timestamp to ensure we keep the most recent one if duplicates exist
+        raw_activities = AuditLog.objects.select_related('user').order_by('-timestamp')[:60]
+        
         for activity in raw_activities:
-            # The description property now returns None for irrelevant activities
-            if activity.description:
-                recent_activities.append(activity)
+            msg = activity.description
+            if msg:
+                # Aggressive Deduplication: 
+                # If the exact same text has already been shown, skip it.
+                # This ensures "only show them once".
+                if msg not in seen_messages:
+                    recent_activities.append(activity)
+                    seen_messages.add(msg)
+                    
                 if len(recent_activities) >= 10:
                     break
         
@@ -329,6 +317,15 @@ def dashboard(request):
                     {'name': 'Personal Leave', 'code': 'PERS', 'used': 1, 'total': 5, 'remaining': 4, 'percentage': 20}
                 ]
         
+        # Upcoming Meetings
+        from datetime import datetime, time
+        from meetings.models import Meeting # Local import for admin section
+        today_start = timezone.make_aware(datetime.combine(timezone.localdate(), time.min))
+        upcoming_meetings = Meeting.objects.filter(
+            Q(participants=user) | Q(organizer=user),
+            start_time__gte=today_start
+        ).distinct().order_by('start_time')[:5]
+                
         context = {
             'total_employees': total_employees,
             'new_employees_count': new_employees_count,
@@ -349,6 +346,7 @@ def dashboard(request):
             'upcoming_holidays': upcoming_holidays,
             'recent_activities': recent_activities,
             'leave_balances': leave_balances,
+            'upcoming_meetings': upcoming_meetings,
         }
         return render(request, 'dashboard_modern.html', context)
     
@@ -470,6 +468,16 @@ def dashboard(request):
         ).count()
         avg_daily_attendance = int(total_present_logs / days_in_month) if days_in_month > 0 else 0
 
+        # Upcoming Meetings
+        from datetime import datetime, time
+        from meetings.models import Meeting  # Local import to fix UnboundLocalError
+        today_start = timezone.make_aware(datetime.combine(timezone.localdate(), time.min))
+        upcoming_meetings = Meeting.objects.filter(
+            Q(participants=employee) | Q(organizer=employee),
+            start_time__gte=today_start
+        ).distinct().order_by('start_time')[:5]
+
+
         # Upcoming Holidays
         from .models import PublicHoliday
         upcoming_holidays = PublicHoliday.objects.filter(date__gte=today.date()).order_by('date')
@@ -484,5 +492,6 @@ def dashboard(request):
             'leave_balances': leave_balances,
             'upcoming_holidays': upcoming_holidays,
             'avg_daily_attendance': avg_daily_attendance,
+            'upcoming_meetings': upcoming_meetings,
         }
         return render(request, 'dashboard_ess.html', context)

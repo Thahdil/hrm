@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, views_document
 
 urlpatterns = [
     path('leave-requests/', views.leave_list, name='leave_list'),
@@ -7,6 +7,8 @@ urlpatterns = [
     path('leave-requests/<int:pk>/', views.leave_detail, name='leave_detail'),
     path('leave-requests/<int:pk>/delete/', views.leave_delete, name='leave_delete'),
     path('leave-requests/<int:pk>/action/', views.leave_approve, name='leave_approve'),
+    path('leave-requests/<int:pk>/upload/', views_document.leave_upload_document, name='leave_upload_document'),
+    path('leave-requests/<int:pk>/verify/', views_document.leave_verify_document, name='leave_verify_document'),
     path('tickets/', views.ticket_list, name='ticket_list'),
     path('tickets/add/', views.ticket_create, name='ticket_add'),
     # Configuration

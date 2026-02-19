@@ -5,20 +5,22 @@
 
 {% block content %}
 <div class="profile-page-container" style="display: flex; flex-direction: column; min-height: 0; flex: 1; animation: fadeIn 0.8s ease-out; padding-top: 8px;">
-    <div class="glass-card" style="width: 100%; display: flex; flex-direction: column; min-height: 0; flex: 1; overflow: hidden; box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.1); border-radius: 24px; background: rgba(255, 255, 255, 0.98);">
+    <div class="glass-card" style="width: 100%; display: flex; flex-direction: column; min-height: 0; flex: 1; overflow: hidden; box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.1); border-radius: 24px; background: var(--bg-surface);">
         <!-- Profile Banner/Header -->
         <div class="profile-banner" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); height: 70px; position: relative; flex-shrink: 0;">
             <div style="position: absolute; bottom: -30px; left: 32px; display: flex; align-items: flex-end; gap: 16px;">
-                <div class="profile-avatar-container" style="width: 70px; height: 70px; background: white; border-radius: 14px; padding: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-                    <div style="width: 100%; height: 100%; background: #eff6ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                <div class="profile-avatar-container" style="width: 70px; height: 70px; background: var(--bg-surface); border-radius: 14px; padding: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                    <div style="width: 100%; height: 100%; background: var(--gray-100); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
                         <i class="ri-user-3-fill" style="font-size: 32px;"></i>
                     </div>
                 </div>
                 <div style="padding-bottom: 2px;">
                     <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">{{ employee.full_name|upper }}</h2>
                     <div style="display: flex; gap: 6px; margin-top: 2px;">
-                        <span class="badge" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); font-size: 9px; padding: 2px 8px;">{{ employee.designation }}</span>
-                        <span class="badge" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); font-size: 9px; padding: 2px 8px;">{{ employee.department }}</span>
+                        {% if employee.designation %}
+                        <span class="badge" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); font-size: 9px; padding: 2px 8px;">{{ employee.get_designation_display }}</span>
+                        {% endif %}
+                        <span class="badge" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); font-size: 9px; padding: 2px 8px;">{{ employee.get_department_display }}</span>
                     </div>
                 </div>
             </div>
@@ -132,7 +134,8 @@
                             <label>Designation</label>
                             <div class="input-wrapper">
                                 <i class="ri-briefcase-line"></i>
-                                <select name="designation">
+                                <select name="designation" id="profile-designation">
+                                    <option value="">— Select Designation —</option>
                                     {% for val, label in designation_choices %}
                                         <option value="{{ val }}" {% if employee.designation == val %}selected{% endif %}>{{ label }}</option>
                                     {% endfor %}
@@ -147,6 +150,35 @@
                             </div>
                         </div>
                     </div>
+
+                    <script>
+                    (function() {
+                        const deptMap = {
+                            'IT':         ['FRONTEND','BACKEND','DESIGNER','PROJECT_MANAGER','QC'],
+                            'HR':         ['HR_EXECUTIVE','HR_MANAGER','RECRUITER','PAYROLL_SPEC'],
+                            'SALES':      ['SALES_EXEC','SALES_MANAGER','MARKETING_EXEC','BIZ_DEV'],
+                            'FINANCE':    ['ACCOUNTANT','FINANCE_MANAGER','AUDITOR'],
+                            'OPERATIONS': ['OPS_EXECUTIVE','OPS_MANAGER','LOGISTICS_COORD'],
+                            'ADMIN':      ['ADMIN_EXECUTIVE','OFFICE_MANAGER','RECEPTIONIST'],
+                        };
+                        const dept = '{{ employee.department }}';
+                        const allowed = deptMap[dept] || [];
+                        const desigSel = document.getElementById('profile-designation');
+                        if (!desigSel) return;
+                        const allOpts = Array.from(desigSel.options).map(o => ({ value: o.value, label: o.text, selected: o.selected }));
+                        const current = desigSel.value;
+                        desigSel.innerHTML = '<option value="">— Select Designation —</option>';
+                        allOpts.forEach(opt => {
+                            if (opt.value === '' || allowed.includes(opt.value)) {
+                                const el = document.createElement('option');
+                                el.value = opt.value;
+                                el.text  = opt.label;
+                                if (opt.value === current) el.selected = true;
+                                desigSel.appendChild(el);
+                            }
+                        });
+                    })();
+                    </script>
 
                     <h3 style="margin: 24px 0 16px; font-size: 16px; font-weight: 800; color: var(--gray-900); display: flex; align-items: center; gap: 10px;">
                         <i class="ri-bank-card-line" style="color: var(--primary);"></i> Banking Information
@@ -205,8 +237,8 @@
     .detail-item i {
         width: 36px;
         height: 36px;
-        background: white;
-        border: 1px solid var(--gray-200);
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
         border-radius: 10px;
         display: flex;
         align-items: center;
@@ -256,13 +288,13 @@
     .modern-form select,
     .modern-form textarea {
         width: 100%;
-        border: 1px solid var(--gray-200);
+        border: 1px solid var(--border-color);
         border-radius: 10px;
         font-size: 13px;
         font-weight: 500;
-        color: var(--gray-900);
+        color: var(--text-main);
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        background: white;
+        background: var(--input-bg);
         appearance: none;
         box-sizing: border-box;
     }

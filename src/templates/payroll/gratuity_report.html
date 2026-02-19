@@ -54,7 +54,7 @@
             <tr style="border-bottom: 1px solid var(--border);">
                 <td style="padding: 16px;">
                     <div style="font-weight: 600; color: #1e293b;">{{ item.employee.full_name }}</div>
-                    <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ item.employee.designation }}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ item.employee.get_designation_display|default:item.employee.get_department_display }}</div>
                 </td>
                 <td style="padding: 16px;">
                     <span

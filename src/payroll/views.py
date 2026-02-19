@@ -14,9 +14,24 @@ def payroll_list(request):
 @login_required
 def payroll_detail(request, pk):
     from django.shortcuts import get_object_or_404
+    from django.db.models import Sum
     batch = get_object_or_404(PayrollBatch, pk=pk)
     entries = batch.entries.select_related('employee').all()
-    return render(request, 'payroll/payroll_detail.html', {'batch': batch, 'entries': entries})
+    
+    # Calculate stats for the summary cards
+    totals = entries.aggregate(
+        total_net=Sum('net_salary'),
+        total_deductions=Sum('deductions'),
+        total_ot=Sum('ot_pay')
+    )
+    
+    return render(request, 'payroll/payroll_detail.html', {
+        'batch': batch, 
+        'entries': entries,
+        'total_net': totals['total_net'] or 0,
+        'total_deductions': totals['total_deductions'] or 0,
+        'total_ot': totals['total_ot'] or 0
+    })
 
 from django.contrib.auth import get_user_model
 
@@ -129,15 +144,6 @@ def attendance_import(request):
                     return redirect('attendance_import')
                 
                 if count > 0:
-                    # Log to audit trail
-                    from core.models import AuditLog
-                    AuditLog.log(
-                        user=request.user,
-                        action=AuditLog.Action.IMPORT,
-                        module=AuditLog.Module.ATTENDANCE,
-                        object_repr=f"{count} records",
-                        request=request
-                    )
                     date_msg = ""
                     if min_d and max_d:
                          date_msg = f" Covering {min_d.strftime('%d-%b-%Y')} to {max_d.strftime('%d-%b-%Y')}."
@@ -204,15 +210,6 @@ def run_payroll_action(request):
         batch.sif_file.save(f"BankTransfer_{batch_date.strftime('%Y%m')}.csv", ContentFile(file_content))
         batch.status = PayrollBatch.Status.FINALIZED
         batch.save()
-        
-        from core.models import AuditLog
-        AuditLog.log(
-            user=request.user,
-            action=AuditLog.Action.CREATE,
-            obj=batch,
-            request=request,
-            module=AuditLog.Module.PAYROLL
-        )
         
         messages.success(request, f"Payroll generated successfully for {batch_date.strftime('%B %Y')}!")
         return redirect('payroll_list')
@@ -316,17 +313,6 @@ def attendance_manual_entry(request):
             log = form.save(commit=False)
             log.entry_type = AttendanceLog.EntryType.MANUAL
             log.save()
-            
-            from core.models import AuditLog
-            AuditLog.log(
-                user=request.user,
-                action=AuditLog.Action.CREATE,
-                obj=log,
-                request=request,
-                module=AuditLog.Module.ATTENDANCE,
-                object_repr=f"Attendance for {log.employee}"
-            )
-            
             messages.success(request, "Attendance manually logged successfully.")
             return redirect('attendance_list')
     else:

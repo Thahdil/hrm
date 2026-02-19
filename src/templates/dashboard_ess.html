@@ -20,7 +20,7 @@
                         <i class="ri-checkbox-circle-fill"></i> Present Today
                     </div>
                 </div>
-                <div style="width: 44px; height: 44px; background: #ecfdf5; color: #10b981; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                <div style="width: 44px; height: 44px; background: var(--badge-green-bg); color: var(--badge-green-text); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
                     <i class="ri-fingerprint-fill"></i>
                 </div>
             </div>
@@ -35,7 +35,7 @@
                         Awaiting Review
                     </div>
                 </div>
-                <div style="width: 44px; height: 44px; background: #fffbe6; color: #f59e0b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                <div style="width: 44px; height: 44px; background: var(--badge-yellow-bg); color: var(--badge-yellow-text); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
                     <i class="ri-time-line"></i>
                 </div>
             </div>
@@ -50,7 +50,7 @@
                         Employees
                     </div>
                 </div>
-                <div style="width: 44px; height: 44px; background: #f5f3ff; color: #8b5cf6; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                <div style="width: 44px; height: 44px; background: var(--badge-purple-bg); color: var(--badge-purple-text); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
                     <i class="ri-line-chart-line"></i>
                 </div>
             </div>
@@ -65,7 +65,7 @@
                         Scheduled Shift
                     </div>
                 </div>
-                <div style="width: 44px; height: 44px; background: #eff6ff; color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                <div style="width: 44px; height: 44px; background: var(--badge-blue-bg); color: var(--badge-blue-text); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">
                     <i class="ri-focus-2-line"></i>
                 </div>
             </div>
@@ -80,7 +80,7 @@
             <!-- DETAILS: Leave Balances -->
             <div class="card" style="padding: 24px; border-radius: 24px; border: 1px solid var(--border-color); background: var(--bg-surface);">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);">
-                    <div style="width: 32px; height: 32px; background: #eff6ff; color: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                    <div style="width: 32px; height: 32px; background: var(--badge-blue-bg); color: var(--badge-blue-text); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
                         <i class="ri-calendar-check-line"></i>
                     </div>
                     <h3 style="margin: 0; font-size: 15px; font-weight: 800; color: var(--text-main);">My Leave Balances</h3>
@@ -92,9 +92,9 @@
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                             <div style="display: flex; gap: 10px; align-items: center;">
                                 <div style="width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px;
-                                    {% if 'SICK' in balance.name|upper %}background: #fef2f2; color: #ef4444;
-                                    {% elif 'NORMAL' in balance.name|upper or 'CASUAL' in balance.name|upper %}background: #ecfeff; color: #06b6d4;
-                                    {% else %}background: #eff6ff; color: #3b82f6;{% endif %}">
+                                    {% if 'SICK' in balance.name|upper %}background: var(--card-sick-bg); color: var(--card-sick-text);
+                                    {% elif 'NORMAL' in balance.name|upper or 'CASUAL' in balance.name|upper %}background: var(--card-normal-bg); color: var(--card-normal-text);
+                                    {% else %}background: var(--card-annual-bg); color: var(--card-annual-text);{% endif %}">
                                     {% if 'SICK' in balance.name|upper %}<i class="ri-pulse-line"></i>
                                     {% elif 'NORMAL' in balance.name|upper or 'CASUAL' in balance.name|upper %}<i class="ri-information-line"></i>
                                     {% else %}<i class="ri-calendar-line"></i>{% endif %}
@@ -115,9 +115,9 @@
                         <!-- Progress Bar (Shows Used %) -->
                         <div style="height: 4px; width: 100%; background: var(--border-color); border-radius: 2px; overflow: hidden; margin-bottom: 8px;">
                             <div style="height: 100%; border-radius: 2px; width: {{ balance.percentage }}%;
-                                {% if 'SICK' in balance.name|upper %}background: #ef4444;
-                                {% elif 'NORMAL' in balance.name|upper or 'CASUAL' in balance.name|upper %}background: #06b6d4;
-                                {% else %}background: #3b82f6;{% endif %}">
+                                {% if 'SICK' in balance.name|upper %}background: var(--card-sick-text);
+                                {% elif 'NORMAL' in balance.name|upper or 'CASUAL' in balance.name|upper %}background: var(--card-normal-text);
+                                {% else %}background: var(--card-annual-text);{% endif %}">
                             </div>
                         </div>
                         
@@ -147,6 +147,7 @@
                             <tr>
                                 <th style="padding: 12px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Type</th>
                                 <th style="padding: 12px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Duration</th>
+                                <th style="padding: 12px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Doc Status</th>
                                 <th style="padding: 12px 24px; text-align: right; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Status</th>
                             </tr>
                         </thead>
@@ -167,18 +168,48 @@
                                         {{ leave.duration_days }} Day{{ leave.duration_days|pluralize }}
                                     {% endif %}
                                 </td>
+                                <td style="padding: 16px 24px; font-size: 13px; font-weight: 600;">
+                                    {% if leave.is_sick_leave and leave.leave_type.requires_document %}
+                                        {% if leave.document_status == 'VERIFIED' %}
+                                            <span style="color: var(--success); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="ri-checkbox-circle-fill"></i> Accepted
+                                            </span>
+                                        {% elif leave.document_status == 'REJECTED' %}
+                                             <span style="color: #ef4444 !important; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="ri-close-circle-fill"></i> Rejected
+                                            </span>
+                                        {% elif leave.document_status == 'UPLOADED' %}
+                                            <span style="color: var(--primary); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="ri-file-text-fill"></i> Uploaded
+                                            </span>
+                                        {% elif leave.document_status == 'PENDING' %}
+                                            <span style="color: #f59e0b; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="ri-time-fill"></i> Pending
+                                            </span>
+                                        {% else %}
+                                            <span style="color: var(--text-secondary); font-size: 11px;">--</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span style="color: var(--text-secondary); font-size: 11px; font-style: italic;">Not Required</span>
+                                    {% endif %}
+                                </td>
                                 <td style="padding: 16px 24px; text-align: right;">
-                                    <span style="padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase;
-                                        {% if leave.status == 'APPROVED' %}background: #ecfdf5; color: #10b981;
-                                        {% elif leave.status == 'PENDING' %}background: #fffbeb; color: #f59e0b;
-                                        {% else %}background: #fef2f2; color: #ef4444;{% endif %}">
-                                        {{ leave.status }}
+                                    <span style="padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; display: inline-block; text-align: center;
+                                        {% if leave.status == 'APPROVED' %}background: var(--status-approved-bg); color: var(--status-approved-text); border: 1px solid var(--status-approved-border);
+                                        {% elif leave.status == 'PENDING' %}background: var(--status-pending-bg); color: var(--status-pending-text); border: 1px solid var(--status-pending-border);
+                                        {% else %}background: var(--status-rejected-bg); color: var(--status-rejected-text); border: 1px solid var(--status-rejected-border);{% endif %}">
+                                        
+                                        {% if leave.status == 'APPROVED' %}
+                                            APPROVED
+                                        {% else %}
+                                            {{ leave.status }}
+                                        {% endif %}
                                     </span>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="3" style="padding: 40px; text-align: center; color: var(--text-secondary); font-size: 14px;">No recent records</td>
+                                <td colspan="4" style="padding: 40px; text-align: center; color: var(--text-secondary); font-size: 14px;">No recent records</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -194,30 +225,63 @@
                 <h3 style="margin: 0 0 20px; font-size: 12px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em;">Quick Action</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <a href="{% url 'leave_add' %}" class="action-tile" style="text-decoration: none; padding: 16px; background: var(--gray-50); border-radius: 16px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-                        <div style="width: 40px; height: 40px; background: #eff6ff; color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                        <div style="width: 40px; height: 40px; background: var(--badge-blue-bg); color: var(--badge-blue-text); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
                             <i class="ri-calendar-event-line"></i>
                         </div>
                         <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Request Leave</span>
                     </a>
                     <a href="{% url 'my_payslips' %}" class="action-tile" style="text-decoration: none; padding: 16px; background: var(--gray-50); border-radius: 16px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-                        <div style="width: 40px; height: 40px; background: #ecfdf5; color: #10b981; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                        <div style="width: 40px; height: 40px; background: var(--badge-green-bg); color: var(--badge-green-text); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
                             <i class="ri-money-dollar-circle-line"></i>
                         </div>
                         <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Payslips</span>
                     </a>
                     <a href="{% url 'attendance_list' %}" class="action-tile" style="text-decoration: none; padding: 16px; background: var(--gray-50); border-radius: 16px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-                        <div style="width: 40px; height: 40px; background: #fffbeb; color: #f59e0b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                        <div style="width: 40px; height: 40px; background: var(--badge-yellow-bg); color: var(--badge-yellow-text); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
                             <i class="ri-fingerprint-line"></i>
                         </div>
                         <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">My Logs</span>
                     </a>
                     <a href="{% url 'ticket_list' %}" class="action-tile" style="text-decoration: none; padding: 16px; background: var(--gray-50); border-radius: 16px; border: 1px solid var(--border-color); text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-                        <div style="width: 40px; height: 40px; background: #f5f3ff; color: #8b5cf6; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                        <div style="width: 40px; height: 40px; background: var(--badge-purple-bg); color: var(--badge-purple-text); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
                             <i class="ri-plane-line"></i>
                         </div>
                         <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Ticket Request</span>
                     </a>
                 </div>
+            </div>
+
+            <!-- Upcoming Meetings -->
+            <div class="card" style="padding: 24px; border-radius: 24px; border: 1px solid var(--border-color); background: var(--bg-surface); flex-shrink: 0;">
+                <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+                    <h3 style="margin: 0; font-size: 12px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em;">Upcoming Meetings</h3>
+                    <a href="{% url 'meeting_list' %}" style="font-size: 11px; font-weight: 700; text-decoration: none; color: var(--primary);">View All</a>
+                </div>
+                
+                {% if upcoming_meetings %}
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
+                    {% for meeting in upcoming_meetings %}
+                        <div style="display: flex; gap: 14px; align-items: flex-start; padding-bottom: 14px; border-bottom: 1px dashed var(--border-color);">
+                            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(59, 130, 246, 0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(59, 130, 246, 0.15); flex-shrink: 0;">
+                                <span style="font-size: 13px; font-weight: 800; color: var(--primary); line-height: 1;">{{ meeting.start_time|date:"d" }}</span>
+                                <span style="font-size: 9px; font-weight: 700; color: var(--primary-dark); text-transform: uppercase; margin-top: 2px;">{{ meeting.start_time|date:"M" }}</span>
+                            </div>
+                            <div style="flex: 1; min-width: 0; padding-top: 2px;">
+                                <h4 style="margin: 0 0 4px; font-size: 13px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ meeting.title }}</h4>
+                                <div style="font-size: 11px; color: var(--text-secondary); font-weight: 500; display: flex; align-items: center; gap: 6px;">
+                                    <i class="ri-time-line" style="font-size: 11px;"></i>
+                                    <span>{{ meeting.start_time|date:"h:i A" }} - {{ meeting.end_time|date:"h:i A" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% else %}
+                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 0; opacity: 0.5;">
+                        <i class="ri-calendar-check-line" style="font-size: 24px; margin-bottom: 4px; color: var(--text-secondary);"></i>
+                        <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">No scheduled meetings</span>
+                    </div>
+                {% endif %}
             </div>
 
             <!-- Holidays Timeline -->

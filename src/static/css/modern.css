@@ -93,6 +93,49 @@
     --status-pending-text: var(--warning);
     --status-rejected-bg: var(--error-light);
     --status-rejected-text: var(--error);
+
+    /* Extended Status Colors */
+    --status-verified-bg: #ecfdf5;
+    --status-verified-text: #059669;
+    /* emerald-600 */
+    --status-verified-border: #a7f3d0;
+    /* emerald-200 */
+
+    --status-lop-bg: #fef2f2;
+    --status-lop-text: #b91c1c;
+    /* red-700 */
+    --status-lop-border: #fecaca;
+    /* red-200 */
+
+    --status-approved-border: #bbf7d0;
+    /* green-200 */
+    --status-pending-border: #fed7aa;
+    /* orange-200 */
+    --status-rejected-border: #fecaca;
+    /* red-200 */
+
+    /* Leave Balance Card Colors */
+    --card-sick-bg: #fef2f2;
+    --card-sick-text: #ef4444;
+    --card-normal-bg: #ecfeff;
+    --card-normal-text: #06b6d4;
+    --card-annual-bg: #eff6ff;
+    --card-annual-bg: #eff6ff;
+    --card-annual-text: #3b82f6;
+
+    /* Badge Colors - Light */
+    --badge-purple-bg: #f3e8ff;
+    --badge-purple-text: #6b21a8;
+    --badge-gray-bg: #f1f5f9;
+    --badge-gray-text: #475569;
+    --badge-blue-bg: #eff6ff;
+    --badge-blue-text: #1d4ed8;
+    --badge-green-bg: #ecfdf5;
+    --badge-green-text: #059669;
+    --badge-yellow-bg: #fffbeb;
+    --badge-yellow-text: #d97706;
+    --badge-red-bg: #fef2f2;
+    --badge-red-text: #dc2626;
 }
 
 /* Global Responsive Resets */
@@ -193,6 +236,29 @@ html[data-theme="dark"] {
     --status-rejected-text: #F87171;
     /* Lighter red */
 
+    /* Extended Status Dark Mode Overrides */
+    --status-verified-bg: rgba(16, 185, 129, 0.25);
+    --status-verified-text: #34D399;
+    /* lighter emerald */
+    --status-verified-border: rgba(16, 185, 129, 0.3);
+
+    --status-lop-bg: rgba(239, 68, 68, 0.25);
+    --status-lop-text: #FCA5A5;
+    /* Lighter red for text on dark bg */
+    --status-lop-border: rgba(239, 68, 68, 0.3);
+
+    --status-approved-border: rgba(16, 185, 129, 0.3);
+    --status-pending-border: rgba(245, 158, 11, 0.3);
+    --status-rejected-border: rgba(239, 68, 68, 0.3);
+
+    /* Leave Balance Cards Dark Mode */
+    --card-sick-bg: rgba(239, 68, 68, 0.15);
+    --card-sick-text: #f87171;
+    --card-normal-bg: rgba(6, 182, 212, 0.15);
+    --card-normal-text: #22d3ee;
+    --card-annual-bg: rgba(59, 130, 246, 0.15);
+    --card-annual-text: #60a5fa;
+
     /* Other variable mappings to ensure compatibility */
     --success-light: var(--status-approved-bg);
     --success: var(--status-approved-text);
@@ -202,8 +268,33 @@ html[data-theme="dark"] {
     --error: var(--status-rejected-text);
 
     /* Ensure white text on primary buttons stays white */
-    --white: #1E1E1E;
-    /* Remap white to surface color for backgrounds */
+    --white: #FFFFFF;
+
+    /* Remap white to surface color for BACKGROUNDS explicitly where needed */
+    --bg-white: #1E1E1E;
+
+    /* Logo Switching for Dark Mode */
+    .logo-light {
+        display: none !important;
+    }
+
+    .logo-dark {
+        display: block !important;
+    }
+
+    /* Badge Colors - Dark */
+    --badge-purple-bg: rgba(168, 85, 247, 0.2);
+    --badge-purple-text: #d8b4fe;
+    --badge-gray-bg: rgba(71, 85, 105, 0.2);
+    --badge-gray-text: #cbd5e1;
+    --badge-blue-bg: rgba(37, 99, 235, 0.2);
+    --badge-blue-text: #93c5fd;
+    --badge-green-bg: rgba(16, 185, 129, 0.2);
+    --badge-green-text: #6ee7b7;
+    --badge-yellow-bg: rgba(245, 158, 11, 0.2);
+    --badge-yellow-text: #fcd34d;
+    --badge-red-bg: rgba(239, 68, 68, 0.2);
+    --badge-red-text: #fca5a5;
 }
 
 /* Smooth Transition for Theme Switch */
@@ -1061,18 +1152,18 @@ body:has(.viewport-fill) {
 }
 
 .status-badge.active {
-    background: #DCFCE7;
-    color: #15803D;
+    background: var(--badge-green-bg);
+    color: var(--badge-green-text);
 }
 
 .status-badge.on-leave {
-    background: #FEF3C7;
-    color: #D97706;
+    background: var(--badge-yellow-bg);
+    color: var(--badge-yellow-text);
 }
 
 .status-badge.archived {
-    background: #FEE2E2;
-    color: #DC2626;
+    background: var(--badge-red-bg);
+    color: var(--badge-red-text);
 }
 
 .action-dots {
@@ -1393,6 +1484,8 @@ tr:hover {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    z-index: 1;
+    /* Create stacking context */
 }
 
 .btn-primary::before {
@@ -1405,6 +1498,8 @@ tr:hover {
     background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
     opacity: 0;
     transition: opacity 0.2s ease;
+    z-index: -1;
+    /* Move behind content */
 }
 
 .btn-primary:hover {
@@ -1416,11 +1511,10 @@ tr:hover {
     opacity: 1;
 }
 
-.btn-primary i,
-.btn-primary span {
-    position: relative;
-    z-index: 1;
-}
+/* Children z-index fix no longer needed with z-index: -1 on ::before
+   but kept for safety if needed in complex nesting, though strictly redundant now.
+   Actually removing it to prevent confusion.
+*/
 
 /* Pill-Shaped Status Badges */
 .dashboard-grid table td span {
@@ -1433,21 +1527,18 @@ tr:hover {
 }
 
 .dashboard-grid table td span[style*="color: #10b981"] {
-    background-color: #D1FAE5 !important;
-    color: #065F46 !important;
-    border: 1px solid #A7F3D0;
+    background-color: var(--badge-green-bg) !important;
+    color: var(--badge-green-text) !important;
 }
 
 .dashboard-grid table td span[style*="color: #ef4444"] {
-    background-color: #FEE2E2 !important;
-    color: #991B1B !important;
-    border: 1px solid #FECACA;
+    background-color: var(--badge-red-bg) !important;
+    color: var(--badge-red-text) !important;
 }
 
 .dashboard-grid table td span[style*="color: #f59e0b"] {
-    background-color: #FEF3C7 !important;
-    color: #92400E !important;
-    border: 1px solid #FDE68A;
+    background-color: var(--badge-yellow-bg) !important;
+    color: var(--badge-yellow-text) !important;
 }
 
 /* Improved Table Spacing */

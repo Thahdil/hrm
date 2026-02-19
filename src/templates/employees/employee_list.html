@@ -7,7 +7,7 @@
 {% block content %}
 <div class="employee-directory-container flex-1" style="animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column;">
     <!-- Page Header Card -->
-    <div class="glass-card" style="margin-bottom: 32px; padding: 32px; border-radius: 24px; background: white; box-shadow: 0 10px 40px rgba(0,0,0,0.04); border: 1px solid var(--gray-100); display: flex; justify-content: space-between; align-items: center;">
+    <div class="glass-card" style="margin-bottom: 32px; padding: 32px; border-radius: 24px; background: var(--bg-surface); box-shadow: 0 10px 40px rgba(0,0,0,0.04); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
         <div>
             <h1 style="font-size: 28px; font-weight: 800; color: var(--gray-900); margin: 0; letter-spacing: -0.02em;">Employee Directory</h1>
             <p style="font-size: 15px; color: var(--gray-500); margin: 6px 0 0 0;">Manage and view your organization's entire workforce in one place.</p>
@@ -25,7 +25,7 @@
     </div>
 
     <!-- Advanced Filter Bar -->
-    <div class="glass-card" style="margin-bottom: 32px; padding: 20px; border-radius: 24px; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border: 1px solid var(--gray-100);">
+    <div class="glass-card" style="margin-bottom: 32px; padding: 20px; border-radius: 24px; background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--border-color);">
         <form method="get" style="display: grid; grid-template-columns: 1fr auto auto; gap: 16px; align-items: center;">
             <div class="search-box-wrapper" style="position: relative;">
                 <i class="ri-search-2-line" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 20px;"></i>
@@ -51,10 +51,10 @@
     </div>
 
     <!-- Data Table Card -->
-    <div class="glass-card full-height-card flex-1" style="border-radius: 24px; background: white; box-shadow: 0 10px 40px rgba(0,0,0,0.04); border: 1px solid var(--gray-100); overflow: hidden;">
+    <div class="glass-card full-height-card flex-1" style="border-radius: 24px; background: var(--bg-surface); box-shadow: 0 10px 40px rgba(0,0,0,0.04); border: 1px solid var(--border-color); overflow: hidden;">
         <div class="card-body-scroll">
             <table class="premium-table">
-                <thead style="position: sticky; top: 0; z-index: 10; background: #F8FAFC; box-shadow: 0 1px 0 var(--gray-100);">
+                <thead style="position: sticky; top: 0; z-index: 10; background: var(--gray-50); box-shadow: 0 1px 0 var(--border-color);">
                     <tr>
                         <th style="width: 30%;">Full Name</th>
                         <th>Employee ID</th>
@@ -84,7 +84,11 @@
                             </span>
                         </td>
                         <td>
-                            <span style="font-weight: 500; color: var(--gray-700);">{{ emp.designation|default:"--" }}</span>
+                            {% if emp.designation %}
+                                <span class="desig-pill">{{ emp.get_designation_display }}</span>
+                            {% else %}
+                                <span style="color: var(--gray-400); font-size: 12px;">—</span>
+                            {% endif %}
                         </td>
                         <td>
                             <span class="dept-pill">{{ emp.get_department_display|default:emp.department|default:"General" }}</span>
@@ -147,8 +151,8 @@
     .premium-input {
         width: 100%;
         padding: 12px 16px;
-        background: white;
-        border: 2px solid var(--gray-100);
+        background: var(--bg-body);
+        border: 2px solid var(--border-color);
         border-radius: 14px;
         font-size: 14px;
         font-weight: 500;
@@ -163,8 +167,8 @@
 
     .premium-select {
         padding: 12px 16px;
-        background: white;
-        border: 2px solid var(--gray-100);
+        background: var(--bg-body);
+        border: 2px solid var(--border-color);
         border-radius: 14px;
         font-size: 14px;
         font-weight: 600;
@@ -201,7 +205,7 @@
     }
 
     .premium-table th {
-        background: #F8FAFC;
+        background: var(--gray-50);
         padding: 18px 20px;
         text-align: left;
         font-size: 11px;
@@ -251,6 +255,16 @@
         font-weight: 600;
     }
 
+    .desig-pill {
+        padding: 4px 12px;
+        background: var(--badge-purple-bg);
+        color: var(--badge-purple-text);
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-block;
+    }
+
     .status-pill {
         padding: 6px 14px;
         border-radius: 10px;
@@ -260,10 +274,10 @@
         align-items: center;
     }
 
-    .status-pill.success { background: #ecfdf5; color: #059669; }
-    .status-pill.warning { background: #fffbeb; color: #d97706; }
-    .status-pill.danger { background: #fef2f2; color: #dc2626; }
-    .status-pill.secondary { background: #f9fafb; color: #6b7280; }
+    .status-pill.success { background: var(--badge-green-bg); color: var(--badge-green-text); }
+    .status-pill.warning { background: var(--badge-yellow-bg); color: var(--badge-yellow-text); }
+    .status-pill.danger { background: var(--badge-red-bg); color: var(--badge-red-text); }
+    .status-pill.secondary { background: var(--badge-gray-bg); color: var(--badge-gray-text); }
 
     .action-btn {
         width: 38px;
@@ -279,14 +293,14 @@
         font-size: 18px;
     }
 
-    .action-btn.info { background: #eff6ff; color: #3b82f6; }
-    .action-btn.info:hover { background: #3b82f6; color: white; }
+    .action-btn.info { background: var(--badge-blue-bg); color: var(--badge-blue-text); }
+    .action-btn.info:hover { background: var(--primary); color: white; }
     
-    .action-btn.success { background: #ecfdf5; color: #10b981; }
-    .action-btn.success:hover { background: #10b981; color: white; }
+    .action-btn.success { background: var(--badge-green-bg); color: var(--badge-green-text); }
+    .action-btn.success:hover { background: var(--success); color: white; }
 
-    .action-btn.danger { background: #fef2f2; color: #ef4444; }
-    .action-btn.danger:hover { background: #ef4444; color: white; }
+    .action-btn.danger { background: var(--badge-red-bg); color: var(--badge-red-text); }
+    .action-btn.danger:hover { background: var(--error); color: white; }
 
     .badge.secondary {
         background: var(--gray-100);

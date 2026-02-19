@@ -106,7 +106,7 @@ class LeaveRequestForm(forms.ModelForm):
 class LeaveTypeForm(forms.ModelForm):
     class Meta:
         model = LeaveType
-        fields = ['name', 'code', 'days_entitlement', 'duration_days', 'eligibility_gender', 'min_service_days', 'is_paid', 'is_carry_forward', 'reset_monthly', 'allow_unlimited', 'hidden_unless_used', 'allow_half_day']
+        fields = ['name', 'code', 'days_entitlement', 'duration_days', 'eligibility_gender', 'min_service_days', 'is_paid', 'is_carry_forward', 'reset_monthly', 'allow_unlimited', 'hidden_unless_used', 'allow_half_day', 'requires_document']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-input'}),
             'code': forms.TextInput(attrs={'class': 'form-input'}),

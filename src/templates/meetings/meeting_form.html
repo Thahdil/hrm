@@ -1,0 +1,747 @@
+{% extends 'base_modern.html' %}
+{% load static %}
+
+{% block title %}Schedule Meeting{% endblock %}
+{% block header_title %}Schedule Meeting{% endblock %}
+{% block page_subtitle %}Plan and coordinate with your team{% endblock %}
+
+{% block content %}
+<div class="card" style="border-radius: 24px; border: 1px solid var(--border-color); background: var(--bg-surface); height: calc(100vh - 140px); display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-2xl);">
+    
+    <!-- Minimalist Header -->
+    <div style="padding: 24px 32px; background: var(--bg-surface); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 42px; height: 42px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
+                <i class="ri-calendar-event-line"></i>
+            </div>
+            <div>
+                <h2 style="font-size: 18px; font-weight: 700; color: var(--text-main); margin: 0; letter-spacing: -0.02em;">New Event</h2>
+                <div style="font-size: 13px; color: var(--text-secondary);">Fill in the details below</div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <span class="badge" style="background: var(--gray-100); color: var(--text-secondary); padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Draft</span>
+        </div>
+    </div>
+
+    <form method="post" class="needs-validation" novalidate style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
+        {% csrf_token %}
+        
+        <!-- Scrollable Content Area -->
+        <div style="flex: 1; overflow: hidden; padding: 0; background: var(--bg-main);">
+            {% if form.non_field_errors %}
+            <div style="padding: 20px 40px;">
+                <div class="alert alert-danger" style="background: var(--status-rejected-bg); color: var(--status-rejected-text); padding: 16px; border-radius: 12px; font-size: 13px; border: 1px solid var(--status-rejected-border); display: flex; align-items: center; gap: 12px;">
+                    <i class="ri-error-warning-fill" style="font-size: 18px;"></i>
+                    <div>{{ form.non_field_errors }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div style="display: grid; grid-template-columns: 1fr 380px; height: 100%; width: 100%;">
+                
+                <!-- Left Column: Meeting Details -->
+                <div style="display: flex; flex-direction: column; gap: 0; padding: 32px 40px; border-right: 1px solid var(--border-color); overflow-y: auto;">
+                    
+                    <!-- Title Section: Massive & Clean -->
+                    <div style="margin-bottom: 40px;">
+                        <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.1em; margin-bottom: 12px; text-transform: uppercase;">Event Details</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                        <div class="error-msg"><i class="ri-alert-line"></i> {{ form.title.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Date & Time Section -->
+                    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 40px; margin-bottom: 40px; padding-bottom: 40px; border-bottom: 1px solid var(--border-color);">
+                        
+                        <!-- Date Field -->
+                        <div class="form-group-animated">
+                            <label class="form-label-premium"><i class="ri-calendar-line"></i> Date</label>
+                            {{ form.meeting_date }}
+                            {% if form.meeting_date.errors %}
+                            <div class="error-msg"><i class="ri-alert-line"></i> {{ form.meeting_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Time Fields (Grouped) -->
+                        <div style="display: flex; gap: 24px;">
+                            <div class="form-group-animated" style="flex: 1;">
+                                <label class="form-label-premium"><i class="ri-time-line"></i> Start Time</label>
+                                {{ form.start_time_input }}
+                                {% if form.start_time_input.errors %}
+                                <div class="error-msg"><i class="ri-alert-line"></i> {{ form.start_time_input.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group-animated" style="flex: 1;">
+                                <label class="form-label-premium"><i class="ri-time-line"></i> End Time</label>
+                                {{ form.end_time_input }}
+                                {% if form.end_time_input.errors %}
+                                <div class="error-msg"><i class="ri-alert-line"></i> {{ form.end_time_input.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Agenda Section -->
+                    <div class="form-group-animated" style="flex: 1; display: flex; flex-direction: column;">
+                        <label class="form-label-premium"><i class="ri-align-left"></i> Agenda & Notes</label>
+                        <div style="flex: 1; position: relative; min-height: 200px;">
+                            {{ form.description }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Participants -->
+                <div style="display: flex; flex-direction: column; height: 100%; background: var(--bg-body); padding: 24px; border-left: 1px solid var(--border-color);">
+                    <div style="background: var(--bg-surface); border-radius: 16px; padding: 20px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); height: 100%; display: flex; flex-direction: column;">
+                        
+                        <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px;">
+                            <label class="form-label-premium" style="margin: 0 !important; font-size: 13px;">
+                                <i class="ri-team-line"></i> Invite Participants
+                            </label>
+                            <div class="search-premium" style="width: 100%;">
+                                <i class="ri-search-line"></i>
+                                <input type="text" id="participantSearch" placeholder="Search people..." style="background: var(--gray-50);">
+                            </div>
+                        </div>
+                        
+                        <div style="flex: 1; position: relative; min-height: 200px; border-radius: 12px; overflow: hidden; margin-top: 8px;">
+                             <!-- Custom list injects here -->
+                            {{ form.participants }}
+                        </div>
+                        
+                        <div style="margin-top: 20px; padding: 16px; background: var(--badge-blue-bg); border-radius: 12px; display: flex; gap: 12px; border: 1px solid var(--badge-blue-bg);">
+                            <i class="ri-notification-3-line" style="color: var(--badge-blue-text);"></i>
+                            <span style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">Invited members will receive an email notification and calendar invite.</span>
+                        </div>
+                        
+                        {% if form.participants.errors %}
+                            <div class="error-msg" style="margin-top: 8px;"><i class="ri-alert-line"></i> {{ form.participants.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div style="padding: 24px 40px; border-top: 1px solid var(--border-color); background: var(--bg-surface); display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+            <div style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+                <i class="ri-shield-check-line" style="color: var(--success);"></i> Secure Scheduling Encrypted
+            </div>
+            <div style="display: flex; gap: 16px;">
+                <a href="{% url 'meeting_list' %}" class="btn-cancel">
+                    Cancel
+                </a>
+                <button type="submit" class="btn-confirm">
+                    <span>Confirm Event</span>
+                    <i class="ri-arrow-right-line"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Add jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- ClockPicker CSS & JS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/clockpicker/0.0.7/bootstrap-clockpicker.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clockpicker/0.0.7/bootstrap-clockpicker.min.js"></script>
+
+<style>
+    /* -------------------------------------------------------------------
+       Bootstrap Popover Shim for ClockPicker 
+       (Required because we are not using full Bootstrap)
+       ------------------------------------------------------------------- */
+    .popover {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1060;
+        display: none;
+        max-width: 276px;
+        padding: 1px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 1.42857143;
+        text-align: left;
+        text-align: start;
+        text-decoration: none;
+        text-shadow: none;
+        text-transform: none;
+        letter-spacing: normal;
+        word-break: normal;
+        word-spacing: normal;
+        word-wrap: normal;
+        white-space: normal;
+        background-color: var(--bg-surface);
+        background-clip: padding-box;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+        box-shadow: 0 5px 10px rgba(0,0,0,.2);
+        color: var(--text-main);
+    }
+    .popover.top { margin-top: -10px; }
+    .popover.right { margin-left: 10px; }
+    .popover.bottom { margin-top: 10px; }
+    .popover.left { margin-left: -10px; }
+
+    .popover-title {
+        padding: 8px 14px;
+        margin: 0;
+        font-size: 14px;
+        background-color: var(--gray-50);
+        border-bottom: 1px solid var(--border-color);
+        border-radius: 5px 5px 0 0;
+        color: var(--text-main);
+        font-weight: 600;
+    }
+
+    .popover-content {
+        padding: 9px 14px;
+    }
+
+    /* Arrows */
+    .popover > .arrow, .popover > .arrow:after {
+        position: absolute;
+        display: block;
+        width: 0;
+        height: 0;
+        border-color: transparent;
+        border-style: solid;
+    }
+    .popover > .arrow { border-width: 11px; }
+    .popover > .arrow:after { border-width: 10px; content: ""; }
+
+    /* Top Arrow */
+    .popover.top > .arrow {
+        bottom: -11px;
+        left: 50%;
+        margin-left: -11px;
+        border-top-color: var(--border-color);
+        border-bottom-width: 0;
+    }
+    .popover.top > .arrow:after {
+        bottom: 1px;
+        margin-left: -10px;
+        content: " ";
+        border-top-color: var(--bg-surface);
+        border-bottom-width: 0;
+    }
+
+    /* ClockPicker Specific Overrides */
+    .clockpicker-popover {
+        z-index: 99999 !important; /* Ensure it's on top of everything */
+        border-color: var(--border-color);
+        box-shadow: var(--shadow-xl);
+        background-color: var(--bg-surface);
+        color: var(--text-main);
+    }
+    .clockpicker-popover .popover-title {
+        background-color: var(--bg-surface);
+        color: var(--text-main);
+        font-weight: 600;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .clockpicker-plate {
+        background-color: var(--bg-surface) !important;
+        border: 1px solid var(--border-color);
+    }
+    .clockpicker-tick {
+        color: var(--text-secondary);
+    }
+    .clockpicker-canvas line {
+        stroke: var(--primary) !important;
+    }
+    .clockpicker-canvas circle {
+        fill: var(--primary) !important;
+    }
+    .clockpicker-canvas-bearing, .clockpicker-canvas-fg {
+        fill: var(--primary) !important;
+    }
+    .clockpicker-canvas-bg {
+        fill: var(--primary-light) !important;
+    }
+</style>
+
+<script>
+    $(document).ready(function(){
+        // Initialize ClockPicker with "Top" placement
+        $('.time-input').clockpicker({
+            placement: 'top',       
+            align: 'left',
+            autoclose: true,
+            twelvehour: true,
+            donetext: 'Done'
+        });
+
+        // Auto-set End Time Logic (Bound to Input Change)
+        $('input[name="start_time_input"]').change(function(){
+            const startTime = $(this).val(); // "01:30 PM"
+            const endInput = $('input[name="end_time_input"]');
+            
+            if (startTime && !endInput.val()) {
+                try {
+                    // ClockPicker returns "01:30PM" or "01:30 PM" depending on config.
+                    // Normalize space if missing
+                    let timeStr = startTime;
+                    if (!timeStr.includes(' ')) {
+                        // Insert space before AM/PM if needed
+                        timeStr = timeStr.replace(/([AP]M)/, ' $1');
+                    }
+                    
+                    let [time, period] = timeStr.split(' ');
+                    if (!period) return; // invalid format
+                    
+                    let [h, m] = time.split(':').map(Number);
+                    
+                    // Add 1 hour
+                    h += 1;
+                    
+                    // Handle AM/PM transition and 12-hour clock wrap-around
+                    // 11AM -> 12PM
+                    // 12PM -> 1PM (h becomes 13 -> 1, period stays PM)
+                    
+                    if (h === 12 && period === 'AM') {
+                        period = 'PM';
+                    } else if (h > 12) {
+                        h -= 12;
+                        if (period === 'PM') {
+                             // 12PM + 1 = 1PM. No change
+                        } else {
+                             // 12AM + 1 = 1AM. No change
+                             period = 'AM';
+                        }
+                        // Wait, 11PM + 1 = 12AM.
+                        if (period === 'PM' && h !== 12) { 
+                             // Logic is getting complex. Let's start with basic +1h
+                        }
+                    }
+                    
+                    // Simplified: Convert to 24h, add 1, convert back
+                    let h24 = h - 1; // current hour (1-12)
+                    if (startTime.includes('PM') && h24 !== 12) h24 += 12;
+                    if (startTime.includes('AM') && h24 === 12) h24 = 0;
+                    
+                    // But wait, h was already incremented above. Let's restart.
+                    // Reset
+                    [time, period] = timeStr.split(' ');
+                    [h, m] = time.split(':').map(Number);
+                    
+                    let h24_start = h;
+                    if (period === 'PM' && h !== 12) h24_start += 12;
+                    if (period === 'AM' && h === 12) h24_start = 0;
+                    
+                    let h24_end = (h24_start + 1) % 24;
+                    
+                    let nextPeriod = h24_end >= 12 ? 'PM' : 'AM';
+                    let nextH = h24_end % 12;
+                    if (nextH === 0) nextH = 12;
+                    
+                    const nextTime = `${nextH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}${nextPeriod}`;
+                    
+                    // Force space usually helps standard formats
+                     const finalTime = `${nextH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${nextPeriod}`;
+                    
+                    endInput.val(finalTime);
+                } catch(err) {
+                    console.error("Auto-time calculation error:", err);
+                }
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- 1. Date Defaults ---
+        const dateInput = document.querySelector('input[name="meeting_date"]');
+        if (dateInput && !dateInput.value) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+        }
+
+        // --- 2. Participant List Logic ---
+        const select = document.querySelector('select[name="participants"]');
+        select.style.display = 'none'; // Hide native select
+        
+        // Roles from backend
+        const participantRoles = {{ participant_roles|safe|default:"{}" }};
+        
+        const container = select.parentElement;
+        const customList = document.createElement('div');
+        customList.className = 'custom-participant-list';
+        // Match reference: themed background and rounded container
+        customList.style.cssText = "position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; gap: 8px; overflow-y: scroll; padding: 16px; background: var(--gray-50);";
+        container.appendChild(customList);
+
+        // Populate Custom List
+        Array.from(select.options).forEach(option => {
+            const item = document.createElement('div');
+            item.className = 'participant-item';
+            item.dataset.value = option.value;
+            
+            // Generate Avatar
+            const name = option.text;
+            const initial = name.charAt(0).toUpperCase();
+            
+            // Get Role
+            const role = participantRoles[option.value] || 'Employee';
+            
+            item.innerHTML = `
+                <div class="p-avatar">${initial}</div>
+                <div class="p-info">
+                    <div class="p-name">${name}</div>
+                    <div class="p-role">${role}</div>
+                </div>
+                <div class="p-check"><i class="ri-check-line"></i></div>
+            `;
+            
+            // Initial State
+            if(option.selected) item.classList.add('selected');
+
+            // Click Handler
+            item.addEventListener('click', (e) => {
+                option.selected = !option.selected;
+                item.classList.toggle('selected');
+            });
+
+            customList.appendChild(item);
+        });
+
+        // Search Filter
+        document.getElementById('participantSearch').addEventListener('keyup', function() {
+            const filter = this.value.toUpperCase();
+            const items = customList.getElementsByClassName('participant-item');
+            
+            for (let item of items) {
+                const name = item.querySelector('.p-name').innerText;
+                if (name.toUpperCase().indexOf(filter) > -1) {
+                    item.style.display = "flex";
+                } else {
+                    item.style.display = "none";
+                }
+            }
+        });
+    });
+</script>
+
+<style>
+    /* VARIABLES (Scoped) */
+    .card {
+        --input-bg: var(--bg-body);
+        --input-border: var(--border-color);
+        --input-focus-border: var(--primary);
+        --input-focus-ring: rgba(59, 130, 246, 0.15);
+    }
+    
+    /* Typography */
+    .form-label-premium {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+        color: var(--text-secondary);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Inputs */
+    .form-control, .form-select {
+        border: 1px solid var(--input-border) !important;
+        background: var(--input-bg) !important;
+        transition: all 0.2s ease !important;
+        font-size: 14px !important;
+        border-radius: 12px !important;
+        padding: 12px 16px !important;
+        color: var(--text-main) !important;
+        box-shadow: none !important;
+    }
+    
+    .form-control:hover, .form-select:hover {
+        background: var(--bg-surface) !important;
+        border-color: var(--gray-300) !important;
+    }
+
+    .form-control:focus, .form-select:focus {
+        background: var(--bg-surface) !important;
+        border-color: var(--input-focus-border) !important;
+        box-shadow: 0 0 0 4px var(--input-focus-ring) !important;
+    }
+
+    /* Specific Styles for Title Input to make it look prominent */
+    input[name="title"] {
+        font-size: 24px !important;
+        font-weight: 700 !important;
+        padding: 12px 0 16px 0 !important;
+        border: none !important;
+        border-bottom: 2px solid var(--border-color) !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+    }
+    input[name="title"]:focus {
+        border-bottom-color: var(--primary) !important;
+        box-shadow: none !important;
+    }
+
+    /* Time Input Styling */
+    input[type="time"] {
+        font-family: inherit;
+        font-size: 15px !important;
+        letter-spacing: 0.5px;
+        color: var(--text-main);
+    }
+    
+    /* Date Input Styling */
+    input[type="date"] {
+        font-family: inherit;
+        font-size: 14px !important;
+        color: var(--text-main);
+    }
+    textarea.form-control {
+        height: 100% !important;
+        min-height: 150px;
+        resize: none;
+        line-height: 1.6;
+    }
+    
+    /* Search Bar */
+    .search-premium {
+        position: relative;
+        width: 160px;
+    }
+    
+    .search-premium i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 14px;
+        color: var(--gray-400);
+    }
+    
+    .search-premium input {
+        width: 100%;
+        padding: 8px 8px 8px 34px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 13px;
+        background: var(--bg-surface);
+        transition: all 0.2s;
+    }
+    
+    .search-premium input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--input-focus-ring);
+    }
+
+    /* Participant Item */
+    .participant-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid transparent;
+        background: var(--bg-surface);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .participant-item:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border-color: var(--primary-light);
+    }
+
+    .participant-item.selected {
+        background: var(--bg-surface);
+        border: 2px solid var(--primary);
+        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1);
+    }
+    
+    .participant-item.selected .p-name {
+        color: var(--text-main) !important;
+    }
+    
+    .participant-item.selected .p-role {
+        color: var(--primary) !important;
+        font-weight: 600;
+    }
+    
+    .participant-item.selected .p-avatar {
+        background: var(--primary-light);
+        color: var(--primary);
+    }
+    
+    .participant-item.selected .p-check {
+        opacity: 1;
+        transform: scale(1);
+        color: var(--primary);
+    }
+
+    .p-avatar {
+        width: 36px;
+        height: 36px;
+        background: var(--gray-200);
+        color: var(--text-main);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        flex-shrink: 0;
+        transition: all 0.2s;
+    }
+
+    .p-info {
+        flex: 1;
+    }
+
+    .p-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-main);
+        line-height: 1.2;
+    }
+
+    .p-role {
+        font-size: 11px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+
+    .p-check {
+        color: white;
+        font-size: 18px;
+        opacity: 0;
+        transform: scale(0.5);
+        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    /* Error Msg */
+    .error-msg {
+        font-size: 12px;
+        color: var(--error);
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 500;
+    }
+
+    /* Buttons */
+    .btn-cancel {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        border-radius: 12px;
+        padding: 12px 24px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    .btn-cancel:hover {
+        background: var(--gray-50);
+        color: var(--text-main);
+    }
+    
+    .btn-confirm {
+        background: var(--primary);
+        border: none;
+        border-radius: 12px;
+        padding: 12px 32px;
+        color: var(--white);
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+        transition: transform 0.2s;
+        cursor: pointer;
+    }
+    .btn-confirm:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    }
+    .btn-confirm:active {
+        transform: translateY(0);
+    }
+
+    /* Scrollbar Styling */
+    .custom-participant-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-participant-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-participant-list::-webkit-scrollbar-thumb {
+        background: var(--gray-300);
+        border-radius: 10px;
+    }
+    /* Premium Time Input Styling - Compact */
+    input.time-input {
+        width: 140px !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.5px;
+        color: var(--text-main);
+        cursor: pointer;
+        text-align: center;
+        background-color: var(--bg-surface);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24' fill='%2364748b'%3E%3Cpath d='M12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22ZM12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20ZM13 12H17V14H11V7H13V12Z'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 18px;
+        padding: 10px 12px !important;
+        padding-right: 36px !important; /* Make room for icon */
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        transition: all 0.2s ease;
+    }
+
+    input.time-input:hover {
+        border-color: var(--primary) !important;
+        background-color: var(--gray-50);
+    }
+    
+    input.time-input:focus {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 4px var(--primary-light) !important;
+    }
+    
+    /* Matching Date Input Styling */
+    input[type="date"] {
+        height: 42px; /* Match calculated height of time input */
+        font-family: 'Inter', sans-serif !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        color: var(--text-main);
+        cursor: pointer;
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        padding: 0 12px !important;
+        transition: all 0.2s ease;
+    }
+    input[type="date"]:hover {
+        border-color: var(--primary) !important;
+        background-color: var(--gray-50);
+    }
+    input[type="date"]:focus {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 4px var(--primary-light) !important;
+        outline: none;
+    }
+</style>
+{% endblock %}

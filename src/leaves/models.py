@@ -21,6 +21,9 @@ class LeaveType(models.Model):
     allow_unlimited = models.BooleanField(default=False, help_text="Skip entitlement / balance check (e.g. for Unpaid/Emergency Leave).")
     hidden_unless_used = models.BooleanField(default=False, help_text="Hide from dashboard unless the user has used it.")
     allow_half_day = models.BooleanField(default=False, help_text="Allow half-day requests for this leave type.")
+    
+    # Document Workflow Configuration
+    requires_document = models.BooleanField(default=False, help_text="If checked, requires document upload after manager approval (e.g. Sick Leave).")
 
     ACCRUAL_CHOICES = [
         ('ANNUAL', 'Annual (Upfront)'),
@@ -95,6 +98,18 @@ class LeaveRequest(models.Model):
         APPROVED = "APPROVED", "Completed"
         REJECTED = "REJECTED", "Rejected"
         CANCELLED = "CANCELLED", "Cancelled"
+    
+    class DocumentStatus(models.TextChoices):
+        NONE = "NONE", "Not Required"
+        PENDING = "PENDING", "Pending Upload"
+        UPLOADED = "UPLOADED", "Uploaded"
+        VERIFIED = "VERIFIED", "Verified"
+        REJECTED = "REJECTED", "Rejected"
+
+    class PaymentStatus(models.TextChoices):
+        PENDING = "PENDING", "Pending Classification"
+        PAID = "PAID", "Paid Leave"
+        LOP = "LOP", "Loss of Pay"
 
     employee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='leave_requests')
     assigned_manager = models.ForeignKey(
@@ -123,6 +138,14 @@ class LeaveRequest(models.Model):
     
     # Workflow
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    
+    # Document Workflow
+    attachment = models.FileField(upload_to='leave_documents/', null=True, blank=True, help_text="Medical certificate or supporting document.")
+    document_status = models.CharField(max_length=20, choices=DocumentStatus.choices, default=DocumentStatus.NONE)
+    payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
+    
+    verified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='verified_leaves')
+    verification_date = models.DateTimeField(null=True, blank=True)
     
     # Audit
     manager_comment = models.TextField(blank=True, null=True)
@@ -160,6 +183,15 @@ class LeaveRequest(models.Model):
 
     def save(self, *args, **kwargs):
         self.clean()
+        
+        # Auto-initialize document status based on Leave Type configuration
+        # Auto-initialize document status based on Leave Type configuration
+        # STRICT: User requested doc verification only for Sick Leave
+        if self.pk is None and self.leave_type.requires_document:
+             is_sick = 'sick' in self.leave_type.name.lower()
+             if is_sick and self.document_status == self.DocumentStatus.NONE:
+                 self.document_status = self.DocumentStatus.PENDING
+                 
         super().save(*args, **kwargs)
 
     @property
@@ -169,6 +201,10 @@ class LeaveRequest(models.Model):
         if not self.end_date or not self.start_date:
             return 0
         return (self.end_date - self.start_date).days + 1
+        
+    @property
+    def is_sick_leave(self):
+        return 'sick' in self.leave_type.name.lower()
 
     def __str__(self):
         return f"{self.employee.full_name} - {self.leave_type.code} ({self.start_date})"
