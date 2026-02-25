@@ -48,10 +48,17 @@ def attendance_list(request):
         if request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO']):
             manual_entry_form = AttendanceManualEntryForm(request.POST)
             if manual_entry_form.is_valid():
+                employee = manual_entry_form.cleaned_data['employee']
+                date = manual_entry_form.cleaned_data['date']
+                # Delete existing log BEFORE save so unique_together doesn't block
+                deleted_count, _ = AttendanceLog.objects.filter(employee=employee, date=date).delete()
                 log = manual_entry_form.save(commit=False)
                 log.entry_type = AttendanceLog.EntryType.MANUAL
                 log.save()
-                messages.success(request, "Attendance manually logged successfully.")
+                if deleted_count > 0:
+                    messages.success(request, f"Manual punch saved — previous log for {employee} on {date} was overridden.")
+                else:
+                    messages.success(request, "Attendance manually logged successfully.")
                 return redirect('attendance_list')
             else:
                 messages.error(request, "Please correct the errors in the manual entry form.")
@@ -330,10 +337,37 @@ def attendance_manual_entry(request):
     if request.method == 'POST':
         form = AttendanceManualEntryForm(request.POST)
         if form.is_valid():
-            log = form.save(commit=False)
-            log.entry_type = AttendanceLog.EntryType.MANUAL
-            log.save()
-            messages.success(request, "Attendance manually logged successfully.")
+            employee = form.cleaned_data['employee']
+            start_date = form.cleaned_data['start_date']
+            end_date = form.cleaned_data['end_date']
+            # determine reason text to save
+            reason_type = form.cleaned_data.get('reason_type')
+            custom_remarks = form.cleaned_data.get('remarks')
+            final_remarks = custom_remarks if reason_type == 'Other' else reason_type
+            
+            from datetime import timedelta
+            current_date = start_date
+            
+            logs_created = 0
+            while current_date <= end_date:
+                AttendanceLog.objects.filter(employee=employee, date=current_date).delete()
+                
+                log = AttendanceLog(
+                    employee=employee,
+                    date=current_date,
+                    status=AttendanceLog.Status.PRESENT,
+                    is_compliant=True,  # Assume manual entry is compliant
+                    total_work_minutes=480, # Assume 8 hours Standard
+                    remarks=final_remarks,
+                    entry_type=AttendanceLog.EntryType.MANUAL
+                )
+                
+                log.save()
+                
+                current_date += timedelta(days=1)
+                logs_created += 1
+
+            messages.success(request, f"Successfully logged attendance for {logs_created} day(s). Existing entries overridden.")
             return redirect('attendance_list')
     else:
         form = AttendanceManualEntryForm()

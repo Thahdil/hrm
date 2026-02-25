@@ -123,7 +123,18 @@
                         </td>
                         <td style="padding: 10px 20px; border-bottom: 1px solid var(--border-color);">
                             <div style="font-weight: 700; color: var(--text-secondary); font-size: 13px;">{{ log.date|date:"D, d M Y" }}</div>
-                            <div style="font-size: 10.5px; color: var(--text-secondary); font-weight: 600;">{{ log.date|date:"l" }}</div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="font-size: 10.5px; color: var(--text-secondary); font-weight: 600;">{{ log.date|date:"l" }}</div>
+                                {% if log.remarks %}
+                                <div style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--primary); background: rgba(37,99,235,0.1); padding: 2px 6px; border-radius: 4px; letter-spacing: 0.05em;">
+                                    {{ log.remarks|truncatechars:18 }}
+                                </div>
+                                {% else %}
+                                <div style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); background: var(--gray-50); padding: 2px 6px; border-radius: 4px; letter-spacing: 0.05em; border: 1px solid var(--border-color);">
+                                    IN OFFICE
+                                </div>
+                                {% endif %}
+                            </div>
                         </td>
                         <td style="padding: 10px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
                             <div style="font-weight: 800; color: var(--primary); font-size: 13.5px; letter-spacing: -0.01em;">
@@ -231,50 +242,67 @@
         </div>
         
         <div style="padding: 32px; max-height: 80vh; overflow-y: auto;">
-            <form method="post" action="">
+            <form id="manualEntryForm" method="post" action="{% url 'attendance_manual_entry' %}" novalidate>
                 {% csrf_token %}
                 <input type="hidden" name="manual_entry_submit" value="true">
                 
                 <!-- Section 1: Who & When -->
-                <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; margin-bottom: 24px;">
+                <div style="margin-bottom: 24px;">
                     <div class="form-group">
-                        <label class="form-label"><i class="ri-user-search-line"></i> Employee</label>
-                        {{ manual_entry_form.employee }}
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label"><i class="ri-calendar-event-line"></i> Date</label>
-                        {{ manual_entry_form.date }}
+                        <label class="form-label"><i class="ri-user-search-line"></i> Search Employee</label>
+                        <div style="position: relative;" id="empSearchWrapper">
+                            <i class="ri-search-2-line" style="position: absolute; left: 14px; top: 14px; color: var(--primary); font-size: 18px; pointer-events: none; z-index: 1;"></i>
+                            <input type="text" id="manualEmployeeSearch" placeholder="Enter name or employee ID..." autocomplete="off"
+                                   style="width: 100%; height: 44px; padding-left: 44px; padding-right: 16px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--input-bg); color: var(--text-main); font-size: 13.5px; font-weight: 600; transition: all 0.2s; outline: none;"
+                                   onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 4px rgba(37,99,235,0.08)'"
+                                   onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'">
+                            <!-- Custom styled dropdown list -->
+                            <div id="empDropdown" style="display:none; position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.12); z-index: 9999; max-height: 260px; overflow-y: auto; padding: 6px;"></div>
+                        </div>
+                        <!-- Employee data for JS (hidden) -->
+                        <script type="application/json" id="empChoicesData">[
+                            {% for choice_val, choice_label in manual_entry_form.fields.employee.choices %}{% if choice_val %}{"id": "{{ choice_val }}", "name": "{{ choice_label|escapejs }}"}{% if not forloop.last %},{% endif %}{% endif %}{% endfor %}
+                        ]</script>
+                        <!-- Hidden real selection for Django -->
+                        <div style="display: none !important;">
+                            {{ manual_entry_form.employee }}
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Section 2: Time & Status -->
+                <!-- Section 2: Range Details -->
                 <div style="background: var(--gray-50); padding: 20px; border-radius: 16px; border: 1px dashed var(--border-color); margin-bottom: 24px;">
-                    <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--gray-500); margin-bottom: 16px; letter-spacing: 0.05em;">Time Details</div>
+                    <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--gray-500); margin-bottom: 16px; letter-spacing: 0.05em;">Range Details</div>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
-                         <div class="form-group">
-                            <label class="form-label"><i class="ri-flag-line"></i> Status</label>
-                            {{ manual_entry_form.status }}
+                         
+                        <div class="form-group" style="cursor: pointer;" onclick="document.getElementById('manual_start_date').showPicker()">
+                            <label class="form-label" style="pointer-events: none;"><i class="ri-calendar-event-line"></i> From Date</label>
+                            {{ manual_entry_form.start_date }}
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label"><i class="ri-login-circle-line"></i> In Time</label>
-                            {{ manual_entry_form.check_in }}
+                            <label class="form-label"><i class="ri-calendar-line"></i> Number of Days</label>
+                            {{ manual_entry_form.days }}
                         </div>
                         
-                        <div class="form-group">
-                            <label class="form-label"><i class="ri-logout-circle-line"></i> Out Time</label>
-                            {{ manual_entry_form.check_out }}
+                        <div class="form-group" style="cursor: pointer;" onclick="document.getElementById('manual_end_date').showPicker()">
+                            <label class="form-label" style="pointer-events: none;"><i class="ri-calendar-event-fill"></i> To Date</label>
+                            {{ manual_entry_form.end_date }}
                         </div>
                     </div>
                 </div>
                 
                 <!-- Section 3: Reason -->
-                <div class="form-group" style="margin-bottom: 32px;">
-                    <label class="form-label"><i class="ri-text-spacing"></i> Remarks / Justification</label>
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label"><i class="ri-list-check-2"></i> Reason Type</label>
+                    {{ manual_entry_form.reason_type }}
+                </div>
+                
+                <div class="form-group" id="remarksContainer" style="margin-bottom: 32px; display: none;">
+                    <label class="form-label"><i class="ri-text-spacing"></i> Specific Reason / Remarks</label>
                     {{ manual_entry_form.remarks }}
-                    <div class="help-text">Reason for manual entry (e.g. WFH, Forgot Punch)</div>
+                    <div class="help-text">Please provide a reason for this manual entry.</div>
                 </div>
                 
                 <!-- Footer Actions -->
@@ -314,14 +342,112 @@
         }
     });
 
+    document.getElementById('manualEntryForm').addEventListener('submit', function(e) {
+        const empSelect = document.getElementById('id_employee');
+        if (!empSelect || !empSelect.value) {
+            e.preventDefault();
+            const searchInput = document.getElementById('manualEmployeeSearch');
+            searchInput.style.borderColor = 'var(--error)';
+            searchInput.style.boxShadow = '0 0 0 4px rgba(239, 68, 68, 0.1)';
+            alert('Please select an employee.');
+            return;
+        }
+
+        const reasonSelect = document.getElementById('manual_reason_type');
+        const remarksInput = document.getElementById('manual_remarks');
+        if (reasonSelect && reasonSelect.value === 'Other') {
+            if (!remarksInput || !remarksInput.value.trim()) {
+                e.preventDefault();
+                remarksInput.style.borderColor = 'var(--error)';
+                alert('Please provide specific remarks when "Other" is selected.');
+                return;
+            }
+        }
+        
+        // Hide the modal immediately to feel instant
+        closeManualEntryModal();
+        
+        // Change button to loading state
+        const btn = this.querySelector('button[type="submit"]');
+        if (btn) {
+            btn.innerHTML = '<span>Saving...</span>';
+            btn.style.opacity = '0.7';
+            btn.style.pointerEvents = 'none';
+        }
+    });
+
     {% if manual_entry_form.errors %}
     document.addEventListener('DOMContentLoaded', function() {
         openManualEntryModal();
+        if (document.getElementById('manual_reason_type') && document.getElementById('manual_reason_type').value === 'Other') {
+            document.getElementById('remarksContainer').style.display = 'block';
+        }
     });
     {% endif %}
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const reasonSelect = document.getElementById('manual_reason_type');
+        const remarksContainer = document.getElementById('remarksContainer');
+        if (reasonSelect && remarksContainer) {
+            reasonSelect.addEventListener('change', function() {
+                if (this.value === 'Other') {
+                    remarksContainer.style.display = 'block';
+                } else {
+                    remarksContainer.style.display = 'none';
+                }
+            });
+            // trigger on load
+            if (reasonSelect.value === 'Other') {
+                remarksContainer.style.display = 'block';
+            }
+        }
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const startInput = document.getElementById('manual_start_date');
+        const daysInput = document.getElementById('manual_days');
+        const endInput = document.getElementById('manual_end_date');
+
+        function updateEndDate() {
+            if (startInput && startInput.value && daysInput && daysInput.value) {
+                let start = new Date(startInput.value);
+                let days = parseInt(daysInput.value) - 1;
+                if (days >= 0) {
+                    start.setDate(start.getDate() + days);
+                    let isoDate = start.toISOString().split('T')[0];
+                    if (endInput) {
+                        endInput.value = isoDate;
+                    }
+                }
+            }
+        }
+        
+        function updateDays() {
+            if (startInput && startInput.value && endInput && endInput.value) {
+                let start = new Date(startInput.value);
+                let end = new Date(endInput.value);
+                let diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                if (diffDays > 0) {
+                    if (daysInput) {
+                        daysInput.value = diffDays;
+                    }
+                }
+            }
+        }
+
+        if(startInput && daysInput && endInput) {
+            startInput.addEventListener('change', updateEndDate);
+            daysInput.addEventListener('input', updateEndDate);
+            endInput.addEventListener('change', updateDays);
+        }
+    });
 </script>
 
 <style>
+
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -717,5 +843,120 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// -------------------------------------------------------------------------------- //
+// Manual Entry Employee Search — Custom Styled Dropdown
+// -------------------------------------------------------------------------------- //
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput  = document.getElementById('manualEmployeeSearch');
+    const realSelect   = document.getElementById('id_employee');
+    const dropdown     = document.getElementById('empDropdown');
+    const dataEl       = document.getElementById('empChoicesData');
+
+    if (!searchInput || !realSelect || !dropdown || !dataEl) return;
+
+    // Parse server-rendered employee list
+    let allEmployees = [];
+    try { allEmployees = JSON.parse(dataEl.textContent.trim()); } catch(e) {}
+
+    let activeIndex = -1;
+
+    function highlight(text, query) {
+        if (!query) return text;
+        const re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+        return text.replace(re, '<span style="color:var(--primary);font-weight:800;">$1</span>');
+    }
+
+    function showDropdown(query) {
+        const q = query.toLowerCase().trim();
+        const filtered = q
+            ? allEmployees.filter(e => e.name.toLowerCase().includes(q))
+            : [];
+
+        if (filtered.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+
+        dropdown.innerHTML = filtered.map((emp, idx) => {
+            const initial = emp.name.charAt(0).toUpperCase();
+            return `
+                <div class="emp-opt" data-id="${emp.id}" data-name="${emp.name}" data-idx="${idx}"
+                     style="display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:10px; cursor:pointer; transition:background 0.15s;">
+                    <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#6366f1);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;">${initial}</div>
+                    <div>
+                        <div style="font-weight:700;font-size:13.5px;color:var(--text-main);">${highlight(emp.name, query.trim())}</div>
+                    </div>
+                </div>`;
+        }).join('');
+
+        dropdown.style.display = 'block';
+        activeIndex = -1;
+
+        dropdown.querySelectorAll('.emp-opt').forEach(item => {
+            item.addEventListener('mouseenter', () => item.style.background = 'var(--gray-50)');
+            item.addEventListener('mouseleave', () => { if (parseInt(item.dataset.idx) !== activeIndex) item.style.background = ''; });
+            item.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                selectEmployee(item.dataset.id, item.dataset.name);
+            });
+        });
+    }
+
+    function selectEmployee(id, name) {
+        searchInput.value = name;
+        realSelect.value  = id;
+        dropdown.style.display = 'none';
+        searchInput.style.borderColor  = 'var(--border-color)';
+        searchInput.style.boxShadow    = 'none';
+    }
+
+    function updateActiveItem() {
+        dropdown.querySelectorAll('.emp-opt').forEach((item, idx) => {
+            item.style.background = idx === activeIndex ? 'var(--gray-50)' : '';
+            if (idx === activeIndex) item.scrollIntoView({ block: 'nearest' });
+        });
+    }
+
+    searchInput.addEventListener('input', function() {
+        realSelect.value = '';
+        showDropdown(this.value);
+    });
+
+    searchInput.addEventListener('keydown', function(e) {
+        const items = dropdown.querySelectorAll('.emp-opt');
+        if (!items.length) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIndex = Math.min(activeIndex + 1, items.length - 1);
+            updateActiveItem();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIndex = Math.max(activeIndex - 1, 0);
+            updateActiveItem();
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (activeIndex >= 0) {
+                const it = items[activeIndex];
+                selectEmployee(it.dataset.id, it.dataset.name);
+            }
+        } else if (e.key === 'Escape') {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', function(e) {
+        if (!document.getElementById('empSearchWrapper').contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    // Restore field if form reloads with errors
+    if (realSelect.value) {
+        const match = allEmployees.find(e => String(e.id) === String(realSelect.value));
+        if (match) searchInput.value = match.name;
+    }
+});
 </script>
 {% endblock %}

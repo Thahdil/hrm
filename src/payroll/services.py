@@ -634,8 +634,7 @@ class PayrollService:
             basic = emp.salary_basic
             allowance = emp.salary_allowance
             gross_monthly = basic + allowance
-            daily_salary = gross_monthly / days_in_basis
-            hourly_rate = daily_salary / Decimal('8.00')
+            hourly_rate = emp.hourly_salary
             
             # 1. Calculate Required Hours & Working Days
             working_days_count = 0

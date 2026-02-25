@@ -39,11 +39,8 @@ def meeting_list(request):
 def schedule_meeting(request):
     """
     View to schedule a new meeting.
-    Restricted to CEO and Project Manager roles.
+    All authenticated employees can schedule meetings.
     """
-    if not (request.user.is_ceo() or request.user.is_project_manager()):
-        messages.error(request, "Only CEOs and Project Managers can schedule meetings.")
-        return redirect('meeting_list')
 
     if request.method == 'POST':
         form = MeetingForm(request.POST, user=request.user)

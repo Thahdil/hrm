@@ -19,11 +19,9 @@
             </a>
         </div>
         
-        {% if user.is_ceo or user.is_project_manager %}
         <a href="{% url 'meeting_schedule' %}" class="btn btn-primary" style="border-radius: 12px; gap: 8px;">
             <i class="ri-add-line"></i> Schedule Meeting
         </a>
-        {% endif %}
     </div>
 
     <!-- Meeting List -->
@@ -36,9 +34,7 @@
                     <th style="padding: 16px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Date & Time</th>
                     <th style="padding: 16px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Organizer</th>
                     <th style="padding: 16px 24px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Participants</th>
-                    {% if request.user.role != 'EMPLOYEE' %}
                     <th style="padding: 16px 24px; text-align: right; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Action</th>
-                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -107,17 +103,15 @@
                             </div>
                         </div>
                     </td>
-                    {% if request.user.role != 'EMPLOYEE' %}
                     <td style="padding: 16px 24px; text-align: right; vertical-align: middle;">
                          <button onclick="openMeetingDetail('{{ meeting.pk }}')" class="btn" style="width: 36px; height: 36px; border-radius: 12px; background: rgba(37, 99, 235, 0.1); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: none; cursor: pointer;" onmouseover="this.style.transform='translateX(4px) scale(1.05)'; this.style.background='var(--primary)'; this.style.color='white'" onmouseout="this.style.transform='translateX(0) scale(1)'; this.style.background='rgba(37, 99, 235, 0.1)'; this.style.color='var(--primary)'">
                             <i class="ri-arrow-right-line" style="font-size: 18px; color: inherit;"></i>
                         </button>
                     </td>
-                    {% endif %}
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="{% if request.user.role == 'EMPLOYEE' %}4{% else %}5{% endif %}" style="padding: 48px; text-align: center; vertical-align: middle;">
+                    <td colspan="5" style="padding: 48px; text-align: center; vertical-align: middle;">
                         <div style="width: 64px; height: 64px; background: var(--gray-50); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: var(--gray-400);">
                             <i class="ri-calendar-event-line" style="font-size: 32px;"></i>
                         </div>

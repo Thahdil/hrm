@@ -151,6 +151,19 @@ class CustomUser(AbstractUser):
     def total_salary(self):
         return self.salary_basic + self.salary_allowance
 
+    @property
+    def hourly_salary(self):
+        """
+        Hourly pay based on criteria: (monthly salary / 30 days) / 8 hours
+        Utilized for OT and Deductions.
+        """
+        from decimal import Decimal
+        monthly_salary = self.salary_basic + self.salary_allowance
+        if monthly_salary <= 0:
+            return Decimal('0.00')
+        daily_salary = monthly_salary / Decimal('30.00')
+        return daily_salary / Decimal('8.00')
+
     # --- Encryption Accessors ---
     @property
     def pan_number(self):

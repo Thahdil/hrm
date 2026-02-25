@@ -92,12 +92,10 @@
                         <span>{% if user.is_admin or user.is_ceo %}Leave Management{% else %}My Leaves{% endif %}</span>
                     </a>
 
-                    {% if user.is_staff or user.is_admin or user.is_hr or user.is_ceo or user.is_project_manager %}
                     <a href="{% url 'meeting_list' %}" class="nav-item {% if 'meetings' in request.path %}active{% endif %}">
                         <i class="ri-calendar-event-line"></i>
                         <span>Meetings</span>
                     </a>
-                    {% endif %}
                 </div>
                 
                 <!-- Team Management (Project Managers Only) -->

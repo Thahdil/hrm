@@ -202,7 +202,7 @@
                 {% endif %}
 
                 <!-- Section 1: Who & When -->
-                <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; margin-bottom: 24px;">
+                <div style="margin-bottom: 24px;">
                     <div class="form-group">
                         <label class="form-label"><i class="ri-user-search-line"></i> Employee</label>
                         {{ form.employee }}
@@ -210,55 +210,53 @@
                         <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.employee.errors.0 }}</div>
                         {% endif %}
                     </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label"><i class="ri-calendar-event-line"></i> Date</label>
-                        {{ form.date }}
-                        {% if form.date.errors %}
-                        <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.date.errors.0 }}</div>
-                        {% endif %}
-                    </div>
                 </div>
                 
-                <!-- Section 2: Time & Status -->
+                <!-- Section 2: Range Details -->
                 <div style="background: var(--gray-50); padding: 24px; border-radius: 18px; border: 1px dashed var(--border-color); margin-bottom: 32px;">
-                    <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--gray-500); margin-bottom: 20px; letter-spacing: 0.05em;">Time Details</div>
+                    <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--gray-500); margin-bottom: 20px; letter-spacing: 0.05em;">Range Details</div>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
-                         <div class="form-group">
-                            <label class="form-label"><i class="ri-flag-line"></i> Status</label>
-                            {{ form.status }}
-                             {% if form.status.errors %}
-                            <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.status.errors.0 }}</div>
+
+                        <div class="form-group" style="cursor: pointer;" onclick="document.getElementById('manual_start_date').showPicker()">
+                            <label class="form-label" style="pointer-events: none;"><i class="ri-calendar-event-line"></i> From Date</label>
+                            {{ form.start_date }}
+                            {% if form.start_date.errors %}
+                            <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.start_date.errors.0 }}</div>
                             {% endif %}
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label"><i class="ri-login-circle-line"></i> In Time</label>
-                            {{ form.check_in }}
-                            {% if form.check_in.errors %}
-                            <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.check_in.errors.0 }}</div>
+                            <label class="form-label"><i class="ri-calendar-line"></i> Number of Days</label>
+                            {{ form.days }}
+                            {% if form.days.errors %}
+                            <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.days.errors.0 }}</div>
                             {% endif %}
                         </div>
                         
-                        <div class="form-group">
-                            <label class="form-label"><i class="ri-logout-circle-line"></i> Out Time</label>
-                            {{ form.check_out }}
-                            {% if form.check_out.errors %}
-                            <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.check_out.errors.0 }}</div>
+                        <div class="form-group" style="cursor: pointer;" onclick="document.getElementById('manual_end_date').showPicker()">
+                            <label class="form-label" style="pointer-events: none;"><i class="ri-calendar-event-fill"></i> To Date</label>
+                            {{ form.end_date }}
+                            {% if form.end_date.errors %}
+                            <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.end_date.errors.0 }}</div>
                             {% endif %}
                         </div>
                     </div>
                 </div>
                 
                 <!-- Section 3: Reason -->
-                <div class="form-group" style="margin-bottom: 40px;">
-                    <label class="form-label"><i class="ri-text-spacing"></i> Remarks / Justification</label>
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label"><i class="ri-list-check-2"></i> Reason Type</label>
+                    {{ form.reason_type }}
+                </div>
+                
+                <div class="form-group" id="remarksContainer" style="margin-bottom: 40px; display: none;">
+                    <label class="form-label"><i class="ri-text-spacing"></i> Specific Reason / Remarks</label>
                     {{ form.remarks }}
                     {% if form.remarks.errors %}
                     <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.remarks.errors.0 }}</div>
                     {% endif %}
-                    <div class="help-text">Reason for manual entry (e.g. WFH, Forgot Punch)</div>
+                    <div class="help-text">Please provide a reason for this manual entry.</div>
                 </div>
                 
                 <!-- Footer Actions -->
@@ -272,4 +270,89 @@
         </div>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Reason Check Logic
+        const reasonSelect = document.getElementById('manual_reason_type');
+        const remarksContainer = document.getElementById('remarksContainer');
+        const remarksInput = document.getElementById('manual_remarks');
+        
+        if (reasonSelect && remarksContainer) {
+            reasonSelect.addEventListener('change', function() {
+                if (this.value === 'Other') {
+                    remarksContainer.style.display = 'block';
+                } else {
+                    remarksContainer.style.display = 'none';
+                    if (remarksInput) remarksInput.style.borderColor = 'var(--border-color)';
+                }
+            });
+            // Initial load config
+            if (reasonSelect.value === 'Other') {
+                remarksContainer.style.display = 'block';
+            }
+        }
+        
+        // Form Validation Interceptor
+        const formObj = document.querySelector('form');
+        if (formObj) {
+            formObj.addEventListener('submit', function(e) {
+                if (reasonSelect && reasonSelect.value === 'Other') {
+                    if (!remarksInput || !remarksInput.value.trim()) {
+                        e.preventDefault();
+                        remarksInput.style.borderColor = 'var(--error)';
+                        alert('Please provide specific remarks when "Other" is selected.');
+                        
+                        // Re-enable button if it was disabled
+                        const btn = this.querySelector('button[type="submit"]');
+                        if (btn) {
+                            btn.innerHTML = '<span>Save Entry</span> <i class="ri-arrow-right-line"></i>';
+                            btn.style.opacity = '1';
+                            btn.style.pointerEvents = 'auto';
+                        }
+                    }
+                }
+            });
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const startInput = document.getElementById('manual_start_date');
+        const daysInput = document.getElementById('manual_days');
+        const endInput = document.getElementById('manual_end_date');
+
+        function updateEndDate() {
+            if (startInput && startInput.value && daysInput && daysInput.value) {
+                let start = new Date(startInput.value);
+                let days = parseInt(daysInput.value) - 1;
+                if (days >= 0) {
+                    start.setDate(start.getDate() + days);
+                    let isoDate = start.toISOString().split('T')[0];
+                    if (endInput) {
+                        endInput.value = isoDate;
+                    }
+                }
+            }
+        }
+        
+        function updateDays() {
+            if (startInput && startInput.value && endInput && endInput.value) {
+                let start = new Date(startInput.value);
+                let end = new Date(endInput.value);
+                let diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                if (diffDays > 0) {
+                    if (daysInput) {
+                        daysInput.value = diffDays;
+                    }
+                }
+            }
+        }
+
+        if(startInput && daysInput && endInput) {
+            startInput.addEventListener('change', updateEndDate);
+            daysInput.addEventListener('input', updateEndDate);
+            endInput.addEventListener('change', updateDays);
+        }
+    });
+</script>
+
 {% endblock %}
