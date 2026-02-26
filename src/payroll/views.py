@@ -345,6 +345,9 @@ def attendance_manual_entry(request):
             custom_remarks = form.cleaned_data.get('remarks')
             final_remarks = custom_remarks if reason_type == 'Other' else reason_type
             
+            work_duration_hours = form.cleaned_data.get('work_duration', 8.0)
+            work_minutes = int(float(work_duration_hours) * 60)
+            
             from datetime import timedelta
             current_date = start_date
             
@@ -357,7 +360,7 @@ def attendance_manual_entry(request):
                     date=current_date,
                     status=AttendanceLog.Status.PRESENT,
                     is_compliant=True,  # Assume manual entry is compliant
-                    total_work_minutes=480, # Assume 8 hours Standard
+                    total_work_minutes=work_minutes,
                     remarks=final_remarks,
                     entry_type=AttendanceLog.EntryType.MANUAL
                 )

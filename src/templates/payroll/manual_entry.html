@@ -244,10 +244,20 @@
                     </div>
                 </div>
                 
-                <!-- Section 3: Reason -->
-                <div class="form-group" style="margin-bottom: 24px;">
-                    <label class="form-label"><i class="ri-list-check-2"></i> Reason Type</label>
-                    {{ form.reason_type }}
+                <!-- Section 3: Reason & Duration -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div class="form-group">
+                        <label class="form-label"><i class="ri-list-check-2"></i> Reason Type</label>
+                        {{ form.reason_type }}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="ri-time-line"></i> Work Duration (Hours)</label>
+                        {{ form.work_duration }}
+                        {% if form.work_duration.errors %}
+                        <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ form.work_duration.errors.0 }}</div>
+                        {% endif %}
+                    </div>
                 </div>
                 
                 <div class="form-group" id="remarksContainer" style="margin-bottom: 40px; display: none;">

@@ -38,8 +38,16 @@ class AttendanceManualEntryForm(forms.Form):
             'onclick': 'this.showPicker()'
         })
     )
+    work_duration = forms.DecimalField(
+        label="Work Duration (Hours)",
+        initial=8.0,
+        min_value=0,
+        max_value=24,
+        required=True,
+        widget=forms.NumberInput(attrs={'class': 'form-input', 'id': 'manual_work_duration', 'step': '0.5'})
+    )
     REASON_CHOICES = [
-        ('Work from Home', 'Work from Home'),
+        ('WFH', 'Work from Home'),
         ('Field Work', 'Field Work'),
         ('Other', 'Other')
     ]

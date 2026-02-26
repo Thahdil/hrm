@@ -127,7 +127,7 @@
                                 <div style="font-size: 10.5px; color: var(--text-secondary); font-weight: 600;">{{ log.date|date:"l" }}</div>
                                 {% if log.remarks %}
                                 <div style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--primary); background: rgba(37,99,235,0.1); padding: 2px 6px; border-radius: 4px; letter-spacing: 0.05em;">
-                                    {{ log.remarks|truncatechars:18 }}
+                                    {% if log.remarks == 'Work from Home' %}WFH{% else %}{{ log.remarks|truncatechars:18 }}{% endif %}
                                 </div>
                                 {% else %}
                                 <div style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); background: var(--gray-50); padding: 2px 6px; border-radius: 4px; letter-spacing: 0.05em; border: 1px solid var(--border-color);">
@@ -293,10 +293,20 @@
                     </div>
                 </div>
                 
-                <!-- Section 3: Reason -->
-                <div class="form-group" style="margin-bottom: 24px;">
-                    <label class="form-label"><i class="ri-list-check-2"></i> Reason Type</label>
-                    {{ manual_entry_form.reason_type }}
+                <!-- Section 3: Reason & Duration -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div class="form-group">
+                        <label class="form-label"><i class="ri-list-check-2"></i> Reason Type</label>
+                        {{ manual_entry_form.reason_type }}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="ri-time-line"></i> Work Duration (Hours)</label>
+                        {{ manual_entry_form.work_duration }}
+                        {% if manual_entry_form.work_duration.errors %}
+                        <div style="color: var(--error); font-size: 12px; margin-top: 6px; font-weight: 600;">{{ manual_entry_form.work_duration.errors.0 }}</div>
+                        {% endif %}
+                    </div>
                 </div>
                 
                 <div class="form-group" id="remarksContainer" style="margin-bottom: 32px; display: none;">
