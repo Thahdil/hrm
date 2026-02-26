@@ -28,11 +28,13 @@ def project_list(request):
         messages.success(request, f"Project '{name}' created successfully.")
         return redirect('project_list')
 
-    projects = Project.objects.all().prefetch_related('assigned_employees')
+    active_projects = Project.objects.filter(is_active=True).prefetch_related('assigned_employees')
+    completed_projects = Project.objects.filter(is_active=False).prefetch_related('assigned_employees')
     all_employees = User.objects.filter(is_active=True).exclude(role__in=['ADMIN', 'CEO', 'PROJECT_MANAGER']).order_by('full_name')
     
     context = {
-        'projects': projects,
+        'active_projects': active_projects,
+        'completed_projects': completed_projects,
         'all_employees': all_employees,
         'is_authorized': is_authorized,
     }
@@ -109,19 +111,94 @@ def project_detail(request, pk):
         messages.error(request, "Permission denied.")
         return redirect('dashboard')
     
+    # Get selected period from request — 'all' means complete portfolio
+    now = timezone.now()
+    import datetime
+
+    show_all = request.GET.get('period') == 'all'
+    selected_month = int(request.GET.get('month', now.month))
+    selected_year = int(request.GET.get('year', now.year))
+
+    if show_all:
+        base_qs = ProjectHours.objects.filter(project=project)
+        label = "Complete Portfolio"
+    else:
+        selected_date = datetime.date(selected_year, selected_month, 1)
+        label = selected_date.strftime('%B %Y')
+        base_qs = ProjectHours.objects.filter(
+            project=project,
+            date__year=selected_year,
+            date__month=selected_month
+        )
+
     # Aggregate summaries
-    stats = ProjectHours.objects.filter(project=project).aggregate(
+    stats = base_qs.aggregate(
         total_std=Sum('standard_hours'),
         total_extra=Sum('extra_time'),
         total_ot=Sum('overtime')
     )
-    
+
+    # Aggregated hours per employee
+    employee_stats = base_qs.values(
+        'employee__full_name',
+        'employee__username',
+        'employee__id'
+    ).annotate(
+        total_std=Sum('standard_hours'),
+        total_extra=Sum('extra_time'),
+        total_ot=Sum('overtime'),
+        total_combined=Sum('standard_hours') + Sum('extra_time') + Sum('overtime')
+    ).order_by('-total_combined')
+
     # Detailed logs
-    logs = ProjectHours.objects.filter(project=project).select_related('employee').order_by('-date')
-    
+    logs = base_qs.select_related('employee').order_by('-date')
+
+    # Generate months from project creation month up to current month
+    available_months = []
+    start = project.created_at.date().replace(day=1)
+    current = now.date().replace(day=1)
+    cursor = current
+    while cursor >= start:
+        available_months.append({
+            'month': cursor.month,
+            'year': cursor.year,
+            'name': cursor.strftime('%B %Y')
+        })
+        if cursor.month == 1:
+            cursor = cursor.replace(year=cursor.year - 1, month=12)
+        else:
+            cursor = cursor.replace(month=cursor.month - 1)
+
     context = {
         'project': project,
         'stats': stats,
+        'employee_stats': employee_stats,
         'logs': logs,
+        'selected_month': selected_month,
+        'selected_year': selected_year,
+        'show_all': show_all,
+        'current_month_name': label,
+        'available_months': available_months,
     }
     return render(request, 'projects/project_detail.html', context)
+
+
+@login_required
+def toggle_project_status(request, pk):
+    """
+    Toggle a project's active/completed status. Restricted to CEO/Admin/Project Managers.
+    """
+    project = get_object_or_404(Project, pk=pk)
+    is_authorized = request.user.role in ['ADMIN', 'CEO'] or getattr(request.user, 'is_project_manager', False)
+
+    if not is_authorized:
+        messages.error(request, "Permission denied.")
+        return redirect('project_list')
+
+    if request.method == 'POST':
+        project.is_active = not project.is_active
+        project.save()
+        status = "activated" if project.is_active else "marked as completed"
+        messages.success(request, f"Project '{project.name}' has been {status}.")
+
+    return redirect('project_detail', pk=project.pk)

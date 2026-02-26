@@ -67,48 +67,116 @@
 {% endblock %}
 
 {% block content %}
-<div class="row" style="gap: 20px; padding: 0 16px;">
-    <!-- Summary Cards -->
-    <div class="col-md-3">
-        <div class="stat-card-premium">
-            <div style="font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase;">Standard Commitment</div>
-            <div style="font-size: 32px; font-weight: 900; color: var(--primary);">{{ stats.total_std|default:"0.0" }}H</div>
-            <div style="margin-top: 8px; font-size: 12px; color: var(--gray-500);">Core mission hours</div>
-        </div>
+<div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 0 16px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; gap: 16px;">
+        <a href="{% url 'project_list' %}" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: var(--radius-md); border: 1px solid var(--gray-200); background: var(--bg-surface); color: var(--text-muted); font-size: 12px; font-weight: 700; text-decoration: none; transition: all 0.2s;"
+            onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)';"
+            onmouseout="this.style.borderColor='var(--gray-200)';this.style.color='var(--text-muted)';">
+            <i class="ri-arrow-left-s-line" style="font-size: 16px;"></i> Back
+        </a>
+        <h4 class="advanced-label" style="margin: 0;">Period Analysis</h4>
+        <!-- Project Status Badge -->
+        {% if project.is_active %}
+        <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.3); border-radius: 50px; padding: 4px 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+            <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px #10b981;"></span>
+            Active
+        </span>
+        {% else %}
+        <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(107,114,128,0.1); color: var(--gray-500); border: 1px solid rgba(107,114,128,0.3); border-radius: 50px; padding: 4px 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+            <span style="width: 6px; height: 6px; background: var(--gray-400); border-radius: 50%; display: inline-block;"></span>
+            Completed
+        </span>
+        {% endif %}
     </div>
-    
-    <div class="col-md-3">
-        <div class="stat-card-premium">
-            <div style="font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase;">Extra Velocity</div>
-            <div style="font-size: 32px; font-weight: 900; color: var(--accent);">{{ stats.total_extra|default:"0.0" }}H</div>
-            <div style="margin-top: 8px; font-size: 12px; color: var(--gray-500);">Bonus effort logging</div>
-        </div>
-    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <!-- Toggle Status Button -->
+        <form method="post" action="{% url 'toggle_project_status' project.pk %}" style="margin: 0;">
+            {% csrf_token %}
+            {% if project.is_active %}
+            <button type="submit" style="height: 42px; padding: 0 20px; border-radius: var(--radius-md); border: 2px solid var(--error); background: transparent; color: var(--error); font-weight: 800; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; letter-spacing: 0.5px; transition: all 0.2s;"
+                onmouseover="this.style.background='var(--error)';this.style.color='white';"
+                onmouseout="this.style.background='transparent';this.style.color='var(--error)';">
+                <i class="ri-checkbox-circle-line"></i> Mark as Completed
+            </button>
+            {% else %}
+            <button type="submit" style="height: 42px; padding: 0 20px; border-radius: var(--radius-md); border: 2px solid #10b981; background: transparent; color: #10b981; font-weight: 800; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; letter-spacing: 0.5px; transition: all 0.2s;"
+                onmouseover="this.style.background='#10b981';this.style.color='white';"
+                onmouseout="this.style.background='transparent';this.style.color='#10b981';">
+                <i class="ri-refresh-line"></i> Reactivate Project
+            </button>
+            {% endif %}
+        </form>
 
-    <div class="col-md-3">
-        <div class="stat-card-premium">
-            <div style="font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase;">Premium Overtime</div>
-            <div style="font-size: 32px; font-weight: 900; color: var(--error);">{{ stats.total_ot|default:"0.0" }}H</div>
-            <div style="margin-top: 8px; font-size: 12px; color: var(--gray-500);">Critical surge support</div>
-        </div>
+        <i class="ri-calendar-event-line" style="color: var(--primary); font-size: 20px;"></i>
+        <form method="get" id="month-filter-form">
+            <select name="month_year" onchange="updatePeriod(this.value)" class="premium-input" style="height: 42px; width: 260px; font-weight: 700; background: var(--bg-surface); cursor: pointer;">
+                <option value="all" {% if show_all %}selected{% endif %} style="font-weight: 900; color: var(--primary);">&#9670; Complete Portfolio (All Time)</option>
+                <option disabled style="color: var(--gray-300); font-size: 10px;">&#9472;&#9472;&#9472;&#9472; Monthly Breakdown &#9472;&#9472;&#9472;&#9472;</option>
+                {% for m in available_months %}
+                <option value="{{ m.month }}-{{ m.year }}" {% if not show_all and m.month == selected_month and m.year == selected_year %}selected{% endif %}>
+                    {{ m.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
     </div>
+</div>
 
-    <div class="col-md-3">
-        <div class="stat-card-premium" style="background: var(--gray-800); color: var(--white); border: none;">
-            <div style="font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase;">Total Portfolio Time</div>
-            <div style="font-size: 32px; font-weight: 900; color: var(--white);">
+<div class="row" style="padding: 0 16px;">
+    <!-- Only Summary Monthly Total Card -->
+    <div class="col-md-12">
+        <div class="stat-card-premium" style="background: var(--gray-800); color: var(--white); border: none; padding: 40px; text-align: center;">
+            <div style="font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2px;">Aggregate Project Velocity ({{ current_month_name }})</div>
+            <div style="font-size: 56px; font-weight: 900; color: var(--white); margin-top: 8px; text-shadow: 0 0 20px rgba(255,255,255,0.2);">
                 {% with total=stats.total_std|default:0|add:stats.total_extra|default:0|add:stats.total_ot|default:0 %}
-                {{ total }}H
+                {{ total|floatformat:1 }}H
                 {% endwith %}
             </div>
-            <div style="margin-top: 8px; font-size: 12px; color: rgba(255,255,255,0.6);">Aggregate contribution</div>
+            <div style="margin-top: 12px; font-size: 14px; color: rgba(255,255,255,0.6);">Total hours logged across all contributors this month</div>
         </div>
+    </div>
+</div>
+
+<!-- Contributor Insights Section -->
+<div style="margin-top: 40px; padding: 0 16px;">
+    <h4 class="advanced-label" style="margin-bottom: 20px;">Contributor Insights ({{ current_month_name }})</h4>
+    <div class="row" style="gap: 16px; display: flex; flex-wrap: wrap;">
+        {% for emp in employee_stats %}
+        <div style="width: 200px; flex: 0 0 auto;">
+            <div class="stat-card-premium" style="border: 1px solid var(--gray-200); padding: 16px; position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; background: var(--bg-surface); transition: transform 0.3s ease;">
+                <!-- Minimalist Avatar -->
+                <div style="width: 40px; height: 40px; border-radius: 12px; background: var(--primary-gradient); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);">
+                    {{ emp.employee__full_name|default:emp.employee__username|slice:":1"|upper }}
+                </div>
+                
+                <!-- Compact Identity -->
+                <div style="font-weight: 800; font-size: 13px; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">
+                    {{ emp.employee__full_name|default:emp.employee__username }}
+                </div>
+                
+                <!-- Advanced Tech Metric -->
+                <div style="margin-top: 12px; width: 100%; padding: 8px; background: var(--gray-50); border-radius: 8px; border: 1px solid var(--gray-100);">
+                    <div style="font-size: 9px; color: var(--gray-400); text-transform: uppercase; font-weight: 900; letter-spacing: 1px;">Monthly Volume</div>
+                    <div style="font-size: 20px; font-weight: 900; color: var(--primary);">{{ emp.total_combined|floatformat:1|default:"0" }}<span style="font-size: 10px; margin-left: 2px;">H</span></div>
+                </div>
+                
+                <!-- Subtle Status Indicator -->
+                <div style="position: absolute; top: 12px; right: 12px; width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981;"></div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-md-12">
+            <div style="padding: 40px; border: 2px dashed var(--gray-200); border-radius: var(--radius-lg); text-align: center; color: var(--gray-400);">
+                No individual contributors identified for this month.
+            </div>
+        </div>
+        {% endfor %}
     </div>
 </div>
 
 <div class="log-table-container">
     <div style="padding: 24px; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="margin: 0; font-weight: 800; font-size: 18px; color: var(--text-main);">Detailed Activity Logs</h3>
+        <h3 style="margin: 0; font-weight: 800; font-size: 18px; color: var(--text-main);">Activity Intelligence &mdash; {{ current_month_name }} {{ selected_year }}</h3>
         <span class="badge" style="background: var(--primary-light); color: var(--white); border-radius: 4px; padding: 4px 12px;">{{ logs.count }} ENTRIES</span>
     </div>
     <div class="table-responsive">
@@ -151,7 +219,7 @@
                 <tr>
                     <td colspan="6" style="padding: 80px; text-align: center; color: var(--gray-400);">
                         <i class="ri-history-line" style="font-size: 40px; margin-bottom: 16px; display: block;"></i>
-                        No hours have been logged for this project yet.
+                        No activity logs found for {{ current_month_name }} {{ selected_year }}.
                     </td>
                 </tr>
                 {% endfor %}
@@ -159,4 +227,20 @@
         </table>
     </div>
 </div>
+<script>
+    function updatePeriod(value) {
+        const url = new URL(window.location.href);
+        if (value === 'all') {
+            url.searchParams.set('period', 'all');
+            url.searchParams.delete('month');
+            url.searchParams.delete('year');
+        } else {
+            const [month, year] = value.split('-');
+            url.searchParams.delete('period');
+            url.searchParams.set('month', month);
+            url.searchParams.set('year', year);
+        }
+        window.location.href = url.toString();
+    }
+</script>
 {% endblock %}
