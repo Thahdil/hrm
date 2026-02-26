@@ -1,0 +1,162 @@
+{% extends "base_modern.html" %}
+{% load static %}
+
+{% block header_title %}Project Intel: {{ project.name }}{% endblock %}
+{% block page_subtitle %}In-depth analysis of team contributions and mission progress.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card-premium {
+        background: var(--bg-surface);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        transition: all 0.3s;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .log-table-container {
+        background: var(--bg-surface);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+        margin-top: 32px;
+        box-shadow: var(--shadow-md);
+    }
+
+    .premium-th {
+        background: var(--gray-50);
+        color: var(--gray-500);
+        font-weight: 800;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .premium-td {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--gray-100);
+        vertical-align: top;
+    }
+
+    .user-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--gray-50);
+        padding: 6px 14px;
+        border-radius: 50px;
+        border: 1px solid var(--gray-200);
+    }
+
+    .task-desc {
+        color: var(--gray-700);
+        font-size: 14px;
+        line-height: 1.6;
+        padding: 12px;
+        background: var(--gray-50);
+        border-radius: 8px;
+        border-left: 3px solid var(--primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row" style="gap: 20px; padding: 0 16px;">
+    <!-- Summary Cards -->
+    <div class="col-md-3">
+        <div class="stat-card-premium">
+            <div style="font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase;">Standard Commitment</div>
+            <div style="font-size: 32px; font-weight: 900; color: var(--primary);">{{ stats.total_std|default:"0.0" }}H</div>
+            <div style="margin-top: 8px; font-size: 12px; color: var(--gray-500);">Core mission hours</div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card-premium">
+            <div style="font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase;">Extra Velocity</div>
+            <div style="font-size: 32px; font-weight: 900; color: var(--accent);">{{ stats.total_extra|default:"0.0" }}H</div>
+            <div style="margin-top: 8px; font-size: 12px; color: var(--gray-500);">Bonus effort logging</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card-premium">
+            <div style="font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase;">Premium Overtime</div>
+            <div style="font-size: 32px; font-weight: 900; color: var(--error);">{{ stats.total_ot|default:"0.0" }}H</div>
+            <div style="margin-top: 8px; font-size: 12px; color: var(--gray-500);">Critical surge support</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card-premium" style="background: var(--gray-800); color: var(--white); border: none;">
+            <div style="font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase;">Total Portfolio Time</div>
+            <div style="font-size: 32px; font-weight: 900; color: var(--white);">
+                {% with total=stats.total_std|default:0|add:stats.total_extra|default:0|add:stats.total_ot|default:0 %}
+                {{ total }}H
+                {% endwith %}
+            </div>
+            <div style="margin-top: 8px; font-size: 12px; color: rgba(255,255,255,0.6);">Aggregate contribution</div>
+        </div>
+    </div>
+</div>
+
+<div class="log-table-container">
+    <div style="padding: 24px; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; font-weight: 800; font-size: 18px; color: var(--text-main);">Detailed Activity Logs</h3>
+        <span class="badge" style="background: var(--primary-light); color: var(--white); border-radius: 4px; padding: 4px 12px;">{{ logs.count }} ENTRIES</span>
+    </div>
+    <div class="table-responsive">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th class="premium-th">Contributor</th>
+                    <th class="premium-th">Date</th>
+                    <th class="premium-th">Std</th>
+                    <th class="premium-th">Extra</th>
+                    <th class="premium-th">OT</th>
+                    <th class="premium-th">Technical Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="premium-td">
+                        <div class="user-pill">
+                            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;">
+                                {{ log.employee.full_name|default:log.employee.username|slice:":1"|upper }}
+                            </div>
+                            <span style="font-weight: 600; font-size: 13px;">{{ log.employee.full_name|default:log.employee.username }}</span>
+                        </div>
+                    </td>
+                    <td class="premium-td">
+                        <div style="font-weight: 700; color: var(--gray-900);">{{ log.date|date:"d M, Y" }}</div>
+                        <div style="font-size: 11px; color: var(--gray-400);">{{ log.date|date:"l" }}</div>
+                    </td>
+                    <td class="premium-td"><span style="font-weight: 700;">{{ log.standard_hours }}</span></td>
+                    <td class="premium-td"><span style="color: var(--accent); font-weight: 700;">{{ log.extra_time }}</span></td>
+                    <td class="premium-td"><span style="color: var(--error); font-weight: 700;">{{ log.overtime }}</span></td>
+                    <td class="premium-td">
+                        <div class="task-desc">
+                            {{ log.task_description }}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="padding: 80px; text-align: center; color: var(--gray-400);">
+                        <i class="ri-history-line" style="font-size: 40px; margin-bottom: 16px; display: block;"></i>
+                        No hours have been logged for this project yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

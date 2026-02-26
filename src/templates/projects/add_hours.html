@@ -1,0 +1,332 @@
+{% extends "base_modern.html" %}
+{% load static %}
+
+{% block header_title %}Work Logs & Timesheets{% endblock %}
+{% block page_subtitle %}Document your technical contributions and focus areas.{% endblock %}
+
+{% block extra_css %}
+<style>
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideRight { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    .premium-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    .log-header {
+        background: var(--primary-gradient);
+        padding: 32px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .progress-pill {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 16px 24px;
+        border-radius: var(--radius-md);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        min-width: 200px;
+    }
+
+    .premium-form-label {
+        font-weight: 700;
+        font-size: 13px;
+        color: var(--gray-700);
+        margin-bottom: 8px;
+        display: block;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .elegant-input {
+        border: 1.5px solid var(--gray-200);
+        border-radius: var(--radius-md);
+        padding: 14px 18px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        background: var(--input-bg);
+        font-weight: 500;
+        width: 100%;
+    }
+
+    .elegant-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .summary-item {
+        padding: 16px;
+        border-radius: var(--radius-md);
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        transition: all 0.2s;
+    }
+
+    .summary-item:hover {
+        background: var(--bg-surface);
+        border-color: var(--primary-light);
+        box-shadow: var(--shadow-md);
+    }
+
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+
+    .extended-hours-card {
+        background: var(--primary-light);
+        color: white;
+        padding: 24px;
+        border-radius: var(--radius-lg);
+        margin-top: 24px;
+        animation: slideRight 0.4s ease-out;
+    }
+
+    /* Modal Styling */
+    .premium-modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .premium-modal.active { display: flex; }
+
+    .modal-content-glass {
+        background: var(--bg-surface);
+        border: 1px solid var(--gray-200);
+        width: 90%;
+        max-width: 800px;
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        box-shadow: var(--shadow-xl);
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+    }
+
+    .premium-modal.active .modal-content-glass { transform: translateY(0); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row" style="gap: 32px; padding: 0 16px;">
+    <!-- Main Log Column -->
+    <div class="col-md-8">
+        <div class="premium-card">
+            <div class="log-header">
+                <div>
+                    <h2 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -1px;">{{ today|date:"F d, Y" }}</h2>
+                    <p style="margin: 4px 0 0 0; opacity: 0.7; font-size: 14px; font-weight: 500;">Active Session: {{ request.user.full_name|default:request.user.username }}</p>
+                </div>
+                
+                <div class="progress-pill">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 10px;">
+                        <span>CAPACITY UTILIZATION</span>
+                        <span>{{ logged_standard }} / 8.0H</span>
+                    </div>
+                    <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                        <div id="progress-bar" 
+                             style="width: {% widthratio logged_standard 8 100 %}%; height: 100%; 
+                             background: {% if logged_standard >= 8 %}#10B981{% else %}#60A5FA{% endif %}; 
+                             transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body" style="padding: 40px;">
+                <form id="hours-form" method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6" style="margin-bottom: 24px;">
+                            <label class="premium-form-label">Strategic Project</label>
+                            <select name="project" class="elegant-input" required id="project-select" style="appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M5%207.5L10%2012.5L15%207.5%22%20stroke%3D%22%236B7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 16px center;">
+                                <option value="">Select Target Objective...</option>
+                                {% for project in projects %}
+                                <option value="{{ project.id }}">{{ project.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6" style="margin-bottom: 24px;">
+                            <label class="premium-form-label">Standard Effort (Hrs)</label>
+                            <input type="number" step="0.1" max="{{ remaining_standard }}" min="0" 
+                                   class="elegant-input" id="id_standard_hours" name="standard_hours" 
+                                   placeholder="Available: {{ remaining_standard }}h" 
+                                   {% if remaining_standard <= 0 %}disabled{% endif %}>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 32px;">
+                        <label class="premium-form-label">Task Contribution Detail</label>
+                        <textarea name="task_description" class="elegant-input" rows="3" required 
+                                  placeholder="Describe the technical or strategic outcomes of this session..."></textarea>
+                    </div>
+
+                    <!-- Extended Hours Section -->
+                    <div id="extended-section" style="display: {% if remaining_standard <= 0 %}block{% else %}none{% endif %};">
+                        <div class="extended-hours-card">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                <i class="ri-rocket-2-fill" style="font-size: 24px;"></i>
+                                <h4 style="margin: 0; font-weight: 800;">EXTRA MILE LOGGING</h4>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="premium-form-label" style="color: rgba(255,255,255,0.8);">EXTRA TIME</label>
+                                    <input type="number" step="0.1" min="0" class="elegant-input" name="extra_time" 
+                                           style="border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: var(--white);" placeholder="0.0">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="premium-form-label" style="color: rgba(255,255,255,0.8);">OVERTIME (PREMIUM)</label>
+                                    <input type="number" step="0.1" min="0" class="elegant-input" name="overtime" 
+                                           style="border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: var(--white);" placeholder="0.0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 40px; border-top: 1px solid var(--gray-100); padding-top: 32px; display: flex; justify-content: flex-end;">
+                        <button type="submit" class="btn btn-primary" style="height: 56px; padding: 0 40px; font-weight: 800; font-size: 16px; border-radius: var(--radius-md); box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);">
+                            COMMIT LOG ENTRY <i class="ri-check-double-line" style="margin-left: 10px;"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Column -->
+    <div class="col-md-4">
+        <div style="margin-bottom: 32px;">
+            <h3 style="font-weight: 800; font-size: 18px; margin-bottom: 20px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 1px;">EONS Stats Engine</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="summary-item">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 11px; font-weight: 800; color: var(--gray-400);">DAY'S CONTRIBUTION</div>
+                            <div style="font-size: 28px; font-weight: 900; color: var(--text-main);">{{ logged_standard }}<span style="font-size: 16px; font-weight: 500; color: var(--gray-400);">/8.0h</span></div>
+                        </div>
+                        <div style="width: 48px; height: 48px; background: var(--success-light); color: var(--success); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                            <i class="ri-pie-chart-2-line"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-item" onclick="toggleActivityModal()" style="cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 11px; font-weight: 800; color: var(--gray-400);">TASKS LOGGED</div>
+                            <div style="font-size: 28px; font-weight: 900; color: var(--text-main);">{{ today_logs.count }}<span style="font-size: 16px; font-weight: 500; color: var(--gray-400);"> log{{ today_logs.count|pluralize }}</span></div>
+                        </div>
+                        <div style="width: 48px; height: 48px; background: var(--primary-light); color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                            <i class="ri-folder-info-line"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-color); padding: 24px; border-radius: var(--radius-lg); position: relative; overflow: hidden; border-left: 4px solid var(--primary);">
+            <i class="ri-shield-user-line" style="position: absolute; right: -20px; bottom: -20px; font-size: 120px; color: var(--primary); opacity: 0.05;"></i>
+            <h4 style="font-weight: 800; margin-bottom: 12px; color: var(--text-main);">Data Integrity</h4>
+            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0;">Your work logs are automatically verified against system attendance. Ensure your standard logs do not exceed the 8-hour compliant threshold for precise payroll calculation.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Premium Activity Modal -->
+<div class="premium-modal" id="activity-modal">
+    <div class="modal-content-glass">
+        <div style="padding: 24px; border-bottom: 1px solid var(--gray-200); background: var(--primary-gradient); color: var(--white); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-weight: 800; font-size: 18px;">Today's Technical Entries</h3>
+            <button onclick="toggleActivityModal()" style="background: none; border: none; color: var(--white); font-size: 24px; cursor: pointer;"><i class="ri-close-line"></i></button>
+        </div>
+        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; padding: 16px 24px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase;">Project</th>
+                        <th style="text-align: left; padding: 16px 24px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase;">Standard</th>
+                        <th style="text-align: left; padding: 16px 24px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase;">Extra/OT</th>
+                        <th style="text-align: left; padding: 16px 24px; font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in today_logs %}
+                    <tr style="border-top: 1px solid var(--gray-100);">
+                        <td style="padding: 16px 24px;">
+                            <div style="font-weight: 700; color: var(--text-main);">{{ log.project.name }}</div>
+                        </td>
+                        <td style="padding: 16px 24px;">
+                            <div style="font-weight: 700;">{{ log.standard_hours }}H</div>
+                        </td>
+                        <td style="padding: 16px 24px;">
+                            <div style="font-size: 13px;">
+                                {% if log.extra_time > 0 %}<span style="color: var(--accent); font-weight: 700;">ET: {{ log.extra_time }}</span>{% endif %}
+                                {% if log.overtime > 0 %}<span style="color: var(--error); font-weight: 700; margin-left: 8px;">OT: {{ log.overtime }}</span>{% endif %}
+                                {% if log.extra_time == 0 and log.overtime == 0 %}<span style="color: var(--gray-400);">--</span>{% endif %}
+                            </div>
+                        </td>
+                        <td style="padding: 16px 24px;">
+                            <div style="font-size: 13px; color: var(--gray-500);">{{ log.task_description }}</div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="padding: 40px; text-align: center; color: var(--gray-400); font-style: italic;">
+                            No entries recorded for today yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleActivityModal() {
+        const modal = document.getElementById('activity-modal');
+        modal.classList.toggle('active');
+    }
+
+    const standardInput = document.getElementById('id_standard_hours');
+    const progressBar = document.getElementById('progress-bar');
+    const extendedSection = document.getElementById('extended-section');
+    const remainingStandard = {{ remaining_standard }};
+    const loggedStandard = {{ logged_standard }};
+
+    if (standardInput) {
+        standardInput.addEventListener('input', function() {
+            let value = parseFloat(this.value) || 0;
+            let total = loggedStandard + value;
+            
+            let percent = (total / 8) * 100;
+            progressBar.style.width = Math.min(percent, 100) + '%';
+            
+            if (total >= 8 || value >= remainingStandard) {
+                progressBar.style.background = '#10B981'; // Success Green
+            } else {
+                progressBar.style.background = '#60A5FA'; // Primary Blue
+            }
+        });
+    }
+</script>
+{% endblock %}

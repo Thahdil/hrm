@@ -1,0 +1,324 @@
+{% extends "base_modern.html" %}
+{% load static %}
+
+{% block header_title %}Project Management{% endblock %}
+{% block page_subtitle %}Refine your company's focus with aesthetic project & team management.{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Premium Animations */
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .project-card {
+        animation: slideUp 0.5s ease-out forwards;
+        background: var(--bg-surface);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+    }
+
+    .project-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+        border-color: var(--primary-light);
+    }
+
+    /* High-Visibility Premium Input Styling */
+    .premium-input {
+        background: var(--input-bg);
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 14px 18px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 500;
+        font-size: 14px;
+        color: var(--text-main);
+        width: 100%;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .premium-input:hover {
+        border-color: var(--gray-400);
+        background: var(--bg-surface);
+    }
+
+    .premium-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        background: var(--bg-surface);
+        outline: none;
+    }
+
+    .input-icon-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .input-icon-wrapper i {
+        position: absolute;
+        left: 20px;
+        color: var(--gray-500);
+        font-size: 20px;
+        transition: all 0.3s ease;
+        pointer-events: none;
+    }
+
+    .input-icon-wrapper .premium-input {
+        padding-left: 56px;
+    }
+
+    .premium-input:focus + i,
+    .input-icon-wrapper:focus-within i {
+        color: var(--primary);
+        transform: scale(1.1);
+    }
+
+    .advanced-label {
+        font-weight: 800;
+        font-size: 11px;
+        color: var(--text-main);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .advanced-label::after {
+        content: '';
+        height: 1px;
+        flex: 1;
+        background: var(--border-color);
+        opacity: 0.5;
+    }
+
+    .employee-scroll-list {
+        max-height: 250px;
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+
+    .employee-scroll-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .employee-scroll-list::-webkit-scrollbar-thumb {
+        background: var(--gray-300);
+        border-radius: 10px;
+    }
+
+    .employee-checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px;
+        margin-bottom: 6px;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        background: var(--gray-50);
+    }
+
+    .employee-checkbox-item:hover {
+        background: var(--primary-light);
+        color: white;
+    }
+
+    .employee-checkbox-item input:checked + span {
+        font-weight: 700;
+    }
+
+    .badge-premium {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .project-header-gradient {
+        background: var(--primary-gradient);
+        padding: 24px;
+        color: var(--white);
+    }
+
+    .avatar-stack {
+        display: flex;
+        align-items: center;
+    }
+
+    .avatar-stack-item {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 2px solid var(--bg-surface);
+        background: var(--primary);
+        color: var(--white);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 700;
+        margin-left: -8px;
+        transition: all 0.2s;
+    }
+
+    .avatar-stack-item:first-child {
+        margin-left: 0;
+    }
+
+    .avatar-stack-item:hover {
+        transform: translateY(-4px);
+        z-index: 10;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row" style="gap: 32px; padding: 0 16px;">
+    {% if is_authorized %}
+    <!-- Aesthetic Create Column -->
+    <div class="col-md-4">
+        <div class="project-card" style="position: sticky; top: 100px;">
+            <div class="project-header-gradient">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px;">New Project</h3>
+                <p style="margin: 8px 0 0 0; opacity: 0.8; font-size: 13px;">Define your next big milestone.</p>
+            </div>
+            <div class="card-body" style="padding: 24px;">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label class="advanced-label">Strategic Project Name</label>
+                        <div class="input-icon-wrapper">
+                            <i class="ri-folder-add-line"></i>
+                            <input type="text" name="name" class="premium-input form-control" required placeholder="e.g. Phoenix Redesign">
+                        </div>
+                    </div>
+                    
+
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label class="advanced-label">Objective / Execution Detail</label>
+                        <div class="input-icon-wrapper" style="align-items: flex-start;">
+                            <i class="ri-text-snippet" style="top: 14px;"></i>
+                            <textarea name="description" class="premium-input form-control" rows="4" style="padding-top: 14px;" placeholder="Briefly describe the project goals and technical focus..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label class="advanced-label">Team Deployment Pool</label>
+                        
+                        <!-- Premium Search Bar -->
+                        <div class="input-icon-wrapper" style="margin-bottom: 16px;">
+                            <i class="ri-search-eye-line"></i>
+                            <input type="text" id="employee-search" class="premium-input form-control" placeholder="Identify team members..." 
+                                   style="height: 46px;">
+                        </div>
+
+                        <div class="employee-scroll-list" id="employee-list">
+                            {% for emp in all_employees %}
+                            <label class="employee-checkbox-item">
+                                <input type="checkbox" name="employees" value="{{ emp.id }}" style="accent-color: var(--primary); width: 18px; height: 18px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 32px; height: 32px; background: var(--gray-200); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--gray-700);">
+                                        {{ emp.full_name|default:emp.username|slice:":1"|upper }}
+                                    </div>
+                                    <span style="font-size: 14px; font-weight: 500;">{{ emp.full_name|default:emp.username }}</span>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: var(--radius-md); height: 50px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);">
+                        Create Project <i class="ri-arrow-right-line" style="margin-left: 8px;"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Aesthetic Projects List -->
+    <div class="{% if is_authorized %}col-md-8{% else %}col-md-12{% endif %}">
+        <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0; font-weight: 800; font-size: 24px; letter-spacing: -1px; color: var(--text-main);">Active Portfolios</h2>
+            <div class="badge-premium" style="background: var(--primary-light); color: var(--white);">{{ projects.count }} TOTAL</div>
+        </div>
+        
+        <div class="row" style="gap: 20px;">
+            {% for project in projects %}
+            <div class="col-md-6" style="margin-bottom: 24px;">
+                <div class="project-card" style="height: 100%; display: flex; flex-direction: column;">
+                    <div style="padding: 24px; flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                            <div>
+                                <h4 style="margin: 0; font-size: 18px; font-weight: 700; color: var(--text-main);">{{ project.name }}</h4>
+                            </div>
+                            <span class="badge-premium" style="background: {% if project.is_active %}var(--success-light){% else %}var(--error-light){% endif %}; color: {% if project.is_active %}var(--success){% else %}var(--error){% endif %};">
+                                {{ project.is_active|yesno:"Active,Inactive" }}
+                            </span>
+                        </div>
+                        
+                        <p style="font-size: 14px; color: var(--gray-600); margin-bottom: 20px; line-height: 1.5;">
+                            {{ project.description|default:"No description provided for this project strategic focus."|truncatechars:120 }}
+                        </p>
+
+                        <div style="border-top: 1px solid var(--gray-100); padding-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; margin-bottom: 8px;">Assigned Team</div>
+                                <div class="avatar-stack">
+                                    {% for emp in project.assigned_employees.all|slice:":5" %}
+                                    <div class="avatar-stack-item">{{ emp.full_name|default:emp.username|slice:":1"|upper }}</div>
+                                    {% endfor %}
+                                    {% if project.assigned_employees.count > 5 %}
+                                    <div class="avatar-stack-item" style="background: var(--gray-200); color: var(--gray-600);">+{{ project.assigned_employees.count|add:"-5" }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <a href="{% url 'project_detail' project.id %}" class="btn btn-sm btn-ghost" style="height: 36px; padding: 0 16px; border-radius: 50px; min-height: 0; display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 12px; background: var(--bg-surface); border: 1px solid var(--gray-200);">
+                                <i class="ri-bar-chart-2-line"></i> View Intel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-md-12">
+                <div class="project-card" style="padding: 60px; text-align: center; border: 2px dashed var(--gray-300); background: transparent;">
+                    <i class="ri-folder-open-line" style="font-size: 48px; color: var(--gray-300);"></i>
+                    <h4 style="margin-top: 16px; color: var(--gray-500);">Awaiting first project initiation...</h4>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById('employee-search')?.addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        const items = document.querySelectorAll('.employee-checkbox-item');
+        
+        items.forEach(item => {
+            const nameSpan = item.querySelector('span');
+            if (nameSpan) {
+                const name = nameSpan.textContent.toLowerCase();
+                item.style.display = name.includes(term) ? 'flex' : 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

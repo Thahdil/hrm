@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'payroll.apps.PayrollConfig',
     'leaves.apps.LeavesConfig',
     'meetings.apps.MeetingsConfig',
+    'projects.apps.ProjectsConfig',
 ]
 
 MIDDLEWARE = [

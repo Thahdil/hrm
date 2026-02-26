@@ -20,6 +20,7 @@ urlpatterns = [
     path('payroll/', include('payroll.urls')),
     path('leaves/', include('leaves.urls')),
     path('meetings/', include('meetings.urls')),
+    path('projects/', include('projects.urls')),
     path('system-admin/', system_admin, name='system_admin'),
     path('system-admin/logs/', system_logs, name='system_logs'),
     path('system-admin/company-profile/', company_profile, name='company_profile'),

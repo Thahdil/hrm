@@ -96,6 +96,20 @@
                         <i class="ri-calendar-event-line"></i>
                         <span>Meetings</span>
                     </a>
+                    
+                    {% if user.role == 'EMPLOYEE' %}
+                    <a href="{% url 'add_project_hours' %}" class="nav-item {% if 'projects/add-hours' in request.path %}active{% endif %}">
+                        <i class="ri-timer-2-line"></i>
+                        <span>Project Hours</span>
+                    </a>
+                    {% endif %}
+
+                    {% if user.role == 'ADMIN' or user.role == 'CEO' or user.is_project_manager %}
+                    <a href="{% url 'project_list' %}" class="nav-item {% if request.path == '/projects/' %}active{% endif %}">
+                        <i class="ri-folder-settings-line"></i>
+                        <span>Project Management</span>
+                    </a>
+                    {% endif %}
                 </div>
                 
                 <!-- Team Management (Project Managers Only) -->
