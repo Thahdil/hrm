@@ -114,6 +114,49 @@
         <!-- Middle: Leave Container -->
         <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0; height: 100%;">
 
+            <!-- Meetings I Scheduled -->
+            <div class="card" style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; border: 1px solid var(--border-color); background: var(--bg-surface);">
+                <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface);">
+                    <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: var(--text-main);">My Scheduled Meetings</h3>
+                    <a href="{% url 'meeting_list' %}" style="font-size: 10px; font-weight: 600; text-decoration: none; color: var(--primary);">View All</a>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; background: var(--bg-surface); flex: 1; overflow-y: auto;" class="custom-scroll">
+                    {% if upcoming_meetings %}
+                        {% for meeting in upcoming_meetings %}
+                        <div style="display: flex; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border-color); align-items: center;{% if meeting.is_organizer %} background: rgba(37, 99, 235, 0.04); border-left: 3px solid var(--primary); padding-left: 13px;{% endif %}">
+                            <!-- Time -->
+                            <div style="min-width: 55px; text-align: right;">
+                                <div style="font-weight: 700; color: {% if meeting.is_organizer %}var(--primary){% else %}var(--text-main){% endif %}; font-size: 11px;">{{ meeting.start_time|date:"h:i A" }}</div>
+                                <div style="font-size: 9px; color: var(--text-secondary); margin-top: 1px;">{{ meeting.start_time|date:"M d" }}</div>
+                            </div>
+
+                            <div style="width: 2px; height: 28px; background: {% if meeting.is_organizer %}var(--primary){% else %}var(--badge-blue-bg){% endif %}; border-radius: 2px;"></div>
+                            
+                            <!-- Info -->
+                            <div style="flex: 1; min-width: 0;">
+                                 <h4 style="margin: 0 0 2px; font-size: 12px; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ meeting.title }}</h4>
+                                 <div style="display: flex; align-items: center; justify-content: space-between; font-size: 10px; color: var(--text-secondary);">
+                                     <div style="display: flex; align-items: center; gap: 3px;">
+                                         <div style="width: 14px; height: 14px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700;">
+                                             {{ meeting.organizer.username|make_list|first|upper }}
+                                         </div>
+                                         <span style="font-size: 10px;">{{ meeting.organizer.first_name|default:meeting.organizer.username }}</span>
+                                     </div>
+                                     <span style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 1px 6px; border-radius: 4px; font-weight: 600;">{{ meeting.participants.count }} Participants</span>
+                                 </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 0; opacity: 0.6; height: 100%;">
+                            <i class="ri-calendar-check-line" style="font-size: 20px; color: var(--gray-400); margin-bottom: 6px;"></i>
+                            <span style="font-size: 11px; font-weight: 500; color: var(--text-secondary);">You have no upcoming meetings</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
             <div class="card" style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-surface);">
                 <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface);">
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -148,6 +191,7 @@
                     {% endfor %}
                 </div>
             </div>
+
         </div>
 
         <!-- Right: Actions & Timeline -->
@@ -183,49 +227,6 @@
                 </div>
             </div>
 
-            <!-- Upcoming Meetings -->
-            <div class="card" style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; border: 1px solid var(--border-color); background: var(--bg-surface);">
-                <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface);">
-                    <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: var(--text-main);">Upcoming Meetings</h3>
-                    {% if user.is_staff or user.is_admin or user.is_hr or user.is_ceo or user.is_project_manager %}
-                    <a href="{% url 'meeting_list' %}" style="font-size: 10px; font-weight: 600; text-decoration: none; color: var(--primary);">View All</a>
-                    {% endif %}
-                </div>
-                
-                <div style="display: flex; flex-direction: column; background: var(--bg-surface);">
-                    {% if upcoming_meetings %}
-                        {% for meeting in upcoming_meetings %}
-                        <div style="display: flex; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border-color); align-items: center;">
-                            <!-- Time -->
-                            <div style="min-width: 45px; text-align: right;">
-                                <div style="font-weight: 700; color: var(--text-main); font-size: 12px;">{{ meeting.start_time|date:"H:i" }}</div>
-                                <div style="font-size: 9px; color: var(--text-secondary); margin-top: 1px;">{{ meeting.start_time|date:"M d" }}</div>
-                            </div>
-
-                            <div style="width: 2px; height: 28px; background: var(--primary-light); border-radius: 2px;"></div>
-                            
-                            <!-- Info -->
-                            <div style="flex: 1; min-width: 0;">
-                                 <h4 style="margin: 0 0 2px; font-size: 12px; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ meeting.title }}</h4>
-                                 <div style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-secondary);">
-                                     <div style="display: flex; align-items: center; gap: 3px;">
-                                         <div style="width: 14px; height: 14px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700;">
-                                             {{ meeting.organizer.username|make_list|first|upper }}
-                                         </div>
-                                         <span style="font-size: 10px;">{{ meeting.organizer.first_name|default:meeting.organizer.username }}</span>
-                                     </div>
-                                 </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 0; opacity: 0.6;">
-                            <i class="ri-calendar-check-line" style="font-size: 20px; color: var(--gray-400); margin-bottom: 6px;"></i>
-                            <span style="font-size: 11px; font-weight: 500; color: var(--text-secondary);">No meetings scheduled</span>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
 
             <!-- Holidays Timeline -->
             <div class="card" style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; border: 1px solid var(--border-color); background: var(--bg-surface);">

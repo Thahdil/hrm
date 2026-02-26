@@ -320,11 +320,24 @@ def dashboard(request):
         # Upcoming Meetings
         from datetime import datetime, time
         from meetings.models import Meeting # Local import for admin section
+        from django.db.models import Case, When, Value, IntegerField
         today_start = timezone.make_aware(datetime.combine(timezone.localdate(), time.min))
         upcoming_meetings = Meeting.objects.filter(
             Q(participants=user) | Q(organizer=user),
             start_time__gte=today_start
-        ).distinct().order_by('start_time')[:5]
+        ).distinct().annotate(
+            is_organizer=Case(
+                When(organizer=user, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        ).order_by('-is_organizer', 'start_time')[:5]
+        
+        # Meetings Scheduled by User
+        my_scheduled_meetings = Meeting.objects.filter(
+            organizer=user,
+            start_time__gte=today_start
+        ).order_by('start_time')[:5]
                 
         context = {
             'total_employees': total_employees,
@@ -347,6 +360,7 @@ def dashboard(request):
             'recent_activities': recent_activities,
             'leave_balances': leave_balances,
             'upcoming_meetings': upcoming_meetings,
+            'my_scheduled_meetings': my_scheduled_meetings,
         }
         return render(request, 'dashboard_modern.html', context)
     
@@ -471,11 +485,18 @@ def dashboard(request):
         # Upcoming Meetings
         from datetime import datetime, time
         from meetings.models import Meeting  # Local import to fix UnboundLocalError
+        from django.db.models import Case, When, Value, IntegerField
         today_start = timezone.make_aware(datetime.combine(timezone.localdate(), time.min))
         upcoming_meetings = Meeting.objects.filter(
             Q(participants=employee) | Q(organizer=employee),
             start_time__gte=today_start
-        ).distinct().order_by('start_time')[:5]
+        ).distinct().annotate(
+            is_organizer=Case(
+                When(organizer=employee, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        ).order_by('-is_organizer', 'start_time')[:5]
 
 
         # Upcoming Holidays

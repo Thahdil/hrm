@@ -173,3 +173,47 @@ def meeting_delete(request, pk):
         return redirect('meeting_list')
         
     return render(request, 'meetings/meeting_confirm_delete.html', {'meeting': meeting})
+
+@login_required
+def meeting_edit(request, pk):
+    """AJAX endpoint for editing specific fields of a meeting."""
+    if request.method != 'POST':
+        from django.http import JsonResponse
+        return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+    meeting = get_object_or_404(Meeting, pk=pk)
+    
+    # Check permissions
+    if request.user != meeting.organizer:
+        from django.http import JsonResponse
+        return JsonResponse({'success': False, 'error': 'You do not have permission to edit this meeting. Only the organizer can do this.'})
+
+    field_update = request.POST.get('field_update')
+    from django.http import JsonResponse
+
+    try:
+        if field_update == 'title':
+            new_title = request.POST.get('title', '').strip()
+            if not new_title:
+                return JsonResponse({'success': False, 'error': 'Title cannot be empty.'})
+            meeting.title = new_title
+        elif field_update == 'description':
+            meeting.description = request.POST.get('description', '')
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid field update.'})
+
+        meeting.save()
+        
+        # Log the activity
+        from core.models import AuditLog
+        AuditLog.log(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            obj=meeting,
+            changes={field_update: getattr(meeting, field_update)},
+            request=request
+        )
+
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

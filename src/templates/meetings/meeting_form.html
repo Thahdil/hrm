@@ -53,11 +53,11 @@
                     </div>
 
                     <!-- Date & Time Section -->
-                    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 40px; margin-bottom: 40px; padding-bottom: 40px; border-bottom: 1px solid var(--border-color);">
+                    <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 40px; padding-bottom: 40px; border-bottom: 1px solid var(--border-color);">
                         
                         <!-- Date Field -->
-                        <div class="form-group-animated">
-                            <label class="form-label-premium"><i class="ri-calendar-line"></i> Date</label>
+                        <div class="form-group-animated" style="cursor: pointer;" onclick="const dInput = document.querySelector('input[name=\'meeting_date\']'); if(dInput) dInput.showPicker();">
+                            <label class="form-label-premium" style="pointer-events: none;"><i class="ri-calendar-line"></i> Date</label>
                             {{ form.meeting_date }}
                             {% if form.meeting_date.errors %}
                             <div class="error-msg"><i class="ri-alert-line"></i> {{ form.meeting_date.errors.0 }}</div>
@@ -65,21 +65,20 @@
                         </div>
 
                         <!-- Time Fields (Grouped) -->
-                        <div style="display: flex; gap: 24px;">
-                            <div class="form-group-animated" style="flex: 1;">
-                                <label class="form-label-premium"><i class="ri-time-line"></i> Start Time</label>
-                                {{ form.start_time_input }}
-                                {% if form.start_time_input.errors %}
-                                <div class="error-msg"><i class="ri-alert-line"></i> {{ form.start_time_input.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="form-group-animated" style="flex: 1;">
-                                <label class="form-label-premium"><i class="ri-time-line"></i> End Time</label>
-                                {{ form.end_time_input }}
-                                {% if form.end_time_input.errors %}
-                                <div class="error-msg"><i class="ri-alert-line"></i> {{ form.end_time_input.errors.0 }}</div>
-                                {% endif %}
-                            </div>
+                        <div class="form-group-animated">
+                            <label class="form-label-premium"><i class="ri-time-line"></i> Start Time</label>
+                            {{ form.start_time_input }}
+                            {% if form.start_time_input.errors %}
+                            <div class="error-msg"><i class="ri-alert-line"></i> {{ form.start_time_input.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group-animated">
+                            <label class="form-label-premium"><i class="ri-time-line"></i> End Time</label>
+                            {{ form.end_time_input }}
+                            {% if form.end_time_input.errors %}
+                            <div class="error-msg"><i class="ri-alert-line"></i> {{ form.end_time_input.errors.0 }}</div>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -279,6 +278,18 @@
             donetext: 'Done'
         });
 
+        // Close when clicking AM / PM buttons
+        $(document).on('click', '.am-button, .pm-button', function() {
+            setTimeout(function() {
+                $('.time-input').each(function() {
+                    var cp = $(this).data('clockpicker');
+                    if (cp && cp.isShown) {
+                        cp.done();
+                    }
+                });
+            }, 50);
+        });
+
         // Auto-set End Time Logic (Bound to Input Change)
         $('input[name="start_time_input"]').change(function(){
             const startTime = $(this).val(); // "01:30 PM"
@@ -358,9 +369,14 @@
     document.addEventListener('DOMContentLoaded', function() {
         // --- 1. Date Defaults ---
         const dateInput = document.querySelector('input[name="meeting_date"]');
-        if (dateInput && !dateInput.value) {
-            const today = new Date().toISOString().split('T')[0];
-            dateInput.value = today;
+        if (dateInput) {
+            if (!dateInput.value) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+            }
+            dateInput.addEventListener('click', function(e) {
+                try { this.showPicker(); } catch(err) {} 
+            });
         }
 
         // --- 2. Participant List Logic ---

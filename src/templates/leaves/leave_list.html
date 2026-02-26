@@ -99,14 +99,29 @@
                 <!-- Date Range -->
                 <div style="width: 240px;">
                     <div style="position: relative;">
-                        <i class="ri-calendar-line" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
-                        <input type="month" id="monthFilter" value="{% now 'Y-m' %}" style="width: 100%; padding: 10px 12px 10px 40px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: var(--input-bg); color: var(--text-main);">
+                        <i class="ri-calendar-line" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400); pointer-events: none;"></i>
+                        <input type="month" id="monthFilter" value="" style="width: 100%; padding: 10px 12px 10px 40px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: var(--input-bg); color: var(--text-main); cursor: pointer;" onclick="if(this.showPicker) this.showPicker();">
                     </div>
                 </div>
 
                 <button id="resetFilters" class="btn btn-outline" style="padding: 10px 16px; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-secondary); font-weight: 600; background: var(--input-bg);">
                     Reset
                 </button>
+                
+                {% if is_admin %}
+                <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+                    <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px; margin: 0;">
+                        <input type="checkbox" id="managedOnlyToggle" style="opacity: 0; width: 0; height: 0;">
+                        <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--gray-300); transition: .4s; border-radius: 24px;"></span>
+                        <style>
+                          #managedOnlyToggle:checked + .slider { background-color: var(--primary); }
+                          #managedOnlyToggle:checked + .slider:before { transform: translateX(20px); }
+                          .switch .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+                        </style>
+                    </label>
+                    <span id="managedOnlyText" style="font-size: 13px; font-weight: 600; color: var(--text-main); min-width: 140px;">Showing: All Requests</span>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -131,7 +146,7 @@
                 </thead>
                 <tbody style="background: var(--bg-surface);">
                     {% for leave in leaves %}
-                    <tr style="transition: all 0.25s ease;">
+                    <tr class="data-row" style="transition: all 0.25s ease;" data-assigned-manager="{{ leave.assigned_manager.id }}" data-current-user="{{ request.user.id }}">
                         {% if is_admin %}
                         <td style="padding: 16px 32px; border-bottom: 1px solid var(--border-color);">
                             <div style="display: flex; align-items: center; gap: 14px;">
@@ -176,6 +191,16 @@
                                         {{ leave.approved_by.full_name|default:leave.approved_by.username|slice:":1"|upper }}
                                     </div>
                                     <span style="font-size: 13px; color: var(--text-secondary); font-weight: 700;">{{ leave.approved_by.full_name|default:leave.approved_by.username|upper }}</span>
+                                </div>
+                            {% elif leave.assigned_manager %}
+                                <div style="display: flex; align-items: center; gap: 10px; opacity: 0.8;" title="Awaiting action from Assigned Manager">
+                                    <div style="width: 24px; height: 24px; border-radius: 6px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800;">
+                                        {{ leave.assigned_manager.full_name|default:leave.assigned_manager.username|slice:":1"|upper }}
+                                    </div>
+                                    <div style="display: flex; flex-direction: column;">
+                                        <span style="font-size: 13px; color: var(--text-secondary); font-weight: 700;">{{ leave.assigned_manager.full_name|default:leave.assigned_manager.username|upper }}</span>
+                                        <span style="font-size: 9px; color: #f59e0b; font-weight: 700; text-transform: uppercase;">Awaiting</span>
+                                    </div>
                                 </div>
                             {% else %}
                                 <span style="font-size: 12px; color: var(--gray-400); font-weight: 600; font-style: italic;">Awaiting action</span>
@@ -327,7 +352,7 @@
                         {% endif %}
                     </tr>
                     {% empty %}
-                    <tr>
+                    <tr class="empty-row" style="display: none;">
                         <td colspan="{% if is_admin %}9{% else %}7{% endif %}" style="padding: 100px 32px; text-align: center;">
                             <div style="width: 80px; height: 80px; background: var(--gray-50); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--gray-400);">
                                 <i class="ri-calendar-event-line" style="font-size: 40px;"></i>
@@ -353,7 +378,15 @@
         const statusFilter = document.getElementById('statusFilter');
         const monthFilter = document.getElementById('monthFilter');
         const resetBtn = document.getElementById('resetFilters');
-        const tableRows = document.querySelectorAll('tbody tr:not(:has(td[colspan]))'); // Exclude empty state
+        const tableRows = document.querySelectorAll('tbody tr.data-row'); 
+        const emptyRow = document.querySelector('tbody tr.empty-row');
+        const managedOnlyToggle = document.getElementById('managedOnlyToggle');
+        const toggleText = document.getElementById('managedOnlyText');
+
+        // Initialize empty state visibility on load if no data rows
+        if (tableRows.length === 0 && emptyRow) {
+            emptyRow.style.display = '';
+        }
 
         function filterTable() {
             const statusTerm = statusFilter.value.toUpperCase();
@@ -380,8 +413,16 @@
                 // Check matches
                 const matchesStatus = statusTerm === '' || leaveStatus.includes(statusTerm);
                 const matchesDate = dateTerm === '' || rowMonth === dateTerm;
+                
+                // Manager check
+                const isManagedOnly = typeof managedOnlyToggle !== 'undefined' && managedOnlyToggle && managedOnlyToggle.checked;
+                const rowManagerId = row.dataset.assignedManager;
+                const currentUserId = row.dataset.currentUser;
+                
+                // If toggle is ON, only show where manager ID matches. If OFF, show all.
+                const matchesManaged = !isManagedOnly || (rowManagerId === currentUserId);
 
-                if (matchesStatus && matchesDate) {
+                if (matchesStatus && matchesDate && matchesManaged) {
                     row.style.display = '';
                     visibleCount++;
                 } else {
@@ -390,7 +431,6 @@
             });
 
             // Handle Empty State
-            const emptyRow = document.querySelector('tbody tr:has(td[colspan])');
             if (visibleCount === 0) {
                 if (emptyRow) emptyRow.style.display = '';
             } else {
@@ -401,11 +441,41 @@
         // Event Listeners
         statusFilter.addEventListener('change', filterTable);
         monthFilter.addEventListener('change', filterTable);
+        
+        if (managedOnlyToggle) {
+            // Load state from localStorage
+            const savedState = localStorage.getItem('leaveFilterAssignedOnly');
+            if (savedState !== null) {
+                managedOnlyToggle.checked = savedState === 'true';
+            }
+            
+            managedOnlyToggle.addEventListener('change', function() {
+                // Save state to localStorage
+                localStorage.setItem('leaveFilterAssignedOnly', this.checked);
+                
+                // Update UI visually
+                if (this.checked) {
+                    toggleText.textContent = 'Showing: Assigned to Me';
+                    toggleText.style.color = 'var(--primary)';
+                } else {
+                    toggleText.textContent = 'Showing: All Requests';
+                    toggleText.style.color = 'var(--text-main)';
+                }
+                filterTable();
+            });
+            // trigger on load
+            managedOnlyToggle.dispatchEvent(new Event('change'));
+        }
 
         resetBtn.addEventListener('click', function() {
             statusFilter.value = '';
             monthFilter.value = ''; 
-            filterTable();
+            if (managedOnlyToggle && managedOnlyToggle.checked) {
+                managedOnlyToggle.checked = false;
+                managedOnlyToggle.dispatchEvent(new Event('change'));
+            } else {
+                filterTable();
+            }
         });
 
         // --- Live Updates Logic ---

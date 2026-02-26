@@ -15,9 +15,25 @@
         }
     </style>
 
-    <div style="margin-bottom: 24px;">
-        <h2 style="font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">{{ meeting.title }}</h2>
-        <div style="font-size: 14px; color: var(--text-secondary); display: flex; gap: 16px; align-items: center;">
+    <div style="margin-bottom: 24px; position: relative;">
+        <!-- Editable Title -->
+        <h2 id="meetingTitleText" style="font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">
+            {{ meeting.title }}
+            {% if request.user == meeting.organizer %}
+            <button onclick="editMeetingField('title')" style="background: none; border: none; font-size: 14px; color: var(--primary); cursor: pointer; padding: 4px; margin-left: 8px; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">
+                <i class="ri-edit-line"></i>
+            </button>
+            {% endif %}
+        </h2>
+        
+        <!-- Title Edit Form (Hidden by default) -->
+        <div id="meetingTitleEditForm" style="display: none; margin-bottom: 12px; align-items: center; gap: 8px;">
+            <input type="text" id="meetingTitleInput" value="{{ meeting.title }}" style="font-size: 20px; font-weight: 700; width: 100%; border: 1px solid var(--primary); border-radius: 8px; padding: 6px 12px; background: var(--bg-surface); color: var(--text-main); outline: none; box-shadow: 0 0 0 3px var(--primary-light);">
+            <button onclick="saveMeetingField('title', '{{ meeting.pk }}', '{{ csrf_token }}')" class="btn btn-primary" style="padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 700; height: 42px;">Save</button>
+            <button onclick="cancelEditMeetingField('title')" class="btn" style="padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; background: var(--gray-50); color: var(--text-secondary); height: 42px; border: 1px solid var(--border-color);">Cancel</button>
+        </div>
+
+        <div id="meetingTimeDisplay" style="font-size: 14px; color: var(--text-secondary); display: flex; gap: 16px; align-items: center;">
             <span style="display: flex; align-items: center; gap: 6px;"><i class="ri-calendar-line"></i> {{ meeting.start_time|date:"D, d M Y" }}</span>
             <span style="display: flex; align-items: center; gap: 6px;"><i class="ri-time-line"></i> {{ meeting.start_time|time:"H:i" }} - {{ meeting.end_time|time:"H:i" }}</span>
         </div>
@@ -35,10 +51,30 @@
     </div>
     {% endif %}
 
-    <div style="margin-bottom: 32px;">
-        <h4 style="font-size: 13px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">Agenda</h4>
-        <div style="font-size: 14px; color: var(--text-main); line-height: 1.6;">
+    <div style="margin-bottom: 32px; position: relative;">
+        <!-- Editable Agenda Header -->
+        <h4 style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+            Agenda
+            {% if request.user == meeting.organizer %}
+            <button onclick="editMeetingField('description')" style="background: none; border: none; font-size: 14px; color: var(--primary); cursor: pointer; padding: 2px; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">
+                <i class="ri-edit-line"></i>
+            </button>
+            {% endif %}
+        </h4>
+        
+        <!-- Agenda Display -->
+        <div id="meetingDescriptionText" style="font-size: 14px; color: var(--text-main); line-height: 1.6;">
             {{ meeting.description|linebreaks|default:"No description provided." }}
+        </div>
+        
+        <!-- Agenda Edit Form (Hidden by default) -->
+        <div id="meetingDescriptionEditForm" style="display: none; align-items: flex-start; gap: 12px; margin-top: 8px;">
+            <textarea id="meetingDescriptionInput" rows="5" style="width: 100%; border: 1px solid var(--primary); border-radius: 12px; padding: 12px; background: var(--bg-surface); color: var(--text-main); outline: none; box-shadow: 0 0 0 3px var(--primary-light); font-size: 14px; line-height: 1.5; resize: vertical;">{{ meeting.description|default:"" }}</textarea>
+            
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button onclick="saveMeetingField('description', '{{ meeting.pk }}', '{{ csrf_token }}')" class="btn btn-primary" style="padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; width: 100%;">Save</button>
+                <button onclick="cancelEditMeetingField('description')" class="btn" style="padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; background: var(--gray-50); color: var(--text-secondary); border: 1px solid var(--border-color); width: 100%;">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -225,6 +261,5 @@
             updateUI();
         });
     }
-})();
-</script>
+})();</script>
 {% endif %}

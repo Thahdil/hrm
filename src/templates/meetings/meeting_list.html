@@ -227,8 +227,13 @@
             const closeBtn = document.getElementById('detailModalClose');
             if (closeBtn) closeBtn.style.display = 'block';
             
-            // Re-initialize any scripts in the loaded HTML if necessary
-            // (The include already has a self-executing script block)
+            // Re-initialize any scripts in the loaded HTML (innerHTML does not execute scripts by default)
+            Array.from(content.querySelectorAll("script")).forEach(oldScript => {
+                const newScript = document.createElement("script");
+                Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                oldScript.parentNode.replaceChild(newScript, oldScript);
+            });
         })
         .catch(err => {
             content.innerHTML = `
@@ -260,6 +265,99 @@
             closeMeetingDetail();
         }
     });
+
+    // ------------- INLINE EDITING LOGIC -------------
+    window.editMeetingField = function(fieldName) {
+        if (fieldName === 'title') {
+            document.getElementById('meetingTitleText').style.display = 'none';
+            document.getElementById('meetingTimeDisplay').style.display = 'none';
+            document.getElementById('meetingTitleEditForm').style.display = 'flex';
+            document.getElementById('meetingTitleInput').focus();
+        } else if (fieldName === 'description') {
+            document.getElementById('meetingDescriptionText').style.display = 'none';
+            document.getElementById('meetingDescriptionEditForm').style.display = 'flex';
+            document.getElementById('meetingDescriptionInput').focus();
+        }
+    };
+
+    window.cancelEditMeetingField = function(fieldName) {
+        if (fieldName === 'title') {
+            document.getElementById('meetingTitleText').style.display = 'block';
+            document.getElementById('meetingTimeDisplay').style.display = 'flex';
+            document.getElementById('meetingTitleEditForm').style.display = 'none';
+        } else if (fieldName === 'description') {
+            document.getElementById('meetingDescriptionText').style.display = 'block';
+            document.getElementById('meetingDescriptionEditForm').style.display = 'none';
+        }
+    };
+
+    window.saveMeetingField = function(fieldName, meetingId, csrfToken) {
+        let inputValue = '';
+        let formData = new FormData();
+        formData.append('csrfmiddlewaretoken', csrfToken);
+        
+        if (fieldName === 'title') {
+            inputValue = document.getElementById('meetingTitleInput').value.trim();
+            if(!inputValue) { alert('Title cannot be empty'); return; }
+            formData.append('title', inputValue);
+            formData.append('field_update', 'title');
+        } else if (fieldName === 'description') {
+            inputValue = document.getElementById('meetingDescriptionInput').value;
+            formData.append('description', inputValue);
+            formData.append('field_update', 'description');
+        }
+
+        const btn = event.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="ri-loader-4-line" style="animation: spin 1s linear infinite;"></i>';
+        btn.disabled = true;
+
+        fetch(`/meetings/${meetingId}/edit/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                if (fieldName === 'title') {
+                    // Update main text
+                    document.getElementById('meetingTitleText').innerHTML = `
+                        ${inputValue}
+                        <button onclick="editMeetingField('title')" style="background: none; border: none; font-size: 14px; color: var(--primary); cursor: pointer; padding: 4px; margin-left: 8px; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">
+                            <i class="ri-edit-line"></i>
+                        </button>
+                    `;
+                    cancelEditMeetingField('title');
+
+                    // Update the title in the background list dynamically if it exists
+                    const meetingRowTitle = document.querySelector(`a[href="/meetings/${meetingId}/"] div`);
+                    if (meetingRowTitle) {
+                        meetingRowTitle.textContent = inputValue;
+                    }
+                } else if (fieldName === 'description') {
+                    cancelEditMeetingField('description');
+                    if (typeof openMeetingDetail === 'function') {
+                        openMeetingDetail(meetingId);
+                    } else {
+                        window.location.reload();
+                    }
+                }
+            } else {
+                alert(data.error || 'Failed to update meeting.');
+            }
+        })
+        .catch(err => {
+            console.error('Error updating:', err);
+            alert('A network error occurred.');
+        })
+        .finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    };
 </script>
 
 <style>
