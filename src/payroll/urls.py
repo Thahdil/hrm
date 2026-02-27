@@ -10,6 +10,7 @@ urlpatterns = [
     path('attendance/import/', views.attendance_import, name='attendance_import'),
     path('attendance/clear/', views.clear_attendance_logs, name='clear_attendance_logs'),
     path('attendance/manual-entry/', views.attendance_manual_entry, name='attendance_manual_entry'),
+    path('attendance/summary/', views.attendance_summary, name='attendance_summary'),
     path('run-payroll/', views.run_payroll_action, name='run_payroll'),
     path('gratuity-report/', views.gratuity_report, name='gratuity_report'),
     path('api/employee-autocomplete/', views.employee_autocomplete, name='employee_autocomplete'),

@@ -1,0 +1,203 @@
+{% extends 'base_modern.html' %}
+
+{% block title %}Attendance Summary - EONS HRM{% endblock %}
+{% block header_title %}Attendance Summary Report{% endblock %}
+
+{% block content %}
+<div class="flex-1" style="width: 100%; animation: fadeIn 0.4s ease-out; display: flex; flex-direction: column; padding-bottom: 80px;">
+    <div class="card full-height-card" style="border: none; background: var(--bg-surface); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-md);">
+        
+        <!-- Header -->
+        <div style="padding: 24px 32px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--gray-100); flex-shrink: 0;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+                    <div style="width: 40px; height: 40px; background: rgba(37, 99, 235, 0.1); color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                        <i class="ri-pie-chart-line"></i>
+                    </div>
+                    <div>
+                        <h1 style="font-size: 22px; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.02em;">Monthly Metrics Summary</h1>
+                        <p style="font-size: 13px; color: var(--gray-500); margin: 0; font-weight: 500;">Performance & reliability metrics for <strong>{{ report_date|date:"F Y" }}</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <a href="{% url 'attendance_list' %}" class="btn btn-outline" style="border-radius: 10px; font-weight: 600; font-size: 13.5px;">
+                    <i class="ri-list-check"></i> Detailed Logs
+                </a>
+                <button type="button" class="btn btn-primary" onclick="window.print()" style="border-radius: 10px; font-weight: 700; font-size: 13.5px; padding: 10px 20px;">
+                    <i class="ri-download-2-line"></i> Export PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div style="padding: 16px 32px; background: var(--gray-50); border-bottom: 1px solid var(--border-color);">
+            <form method="get" id="summaryFilterForm" style="display: flex; gap: 16px; align-items: flex-end;">
+                <div style="min-width: 200px;">
+                    <label style="font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Select Month / Year</label>
+                    <input type="month" name="month" value="{{ selected_month }}" 
+                           style="width: 100%; height: 42px; border-radius: 12px; border: 1px solid var(--border-color); padding: 0 16px; font-size: 14px; font-weight: 600; background: var(--input-bg); color: var(--text-main);"
+                           onchange="this.form.submit()">
+                </div>
+
+                <div style="flex-grow: 1; max-width: 350px;">
+                    <label style="font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Quick Search</label>
+                    <div style="position: relative;">
+                        <i class="ri-search-line" style="position: absolute; left: 14px; top: 12px; color: var(--gray-400); font-size: 18px;"></i>
+                        <input type="text" name="q" value="{{ search_query }}" placeholder="Search Employee..." 
+                               style="width: 100%; height: 42px; border-radius: 12px; border: 1px solid var(--border-color); padding-left: 44px; font-size: 14px; font-weight: 500; background: var(--input-bg); color: var(--text-main);"
+                               oninput="debounceSearch()">
+                    </div>
+                </div>
+                
+                <div style="flex-grow: 1;"></div>
+                
+                <div style="display: flex; align-items: center; gap: 20px; background: white; padding: 8px 16px; border-radius: 12px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 12px; height: 12px; border-radius: 3px; background: #ef4444;"></span>
+                        <span style="font-size: 12px; font-weight: 600; color: var(--gray-600);">Below Threshold (< {{ threshold }}h)</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Table View -->
+        <div class="card-body-scroll">
+            <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                <thead style="background: var(--gray-50); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 var(--border-color);">
+                    <tr>
+                        <th style="padding: 18px 32px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Employee</th>
+                        <th style="padding: 18px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Working Days</th>
+                        <th style="padding: 18px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Days Present</th>
+                        <th style="padding: 18px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Leave Days</th>
+                        <th style="padding: 18px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Present Hours</th>
+                        <th style="padding: 18px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Avg Daily Hours</th>
+                        <th style="padding: 18px 32px; text-align: right; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Details</th>
+                    </tr>
+                </thead>
+                <tbody style="background: var(--bg-surface);">
+                    {% for row in report_data %}
+                    <tr class="summary-row" onclick="navigateToDetail('{{ row.employee.id }}', '{{ selected_month }}')" style="cursor: pointer; transition: all 0.2s;">
+                        <td style="padding: 16px 32px; border-bottom: 1px solid var(--border-color);">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <div style="width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: white;
+                                    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); flex-shrink: 0;">
+                                    {{ row.employee.full_name|default:row.employee.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: var(--text-main); font-size: 14.5px;">{{ row.employee.full_name|default:row.employee.username|upper }}</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); font-family: monospace; font-weight: 700; opacity: 0.8;">
+                                        {% if row.employee.employee_id %}{{ row.employee.employee_id }}{% else %}EMP-{{ row.employee.pk|stringformat:"03d" }}{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
+                            <span style="font-weight: 700; color: var(--text-main); font-size: 14px;">{{ row.total_working_days }}</span>
+                        </td>
+                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
+                            <div style="font-weight: 800; color: #059669; font-size: 14px;">{{ row.days_present }}</div>
+                            <div style="font-size: 10px; color: var(--gray-400); font-weight: 700; text-transform: uppercase;">Unique In-Punches</div>
+                        </td>
+                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
+                            <div style="font-weight: 700; color: {% if row.leave_count > 0 %}var(--warning){% else %}var(--gray-400){% endif %}; font-size: 14.5px;">
+                                {{ row.leave_count|floatformat:1 }}
+                            </div>
+                            {% if row.leave_count > 0 %}
+                            <div style="font-size: 10px; color: var(--gray-400); font-weight: 700; text-transform: uppercase;">Approved Leaves</div>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
+                            <div style="font-weight: 800; color: var(--primary); font-size: 15px; letter-spacing: -0.01em;">
+                                {{ row.total_present_hours }}
+                            </div>
+                            <div style="font-size: 10px; color: var(--gray-400); font-weight: 700; text-transform: uppercase;">Total Hours</div>
+                        </td>
+                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
+                            {% if row.average_hours < threshold %}
+                            <div style="display: inline-flex; flex-direction: column; align-items: center; background: rgba(239, 68, 68, 0.08); padding: 6px 16px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.15);">
+                                <div style="font-weight: 800; color: #ef4444; font-size: 15px;">{{ row.average_hours }}h</div>
+                                <div style="font-size: 9px; color: #ef4444; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;">Performance Alert</div>
+                            </div>
+                            {% else %}
+                            <div style="display: inline-flex; flex-direction: column; align-items: center; background: rgba(5, 150, 105, 0.08); padding: 6px 16px; border-radius: 12px; border: 1px solid rgba(5, 150, 105, 0.15);">
+                                <div style="font-weight: 800; color: #059669; font-size: 15px;">{{ row.average_hours }}h</div>
+                                <div style="font-size: 9px; color: #059669; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;">Satisfactory</div>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 16px 32px; text-align: right; border-bottom: 1px solid var(--border-color);">
+                            <div class="drill-down-icon" style="width: 34px; height: 34px; border-radius: 10px; background: var(--gray-50); display: inline-flex; align-items: center; justify-content: center; color: var(--gray-400); transition: all 0.2s;">
+                                <i class="ri-arrow-right-line" style="font-size: 18px;"></i>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="padding: 120px 32px; text-align: center;">
+                            <div style="width: 90px; height: 90px; background: var(--gray-100); border-radius: 30px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; color: var(--gray-400);">
+                                <i class="ri-folder-info-line" style="font-size: 44px;"></i>
+                            </div>
+                            <h3 style="font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">No Metrics Data Found</h3>
+                            <p style="color: var(--text-secondary); font-size: 14px; max-width: 400px; margin: 0 auto;">There are no active employees or attendance logs for the selected period.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .summary-row:hover {
+        background: var(--gray-50);
+        transform: scale(1.002);
+        box-shadow: inset 4px 0 0 var(--primary);
+    }
+    
+    .summary-row:hover .drill-down-icon {
+        background: var(--primary);
+        color: white;
+        transform: translateX(4px);
+    }
+
+    @media print {
+        .app-container aside, .top-bar-actions, .btn, #summaryFilterForm {
+            display: none !important;
+        }
+        .main-content {
+            margin-left: 0 !important;
+            padding: 0 !important;
+        }
+        .card {
+            box-shadow: none !important;
+            border: none !important;
+        }
+    }
+</style>
+
+<script>
+    let searchTimer;
+    function debounceSearch() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            document.getElementById('summaryFilterForm').submit();
+        }, 500);
+    }
+
+    function navigateToDetail(employeeId, monthStr) {
+        // Calculate start and end date for the selected month to filter detailed logs
+        const [year, month] = monthStr.split('-').map(Number);
+        const lastDay = new Date(year, month, 0).getDate();
+        const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
+        const endDate = `${year}-${month.toString().padStart(2, '0')}-${lastDay.toString().padStart(2, '0')}`;
+        
+        // Build URL for attendance_list with filters
+        // Using employee ID in search query as the attendance_list view already supports it
+        const url = `{% url 'attendance_list' %}?search=${employeeId}&start_date=${startDate}&end_date=${endDate}`;
+        window.location.href = url;
+    }
+</script>
+{% endblock %}

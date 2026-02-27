@@ -585,3 +585,50 @@ def manage_overtime(request):
         'total_staff': logs.values('employee').distinct().count()
     })
 
+@login_required
+def attendance_summary(request):
+    """
+    Monthly Attendance Summary Report Page
+    """
+    if not (request.user.is_superuser or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO', 'PROJECT_MANAGER'])):
+        messages.error(request, "Permission denied.")
+        return redirect('dashboard')
+
+    from datetime import date
+    from django.utils import timezone
+    
+    # 1. Date Selection Logic
+    month_str = request.GET.get('month', timezone.now().strftime('%Y-%m'))
+    try:
+        # Expected format YYYY-MM
+        year, month = map(int, month_str.split('-'))
+        report_date = date(year, month, 1)
+    except (ValueError, AttributeError):
+        report_date = timezone.now().date().replace(day=1)
+        month_str = report_date.strftime('%Y-%m')
+
+    # 2. Fetch Aggregated Report Data
+    report_data = PayrollService.get_monthly_attendance_report(report_date)
+    
+    # 3. Handle Searching
+    search_query = request.GET.get('q', '').strip()
+    if search_query:
+        query_lower = search_query.lower()
+        filtered_data = []
+        for row in report_data:
+            emp = row['employee']
+            full_name = (emp.full_name or "").lower()
+            username = (emp.username or "").lower()
+            emp_id = (emp.employee_id or "").lower()
+            
+            if query_lower in full_name or query_lower in username or query_lower in emp_id:
+                filtered_data.append(row)
+        report_data = filtered_data
+
+    return render(request, 'payroll/attendance_summary.html', {
+        'report_data': report_data,
+        'selected_month': month_str,
+        'report_date': report_date,
+        'search_query': search_query,
+        'threshold': 7.5 # Threshold for average hours highlight
+    })

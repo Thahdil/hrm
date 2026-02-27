@@ -787,3 +787,90 @@ class PayrollService:
             payroll_entry.net_salary = round(net_pay, 2)
             payroll_entry.save()
 
+    @staticmethod
+    def get_monthly_attendance_report(month_date: date):
+        """
+        Calculates monthly metrics per employee:
+        - Total Working Days (excluding holidays/weekends)
+        - Total Days Present (days with at least one 'IN' punch)
+        - Leave Count (days marked as 'Leave')
+        - Total Present Hours
+        - Average Hours
+        """
+        from core.models import CompanySettings
+        from leaves.models import LeaveRequest
+        from django.db.models import Sum, Count, Q
+        import calendar
+
+        settings = CompanySettings.load()
+        year = month_date.year
+        month = month_date.month
+        
+        _, num_days = calendar.monthrange(year, month)
+        start_date = date(year, month, 1)
+        end_date = date(year, month, num_days)
+
+        # 1. Total Working Days in the month
+        # Logic: count days that are NOT holidays in CompanySettings
+        working_days_count = 0
+        for d in range(1, num_days + 1):
+            check_date = date(year, month, d)
+            if not settings.is_holiday(check_date):
+                working_days_count += 1
+
+        # 2. Get Employees
+        employees = User.objects.filter(is_active=True).exclude(role__in=['CEO', 'ADMIN'])
+        
+        report_data = []
+        for emp in employees:
+            # A. Attendance Metrics
+            logs = AttendanceLog.objects.filter(
+                employee=emp, 
+                date__year=year, 
+                date__month=month
+            )
+            
+            stats = logs.aggregate(
+                total_mins=Sum('total_work_minutes'),
+                # Days with at least one punch (check_in is not null)
+                days_present=Count('id', filter=Q(check_in__isnull=False))
+            )
+            
+            total_mins = stats['total_mins'] or 0
+            days_present = stats['days_present'] or 0
+            total_hours = Decimal(total_mins) / Decimal('60.00')
+            avg_hours = total_hours / Decimal(days_present) if days_present > 0 else Decimal('0.00')
+            
+            # B. Leave Count
+            # Count days within this month that are part of an APPROVED LeaveRequest
+            leave_reqs = LeaveRequest.objects.filter(
+                employee=emp,
+                status='APPROVED',
+                start_date__lte=end_date,
+                end_date__gte=start_date
+            )
+            
+            leave_days = Decimal('0.00')
+            for req in leave_reqs:
+                # Calculate overlap days strictly within the selected month
+                overlap_start = max(req.start_date, start_date)
+                overlap_end = min(req.end_date, end_date)
+                
+                if req.half_day:
+                    # If the half-day itself is within this month
+                    if req.start_date >= start_date and req.start_date <= end_date:
+                        leave_days += Decimal('0.5')
+                else:
+                    days = (overlap_end - overlap_start).days + 1
+                    leave_days += Decimal(str(days))
+            
+            report_data.append({
+                'employee': emp,
+                'total_working_days': working_days_count,
+                'days_present': days_present,
+                'leave_count': leave_days,
+                'total_present_hours': round(total_hours, 2),
+                'average_hours': round(avg_hours, 2),
+            })
+            
+        return report_data
