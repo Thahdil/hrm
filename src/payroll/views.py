@@ -42,31 +42,69 @@ def attendance_list(request):
     # Filter logs to show only Active employees
     logs = AttendanceLog.objects.select_related('employee').filter(employee__is_active=True).exclude(employee__status='ARCHIVED').exclude(employee__role='CEO')
     
-    # Handle Manual Entry Form Submission
+    # Handle Manual Entry / Manual Punch Form Submissions
     manual_entry_form = None
-    if request.method == 'POST' and 'manual_entry_submit' in request.POST:
-        if request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO']):
-            manual_entry_form = AttendanceManualEntryForm(request.POST)
-            if manual_entry_form.is_valid():
-                employee = manual_entry_form.cleaned_data['employee']
-                date = manual_entry_form.cleaned_data['date']
-                # Delete existing log BEFORE save so unique_together doesn't block
-                deleted_count, _ = AttendanceLog.objects.filter(employee=employee, date=date).delete()
-                log = manual_entry_form.save(commit=False)
-                log.entry_type = AttendanceLog.EntryType.MANUAL
-                log.save()
-                if deleted_count > 0:
-                    messages.success(request, f"Manual punch saved — previous log for {employee} on {date} was overridden.")
+    manual_punch_req_form = None
+    
+    if request.method == 'POST':
+        if 'manual_entry_submit' in request.POST:
+            if request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO']):
+                manual_entry_form = AttendanceManualEntryForm(request.POST)
+                if manual_entry_form.is_valid():
+                    employee = manual_entry_form.cleaned_data['employee']
+                    date = manual_entry_form.cleaned_data['date']
+                    # Delete existing log BEFORE save so unique_together doesn't block
+                    deleted_count, _ = AttendanceLog.objects.filter(employee=employee, date=date).delete()
+                    log = manual_entry_form.save(commit=False)
+                    log.entry_type = AttendanceLog.EntryType.MANUAL
+                    log.save()
+                    if deleted_count > 0:
+                        messages.success(request, f"Manual punch saved — previous log for {employee} on {date} was overridden.")
+                    else:
+                        messages.success(request, "Attendance manually logged successfully.")
+                    return redirect('attendance_list')
                 else:
-                    messages.success(request, "Attendance manually logged successfully.")
+                    messages.error(request, "Please correct the errors in the manual entry form.")
+            else:
+                messages.error(request, "Permission denied.")
+        
+        elif 'manual_punch_submit' in request.POST:
+            manual_punch_req_form = ManualPunchRequestForm(request.POST, user=request.user)
+            if manual_punch_req_form.is_valid():
+                punch_req = manual_punch_req_form.save(commit=False)
+                punch_req.employee = request.user
+                punch_req.status = 'PENDING'
+                
+                # Check for physical overlap
+                overlap = False
+                existing_log = AttendanceLog.objects.filter(employee=request.user, date=punch_req.date).first()
+                if existing_log and existing_log.segments:
+                    for s in existing_log.segments:
+                        if punch_req.punch_in_time < s['out'] and punch_req.punch_out_time > s['in']:
+                            overlap = True; break
+                
+                if overlap:
+                    messages.error(request, f"Overlapping hours! The requested time conflicts with an existing physical punch for {punch_req.date}.")
+                    return redirect('attendance_list')
+                    
+                # Check for overlap with other manual requests
+                if ManualPunchRequest.objects.filter(
+                    employee=request.user, date=punch_req.date, status__in=['PENDING', 'APPROVED'],
+                    punch_in_time__lt=punch_req.punch_out_time, punch_out_time__gt=punch_req.punch_in_time
+                ).exists():
+                    messages.error(request, "This time range overlaps with another pending or approved manual request.")
+                    return redirect('attendance_list')
+                
+                punch_req.save()
+                messages.success(request, "Manual punch request submitted for approval.")
                 return redirect('attendance_list')
             else:
-                messages.error(request, "Please correct the errors in the manual entry form.")
-        else:
-            messages.error(request, "Permission denied.")
+                messages.error(request, "Please correct the errors in your punch request.")
             
     if manual_entry_form is None:
         manual_entry_form = AttendanceManualEntryForm()
+    if manual_punch_req_form is None:
+        manual_punch_req_form = ManualPunchRequestForm(user=request.user)
     
     # SECURITY: Regular employees should ONLY see their own logs
     if not (request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO'])):
@@ -127,13 +165,20 @@ def attendance_list(request):
         except ValueError:
             pass
 
+    # Pending requests count for manager badge
+    pending_count = 0
+    if request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO']):
+        pending_count = ManualPunchRequest.objects.filter(status='PENDING').count()
+
     return render(request, 'payroll/attendance_list.html', {
         'logs': logs,
         'search_query': search_query,
         'status_filter': status_filter,
         'start_date': start_date_str,
         'end_date': end_date_str,
-        'manual_entry_form': manual_entry_form
+        'manual_entry_form': manual_entry_form,
+        'manual_punch_req_form': manual_punch_req_form,
+        'pending_count': pending_count
     })
 
 @login_required
@@ -632,3 +677,80 @@ def attendance_summary(request):
         'search_query': search_query,
         'threshold': 7.5 # Threshold for average hours highlight
     })
+
+from .forms import ManualPunchRequestForm
+from .models import ManualPunchRequest
+
+@login_required
+def manual_punch_request(request):
+    """
+    Handles employee submission of a manual punch request.
+    """
+    if request.method == 'POST':
+        form = ManualPunchRequestForm(request.POST, user=request.user)
+        if form.is_valid():
+            punch_req = form.save(commit=False)
+            punch_req.employee = request.user
+            punch_req.status = 'PENDING'
+            
+            # Check for physical overlap
+            overlap = False
+            existing_log = AttendanceLog.objects.filter(employee=request.user, date=punch_req.date).first()
+            if existing_log and existing_log.segments:
+                for s in existing_log.segments:
+                    if punch_req.punch_in_time < s['out'] and punch_req.punch_out_time > s['in']:
+                        overlap = True; break
+            
+            if overlap:
+                messages.error(request, f"Overlapping hours! The requested time conflicts with an existing physical punch for {punch_req.date}.")
+                return redirect('attendance_list')
+                
+            # Check for overlap with other manual requests
+            if ManualPunchRequest.objects.filter(
+                employee=request.user, date=punch_req.date, status__in=['PENDING', 'APPROVED'],
+                punch_in_time__lt=punch_req.punch_out_time, punch_out_time__gt=punch_req.punch_in_time
+            ).exists():
+                messages.error(request, "This time range overlaps with another pending or approved manual request.")
+                return redirect('attendance_list')
+            
+            punch_req.save()
+            messages.success(request, "Manual punch request submitted for approval.")
+            return redirect('attendance_list')
+    return redirect('attendance_list')
+
+@login_required
+def manual_punch_approvals(request):
+    """
+    Manager view to list PENDING manual punch requests.
+    """
+    if not (request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO'])):
+        messages.error(request, "Permission denied.")
+        return redirect('dashboard')
+        
+    pending_requests = ManualPunchRequest.objects.filter(status='PENDING').select_related('employee').order_by('-created_at')
+    
+    return render(request, 'payroll/manual_punch_approvals.html', {
+        'pending_requests': pending_requests
+    })
+
+@login_required
+def manual_punch_action(request, pk):
+    """
+    Manager action to APPROVE or REJECT a request.
+    """
+    if not (request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO'])):
+        messages.error(request, "Permission denied.")
+        return redirect('dashboard')
+        
+    action = request.POST.get('action') # 'APPROVE' or 'REJECT'
+    if request.method == 'POST' and action in ['APPROVE', 'REJECT']:
+        try:
+            punch_req = PayrollService.process_manual_punch_approval(pk, request.user, action)
+            if action == 'APPROVE':
+                messages.success(request, f"Request for {punch_req.employee.full_name} APPROVED and attendance updated.")
+            else:
+                messages.info(request, f"Request for {punch_req.employee.full_name} REJECTED.")
+        except Exception as e:
+            messages.error(request, f"Error processing request: {str(e)}")
+            
+    return redirect('manual_punch_approvals')

@@ -201,7 +201,10 @@
     }
 
     .popover-content {
-        padding: 9px 14px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     /* Arrows */
@@ -249,6 +252,7 @@
     .clockpicker-plate {
         background-color: var(--bg-surface) !important;
         border: 1px solid var(--border-color);
+        margin: 0 auto;
     }
     .clockpicker-tick {
         color: var(--text-secondary);
@@ -265,6 +269,39 @@
     .clockpicker-canvas-bg {
         fill: var(--primary-light) !important;
     }
+
+    /* AM/PM Button Styling */
+    .clockpicker-am-pm-block {
+        margin-top: 15px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+    .clockpicker-button {
+        background-color: var(--bg-surface) !important;
+        color: var(--text-main) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        padding: 8px 20px !important;
+        font-weight: 700 !important;
+        font-size: 13px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        cursor: pointer;
+    }
+    .clockpicker-button:hover {
+        background-color: var(--primary) !important;
+        color: white !important;
+        border-color: var(--primary) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2) !important;
+    }
+
+    /* Hide the Done button so user MUST click AM or PM to confirm */
+    .clockpicker-button[data-action="done"] {
+        display: none !important;
+    }
 </style>
 
 <script>
@@ -273,9 +310,9 @@
         $('.time-input').clockpicker({
             placement: 'top',       
             align: 'left',
-            autoclose: true,
+            autoclose: false,
             twelvehour: true,
-            donetext: 'Done'
+            donetext: ''
         });
 
         // Close when clicking AM / PM buttons

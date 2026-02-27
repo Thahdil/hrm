@@ -87,3 +87,80 @@ class AttendanceManualEntryForm(forms.Form):
                 cleaned_data['days'] = (end - start).days + 1
 
         return cleaned_data
+
+from .models import ManualPunchRequest
+
+class ManualPunchRequestForm(forms.ModelForm):
+    REASON_CHOICES = [
+        ('', 'Select a reason...'),
+        ('WFH', 'Work from Home'),
+        ('Field Work', 'Field Work'),
+        ('Other', 'Other')
+    ]
+    reason_type = forms.ChoiceField(
+        choices=REASON_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'req_reason_type', 'onchange': 'toggleOtherReason()'})
+    )
+
+    punch_in_time = forms.TimeField(
+        widget=forms.TextInput(attrs={'class': 'form-input time-input', 'placeholder': '--:-- --', 'readonly': 'readonly'}),
+        input_formats=['%I:%M %p', '%I:%M%p', '%H:%M']
+    )
+    punch_out_time = forms.TimeField(
+        widget=forms.TextInput(attrs={'class': 'form-input time-input', 'placeholder': '--:-- --', 'readonly': 'readonly'}),
+        input_formats=['%I:%M %p', '%I:%M%p', '%H:%M']
+    )
+
+    class Meta:
+        model = ManualPunchRequest
+        fields = ['date', 'punch_in_time', 'punch_out_time', 'reason']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-input', 'id': 'req_date', 'onclick': 'this.showPicker()'}),
+            'reason': forms.Textarea(attrs={
+                'class': 'form-textarea', 
+                'rows': 3, 
+                'id': 'req_reason_other', 
+                'placeholder': 'Please provide details...',
+                'style': 'display: none;'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        self.fields['reason'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        reason_type = cleaned_data.get('reason_type')
+        reason_text = cleaned_data.get('reason')
+        date = cleaned_data.get('date')
+
+        if date:
+            from django.utils import timezone
+            import datetime
+            today = timezone.localdate()
+            yesterday = today - datetime.timedelta(days=1)
+            
+            # Allow managers to bypass date restrictions
+            can_bypass_date = False
+            if self.user:
+                if self.user.is_staff or getattr(self.user, 'role', '') in ['CEO', 'PROJECT_MANAGER', 'ADMIN', 'HR_MANAGER']:
+                    can_bypass_date = True
+            
+            if not can_bypass_date:
+                if date > today:
+                    self.add_error('date', "Cannot submit manual punch for future dates.")
+                elif date < yesterday:
+                    self.add_error('date', "Manual punch requests must be submitted by the next day (only today and yesterday are allowed).")
+
+        if reason_type == 'Other':
+            if not reason_text:
+                self.add_error('reason', "Please provide details for the 'Other' reason.")
+        elif reason_type:
+            # Map choice description or key to the reason field
+            choices_dict = dict(self.REASON_CHOICES)
+            cleaned_data['reason'] = choices_dict.get(reason_type)
+
+        return cleaned_data

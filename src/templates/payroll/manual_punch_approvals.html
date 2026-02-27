@@ -1,0 +1,102 @@
+{% extends 'base_modern.html' %}
+
+{% block title %}Pending Approvals - EONS HRM{% endblock %}
+{% block header_title %}Attendance Approvals{% endblock %}
+
+{% block content %}
+<div class="flex-1" style="width: 100%; animation: fadeIn 0.4s ease-out; display: flex; flex-direction: column; padding-bottom: 80px;">
+    <div class="card full-height-card" style="border: none; background: var(--bg-surface); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-md);">
+        
+        <!-- Tab Navigation -->
+        <div style="padding: 0 32px; border-bottom: 1px solid var(--gray-100); display: flex; gap: 32px; background: white;">
+            <a href="{% url 'attendance_list' %}" style="padding: 20px 0; font-size: 14px; font-weight: 600; color: var(--gray-500); text-decoration: none; border-bottom: 2px solid transparent; transition: all 0.2s;">
+                Daily Logs
+            </a>
+            <a href="{% url 'manual_punch_approvals' %}" style="padding: 20px 0; font-size: 14px; font-weight: 700; color: var(--primary); text-decoration: none; border-bottom: 2px solid var(--primary); display: flex; align-items: center;">
+                Pending Approvals 
+                {% if pending_requests.count > 0 %}
+                <span style="background: var(--error, #ef4444); color: white; min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 20px; font-size: 11px; margin-left: 8px; font-weight: 700; padding: 0 6px; line-height: 1; box-sizing: border-box;">{{ pending_requests.count }}</span>
+                {% endif %}
+            </a>
+        </div>
+
+        <div class="card-body-scroll">
+            <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                <thead style="background: var(--gray-50); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 var(--border-color);">
+                    <tr>
+                        <th style="padding: 18px 32px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Employee</th>
+                        <th style="padding: 18px 20px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Work Date</th>
+                        <th style="padding: 18px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Punch Times</th>
+                        <th style="padding: 18px 20px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Reason</th>
+                        <th style="padding: 18px 32px; text-align: right; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Actions</th>
+                    </tr>
+                </thead>
+                <tbody style="background: var(--bg-surface);">
+                    {% for req in pending_requests %}
+                    <tr style="transition: all 0.2s;">
+                        <td style="padding: 16px 32px; border-bottom: 1px solid var(--border-color);">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <div style="width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: white;
+                                    background: var(--primary); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);">
+                                    {{ req.employee.full_name|default:req.employee.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: var(--text-main); font-size: 14.5px;">{{ req.employee.full_name|default:req.employee.username|upper }}</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); font-family: monospace; font-weight: 700;">
+                                        {% if req.employee.employee_id %}{{ req.employee.employee_id }}{% else %}EMP-{{ req.employee.pk|stringformat:"03d" }}{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding: 16px 20px; border-bottom: 1px solid var(--border-color);">
+                            <div style="font-weight: 700; color: var(--text-main); font-size: 14px;">{{ req.date|date:"D, d M Y" }}</div>
+                            <div style="font-size: 11px; color: var(--gray-500); font-weight: 600;">Requested on {{ req.created_at|date:"M d, H:i" }}</div>
+                        </td>
+                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
+                            <div style="display: inline-flex; align-items: center; gap: 8px; background: var(--gray-50); padding: 6px 16px; border-radius: 10px; border: 1px solid var(--border-color);">
+                                <span style="font-weight: 800; color: var(--primary); font-size: 13px;">{{ req.punch_in_time|time:"H:i" }}</span>
+                                <i class="ri-arrow-right-line" style="color: var(--gray-400); font-size: 12px;"></i>
+                                <span style="font-weight: 800; color: var(--primary); font-size: 13px;">{{ req.punch_out_time|time:"H:i" }}</span>
+                            </div>
+                        </td>
+                        <td style="padding: 16px 20px; border-bottom: 1px solid var(--border-color);">
+                            <div style="font-size: 13px; color: var(--text-secondary); background: #f8fafc; padding: 10px; border-radius: 8px; border-left: 3px solid var(--primary);">
+                                {{ req.reason }}
+                            </div>
+                        </td>
+                        <td style="padding: 16px 32px; text-align: right; border-bottom: 1px solid var(--border-color);">
+                            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                <form method="post" action="{% url 'manual_punch_action' req.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="REJECT">
+                                    <button type="submit" class="btn" style="background: var(--status-rejected-bg); color: var(--status-rejected-text); border: 1px solid var(--status-rejected-bg); font-weight: 700; border-radius: 8px; font-size: 12px; padding: 8px 16px;">
+                                        Reject
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'manual_punch_action' req.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="APPROVE">
+                                    <button type="submit" class="btn" style="background: var(--status-approved-bg); color: var(--status-approved-text); border: 1px solid var(--status-approved-bg); font-weight: 700; border-radius: 8px; font-size: 12px; padding: 8px 16px;">
+                                        Approve
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="padding: 120px 32px; text-align: center;">
+                            <div style="width: 80px; height: 80px; background: var(--gray-50); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--gray-400);">
+                                <i class="ri-checkbox-circle-line" style="font-size: 40px;"></i>
+                            </div>
+                            <h3 style="font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">No Pending Approvals</h3>
+                            <p style="color: var(--text-secondary); font-size: 14px;">Great job! You've cleared all attendance requests.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

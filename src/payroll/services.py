@@ -874,3 +874,46 @@ class PayrollService:
             })
             
         return report_data
+
+    @staticmethod
+    def process_manual_punch_approval(request_id, approver, action):
+        """
+        Approves or Rejects a ManualPunchRequest.
+        On approval: Upserts AttendanceLog and updates worked hours.
+        """
+        from .models import ManualPunchRequest, AttendanceLog, RawPunch
+        
+        punch_req = ManualPunchRequest.objects.get(id=request_id)
+        
+        if action == 'APPROVE':
+            punch_req.status = ManualPunchRequest.Status.APPROVED
+            punch_req.approved_by = approver
+            punch_req.save()
+            
+            # Upsert AttendanceLog
+            log, _ = AttendanceLog.objects.update_or_create(
+                employee=punch_req.employee,
+                date=punch_req.date,
+                defaults={
+                    'check_in': punch_req.punch_in_time,
+                    'check_out': punch_req.punch_out_time,
+                    'status': AttendanceLog.Status.PRESENT,
+                    'entry_type': AttendanceLog.EntryType.MANUAL,
+                    'remarks': punch_req.reason
+                }
+            )
+            
+            # DO NOT delete existing raw punches to preserve physical biometric logs
+            # Create the manual adjustments alongside them
+            from .models import RawPunch
+            RawPunch.objects.create(attendance_log=log, time=punch_req.punch_in_time, punch_type='IN')
+            RawPunch.objects.create(attendance_log=log, time=punch_req.punch_out_time, punch_type='OUT')
+            
+            # Trigger duration calculation
+            log.recalculate_duration()
+            
+        elif action == 'REJECT':
+            punch_req.status = ManualPunchRequest.Status.REJECTED
+            punch_req.save()
+            
+        return punch_req

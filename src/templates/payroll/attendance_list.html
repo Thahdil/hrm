@@ -1,4 +1,170 @@
 {% extends 'base_modern.html' %}
+{% load static %}
+
+{% block extra_css %}
+<!-- Add jQuery for ClockPicker -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- ClockPicker CSS & JS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/clockpicker/0.0.7/bootstrap-clockpicker.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clockpicker/0.0.7/bootstrap-clockpicker.min.js"></script>
+
+<style>
+    /* -------------------------------------------------------------------
+       Bootstrap Popover Shim for ClockPicker 
+       (Required because we are not using full Bootstrap)
+       ------------------------------------------------------------------- */
+    .popover {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1060;
+        display: none;
+        max-width: 276px;
+        padding: 1px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 1.42857143;
+        text-align: left;
+        text-align: start;
+        text-decoration: none;
+        text-shadow: none;
+        text-transform: none;
+        letter-spacing: normal;
+        word-break: normal;
+        word-spacing: normal;
+        word-wrap: normal;
+        white-space: normal;
+        background-color: var(--bg-surface);
+        background-clip: padding-box;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+        box-shadow: 0 5px 10px rgba(0,0,0,.2);
+        color: var(--text-main);
+    }
+    .popover.top { margin-top: -10px; }
+    .popover.right { margin-left: 10px; }
+    .popover.bottom { margin-top: 10px; }
+    .popover.left { margin-left: -10px; }
+
+    .popover-title {
+        padding: 8px 14px;
+        margin: 0;
+        font-size: 14px;
+        background-color: var(--gray-50);
+        border-bottom: 1px solid var(--border-color);
+        border-radius: 5px 5px 0 0;
+        color: var(--text-main);
+        font-weight: 600;
+    }
+
+    .popover-content {
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* Arrows */
+    .popover > .arrow, .popover > .arrow:after {
+        position: absolute;
+        display: block;
+        width: 0;
+        height: 0;
+        border-color: transparent;
+        border-style: solid;
+    }
+    .popover > .arrow { border-width: 11px; }
+    .popover > .arrow:after { border-width: 10px; content: ""; }
+
+    /* Top Arrow */
+    .popover.top > .arrow {
+        bottom: -11px;
+        left: 50%;
+        margin-left: -11px;
+        border-top-color: var(--border-color);
+        border-bottom-width: 0;
+    }
+    .popover.top > .arrow:after {
+        bottom: 1px;
+        margin-left: -10px;
+        content: " ";
+        border-top-color: var(--bg-surface);
+        border-bottom-width: 0;
+    }
+
+    /* ClockPicker Specific Overrides */
+    .clockpicker-popover {
+        z-index: 99999 !important;
+        border-color: var(--border-color);
+        box-shadow: var(--shadow-xl);
+        background-color: var(--bg-surface);
+        color: var(--text-main);
+    }
+    .clockpicker-popover .popover-title {
+        background-color: var(--bg-surface);
+        color: var(--text-main);
+        font-weight: 600;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .clockpicker-plate {
+        background-color: var(--bg-surface) !important;
+        border: 1px solid var(--border-color);
+        margin: 0 auto;
+    }
+    .clockpicker-tick {
+        color: var(--text-secondary);
+    }
+    .clockpicker-canvas line {
+        stroke: var(--primary) !important;
+    }
+    .clockpicker-canvas circle {
+        fill: var(--primary) !important;
+    }
+    .clockpicker-canvas-bearing, .clockpicker-canvas-fg {
+        fill: var(--primary) !important;
+    }
+    .clockpicker-canvas-bg {
+        fill: var(--primary-light) !important;
+    }
+
+    /* AM/PM Button Styling */
+    .clockpicker-am-pm-block {
+        margin-top: 15px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+    .clockpicker-button {
+        background-color: var(--bg-surface) !important;
+        color: var(--text-main) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        padding: 8px 20px !important;
+        font-weight: 700 !important;
+        font-size: 13px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        cursor: pointer;
+    }
+    .clockpicker-button:hover {
+        background-color: var(--primary) !important;
+        color: white !important;
+        border-color: var(--primary) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2) !important;
+    }
+
+    /* Hide the Done button so user MUST click AM or PM to confirm */
+    .clockpicker-button[data-action="done"] {
+        display: none !important;
+    }
+</style>
+{% endblock %}
+
 
 {% block title %}Attendance - EONS HRM{% endblock %}
 {% block header_title %}Attendance Logs{% endblock %}
@@ -46,8 +212,29 @@
                     </button>
                 </form>
             </div>
+            {% else %}
+            <div style="display: flex; gap: 12px;">
+                <button type="button" onclick="openRequestModal()" class="btn btn-primary" style="border-radius: 10px; font-weight: 700; font-size: 13.5px; padding: 10px 20px;">
+                    <i class="ri-add-line"></i> Request Manual Punch
+                </button>
+            </div>
             {% endif %}
         </div>
+
+        <!-- Tab Navigation -->
+        {% if user.is_staff or user.role == 'ADMIN' or user.role == 'HR_MANAGER' or user.role == 'CEO' %}
+        <div style="padding: 0 32px; border-bottom: 1px solid var(--gray-100); display: flex; gap: 32px; background: white;">
+            <a href="{% url 'attendance_list' %}" style="padding: 20px 0; font-size: 14px; font-weight: 700; color: var(--primary); text-decoration: none; border-bottom: 2px solid var(--primary);">
+                Daily Logs
+            </a>
+            <a href="{% url 'manual_punch_approvals' %}" style="padding: 20px 0; font-size: 14px; font-weight: 600; color: var(--gray-500); text-decoration: none; border-bottom: 2px solid transparent; transition: all 0.2s; display: flex; align-items: center;">
+                Pending Approvals
+                {% if pending_count > 0 %}
+                <span style="background: var(--error, #ef4444); color: white; min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 20px; font-size: 11px; margin-left: 8px; font-weight: 700; padding: 0 6px; line-height: 1; box-sizing: border-box;">{{ pending_count }}</span>
+                {% endif %}
+            </a>
+        </div>
+        {% endif %}
 
         <!-- Integrated Filter Bar -->
         <div style="padding: 16px 32px; background: var(--gray-50); border-bottom: 1px solid var(--border-color);">
@@ -135,7 +322,7 @@
                                 <div style="font-size: 10.5px; color: var(--text-secondary); font-weight: 600;">{{ log.date|date:"l" }}</div>
                                 {% if log.remarks %}
                                 <div style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--primary); background: rgba(37,99,235,0.1); padding: 2px 6px; border-radius: 4px; letter-spacing: 0.05em;">
-                                    {% if log.remarks == 'Work from Home' %}WFH{% else %}{{ log.remarks|truncatechars:18 }}{% endif %}
+                                    {% if log.remarks == 'Work from Home' or log.remarks == 'Work From Home' or 'WFH' in log.remarks or 'Work from Home' in log.remarks %}WFH{% else %}{{ log.remarks|cut:"Manual Punch Approved: "|truncatechars:18 }}{% endif %}
                                 </div>
                                 {% else %}
                                 <div style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); background: var(--gray-50); padding: 2px 6px; border-radius: 4px; letter-spacing: 0.05em; border: 1px solid var(--border-color);">
@@ -976,5 +1163,148 @@ document.addEventListener('DOMContentLoaded', function() {
         if (match) searchInput.value = match.name;
     }
 });
+
+function openRequestModal() {
+    document.getElementById('manualRequestModal').style.display = 'flex';
+}
+
+function closeRequestModal() {
+    document.getElementById('manualRequestModal').style.display = 'none';
+}
+
+function toggleOtherReason() {
+    const typeSelect = document.getElementById('req_reason_type');
+    const otherArea = document.getElementById('req_reason_other');
+    if (typeSelect.value === 'Other') {
+        otherArea.style.display = 'block';
+        otherArea.required = true;
+    } else {
+        otherArea.style.display = 'none';
+        otherArea.required = false;
+    }
+}
+</script>
+
+<!-- Request Manual Punch Modal (For Employees) -->
+<div id="manualRequestModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: white; width: 100%; max-width: 500px; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.1); animation: modalSlideUp 0.3s ease-out;">
+        <div style="padding: 24px 32px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 18px; font-weight: 800;">Request Manual Punch</h3>
+            <button onclick="closeRequestModal()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <i class="ri-close-line" style="font-size: 20px;"></i>
+            </button>
+        </div>
+        
+        <form action="" method="post" style="padding: 32px;">
+            {% csrf_token %}
+            <input type="hidden" name="manual_punch_submit" value="true">
+
+            {% if manual_punch_req_form.errors %}
+            <div style="padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; margin-bottom: 24px;">
+                <ul style="margin: 0; padding-left: 20px; color: #dc2626; font-size: 13px; font-weight: 600;">
+                    {% for field, errors in manual_punch_req_form.errors.items %}
+                        {% for error in errors %}
+                            <li>{{ field|title }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; margin-bottom: 8px;">Date of Work</label>
+                {{ manual_punch_req_form.date }}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; margin-bottom: 8px;">Punch In</label>
+                    {{ manual_punch_req_form.punch_in_time }}
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; margin-bottom: 8px;">Punch Out</label>
+                    {{ manual_punch_req_form.punch_out_time }}
+                </div>
+            </div>
+
+            <div style="margin-bottom: 32px;">
+                <label style="display: block; font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; margin-bottom: 8px;">Reason Type</label>
+                {{ manual_punch_req_form.reason_type }}
+                
+                <div id="other_reason_container" style="margin-top: 16px;">
+                    {{ manual_punch_req_form.reason }}
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button type="button" onclick="closeRequestModal()" class="btn btn-outline" style="flex: 1; border-radius: 12px; font-weight: 700; border-color: var(--border-color); color: var(--text-secondary);">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="flex: 2; border-radius: 12px; font-weight: 800; background: var(--primary); box-shadow: 0 4px 12px rgba(37,99,235,0.3);">Submit Request</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+@keyframes modalSlideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.form-input, .form-textarea, .form-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    background: var(--input-bg);
+    color: var(--text-main);
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(37,99,235,0.1);
+    outline: none;
+}
+</style>
+
+<script>
+    $(document).ready(function(){
+        // Initialize ClockPicker
+        $('.time-input').clockpicker({
+            placement: 'top',
+            align: 'left',
+            autoclose: false,
+            twelvehour: true,
+            donetext: ''
+        });
+
+        // Close and confirm selection when clicking AM / PM buttons
+        $(document).on('click', '.am-button, .pm-button', function() {
+            const $btn = $(this);
+            setTimeout(function() {
+                $('.time-input').each(function() {
+                    const cp = $(this).data('clockpicker');
+                    if (cp && cp.isShown) {
+                        cp.done();
+                    }
+                });
+            }, 100);
+        });
+
+        // Auto-open modal if there are errors
+        {% if manual_punch_req_form.errors %}
+            openRequestModal();
+        {% endif %}
+    });
+
+    function openRequestModal() {
+        document.getElementById('manualRequestModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeRequestModal() {
+        document.getElementById('manualRequestModal').style.display = 'none';
+        document.body.style.overflow = '';
+    }
 </script>
 {% endblock %}

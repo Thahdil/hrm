@@ -273,7 +273,9 @@ class AttendanceLog(models.Model):
                 RawPunch.objects.create(attendance_log=self, time=self.check_out, punch_type='OUT')
                 # Recalculate duration to ensure total_work_minutes is updated
                 self.recalculate_duration(skip_save=True) # skip_save to avoid recursion since we are in save()
-                super().save(*args, **kwargs) # Save again with new minutes
+                new_kwargs = kwargs.copy()
+                new_kwargs.pop('force_insert', None)
+                super().save(*args, **new_kwargs) # Save again with new minutes
 
     def recalculate_duration(self, skip_save=False, punches_list=None):
         """
@@ -376,6 +378,29 @@ class AttendanceLog(models.Model):
 
     class Meta:
         unique_together = ('employee', 'date')
+
+class ManualPunchRequest(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        APPROVED = 'APPROVED', 'Approved'
+        REJECTED = 'REJECTED', 'Rejected'
+
+    employee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='manual_punch_requests')
+    date = models.DateField()
+    punch_in_time = models.TimeField()
+    punch_out_time = models.TimeField()
+    reason = models.TextField()
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_punches')
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ('employee', 'date')
+
+    def __str__(self):
+        return f"{self.employee.username} - {self.date} ({self.status})"
 
 class RawPunch(models.Model):
     attendance_log = models.ForeignKey(AttendanceLog, on_delete=models.CASCADE, related_name='raw_punches')
