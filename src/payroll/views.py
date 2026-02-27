@@ -723,11 +723,15 @@ def manual_punch_approvals(request):
     """
     Manager view to list PENDING manual punch requests.
     """
-    if not (request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO'])):
+    if not (request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO', 'PROJECT_MANAGER'])):
         messages.error(request, "Permission denied.")
         return redirect('dashboard')
         
     pending_requests = ManualPunchRequest.objects.filter(status='PENDING').select_related('employee').order_by('-created_at')
+    
+    # Filter to only show requests for subordinates if user is essentially a project manager
+    if not (request.user.is_staff or getattr(request.user, 'role', '') in ['ADMIN', 'CEO', 'HR_MANAGER']):
+        pending_requests = pending_requests.filter(employee__managers=request.user)
     
     return render(request, 'payroll/manual_punch_approvals.html', {
         'pending_requests': pending_requests
@@ -738,13 +742,27 @@ def manual_punch_action(request, pk):
     """
     Manager action to APPROVE or REJECT a request.
     """
-    if not (request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO'])):
+    if not (request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO', 'PROJECT_MANAGER'])):
         messages.error(request, "Permission denied.")
         return redirect('dashboard')
         
     action = request.POST.get('action') # 'APPROVE' or 'REJECT'
     if request.method == 'POST' and action in ['APPROVE', 'REJECT']:
         try:
+            from django.shortcuts import get_object_or_404
+            punch_req = get_object_or_404(ManualPunchRequest, pk=pk)
+            
+            # Authorization check: Is the user an admin/CEO, or are they an assigned manager?
+            is_authorized = False
+            if request.user.is_staff or getattr(request.user, 'role', '') in ['ADMIN', 'CEO', 'HR_MANAGER']:
+                is_authorized = True
+            elif punch_req.employee.managers.filter(id=request.user.id).exists():
+                is_authorized = True
+                
+            if not is_authorized:
+                messages.error(request, "Permission denied. Only assigned managers can process this request.")
+                return redirect('manual_punch_approvals')
+
             punch_req = PayrollService.process_manual_punch_approval(pk, request.user, action)
             if action == 'APPROVE':
                 messages.success(request, f"Request for {punch_req.employee.full_name} APPROVED and attendance updated.")
