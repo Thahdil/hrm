@@ -170,9 +170,16 @@
                     <button class="mobile-menu-toggle" onclick="toggleSidebar()">
                         <i class="ri-menu-line"></i>
                     </button>
-                    <div class="page-title-section">
-                        <h1>{% block header_title %}Dashboard{% endblock %}</h1>
-                        <p class="page-subtitle">{% block page_subtitle %}Welcome back, {{ user.full_name|default:user.username|title }}!{% endblock %}</p>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        {% if request.GET.from == 'admin' %}
+                            <a href="{% url 'system_admin' %}" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: var(--bg-surface); color: var(--text-main); text-decoration: none; transition: all 0.2s; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='var(--bg-surface)'">
+                                <i class="ri-arrow-left-line" style="font-size: 20px;"></i>
+                            </a>
+                        {% endif %}
+                        <div class="page-title-section">
+                            <h1>{% block header_title %}Dashboard{% endblock %}</h1>
+                            <p class="page-subtitle" style="margin-bottom: 0;">{% block page_subtitle %}{% endblock %}</p>
+                        </div>
                     </div>
                 </div>
                 

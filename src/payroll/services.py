@@ -619,7 +619,7 @@ class PayrollService:
         from decimal import Decimal
         
         settings = CompanySettings.load()
-        employees = User.objects.filter(is_active=True).exclude(role__in=['CEO', 'ADMIN'])
+        employees = User.objects.filter(is_active=True).exclude(role__in=['CEO', 'ADMIN']).exclude(status='ARCHIVED')
         month_start = batch.month
         
         # Standard basis
@@ -819,7 +819,7 @@ class PayrollService:
                 working_days_count += 1
 
         # 2. Get Employees
-        employees = User.objects.filter(is_active=True).exclude(role__in=['CEO', 'ADMIN'])
+        employees = User.objects.filter(is_active=True).exclude(role__in=['CEO', 'ADMIN']).exclude(status='ARCHIVED')
         
         report_data = []
         for emp in employees:
@@ -890,18 +890,35 @@ class PayrollService:
             punch_req.approved_by = approver
             punch_req.save()
             
-            # Upsert AttendanceLog
-            log, _ = AttendanceLog.objects.update_or_create(
-                employee=punch_req.employee,
-                date=punch_req.date,
-                defaults={
-                    'check_in': punch_req.punch_in_time,
-                    'check_out': punch_req.punch_out_time,
-                    'status': AttendanceLog.Status.PRESENT,
-                    'entry_type': AttendanceLog.EntryType.MANUAL,
-                    'remarks': punch_req.reason
-                }
-            )
+            # Upsert AttendanceLog carefully to preserve existing data (like physical punches)
+            log = AttendanceLog.objects.filter(employee=punch_req.employee, date=punch_req.date).first()
+            if log:
+                # MergeRemarks
+                new_remark = punch_req.reason
+                if log.remarks and new_remark not in log.remarks:
+                    log.remarks = f"{log.remarks} & {new_remark}"
+                elif not log.remarks:
+                    log.remarks = f"In Office & {new_remark}"
+                
+                # Extend Bounds
+                if not log.check_in or punch_req.punch_in_time < log.check_in:
+                    log.check_in = punch_req.punch_in_time
+                if not log.check_out or punch_req.punch_out_time > log.check_out:
+                    log.check_out = punch_req.punch_out_time
+                
+                log.status = AttendanceLog.Status.PRESENT
+                log.entry_type = AttendanceLog.EntryType.MANUAL
+                log.save()
+            else:
+                log = AttendanceLog.objects.create(
+                    employee=punch_req.employee,
+                    date=punch_req.date,
+                    check_in=punch_req.punch_in_time,
+                    check_out=punch_req.punch_out_time,
+                    status=AttendanceLog.Status.PRESENT,
+                    entry_type=AttendanceLog.EntryType.MANUAL,
+                    remarks=punch_req.reason
+                )
             
             # DO NOT delete existing raw punches to preserve physical biometric logs
             # Create the manual adjustments alongside them

@@ -12,6 +12,7 @@ urlpatterns = [
     path('attendance/manual-entry/', views.attendance_manual_entry, name='attendance_manual_entry'),
     path('attendance/summary/', views.attendance_summary, name='attendance_summary'),
     path('attendance/request/', views.manual_punch_request, name='manual_punch_request'),
+    path('attendance/my-requests/', views.my_manual_punches, name='my_manual_punches'),
     path('attendance/approvals/', views.manual_punch_approvals, name='manual_punch_approvals'),
     path('attendance/approvals/<int:pk>/action/', views.manual_punch_action, name='manual_punch_action'),
     path('run-payroll/', views.run_payroll_action, name='run_payroll'),

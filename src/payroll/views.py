@@ -543,11 +543,12 @@ def manage_overtime(request):
         start_date = timezone.now().date().replace(day=1)
         month_str = start_date.strftime('%Y-%m')
 
-    # 2. Base Query
+    # 2. Base Query (Filter out inactive/archived employees)
     logs = AttendanceLog.objects.filter(
         date__year=start_date.year, 
-        date__month=start_date.month
-    ).select_related('employee').order_by('-date', 'employee__full_name')
+        date__month=start_date.month,
+        employee__is_active=True
+    ).exclude(employee__status='ARCHIVED').select_related('employee').order_by('-date', 'employee__full_name')
 
     # 2b. Role-based Filtering (Strict Assignment for Managers)
     if is_manager and not (request.user.is_superuser or request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO']):
@@ -682,12 +683,60 @@ from .forms import ManualPunchRequestForm
 from .models import ManualPunchRequest
 
 @login_required
+def my_manual_punches(request):
+    """
+    Employee view to list their own manual punch requests.
+    """
+    requests_list = ManualPunchRequest.objects.filter(employee=request.user).order_by('-created_at')
+    
+    if request.method == 'POST' and 'manual_punch_submit' in request.POST:
+        manual_punch_req_form = ManualPunchRequestForm(request.POST, user=request.user)
+        if manual_punch_req_form.is_valid():
+            punch_req = manual_punch_req_form.save(commit=False)
+            punch_req.employee = request.user
+            punch_req.status = 'PENDING'
+            
+            # Check for physical overlap
+            overlap = False
+            existing_log = AttendanceLog.objects.filter(employee=request.user, date=punch_req.date).first()
+            if existing_log and existing_log.segments:
+                for s in existing_log.segments:
+                    if punch_req.punch_in_time < s['out'] and punch_req.punch_out_time > s['in']:
+                        overlap = True; break
+            
+            if overlap:
+                messages.error(request, f"Overlapping hours! The requested time conflicts with an existing physical punch for {punch_req.date}.")
+                return redirect('my_manual_punches')
+                
+            # Check for overlap with other manual requests
+            if ManualPunchRequest.objects.filter(
+                employee=request.user, date=punch_req.date, status__in=['PENDING', 'APPROVED'],
+                punch_in_time__lt=punch_req.punch_out_time, punch_out_time__gt=punch_req.punch_in_time
+            ).exists():
+                messages.error(request, "This time range overlaps with another pending or approved manual request.")
+                return redirect('my_manual_punches')
+            
+            punch_req.save()
+            messages.success(request, "Manual punch request submitted for approval.")
+            return redirect('my_manual_punches')
+        else:
+            messages.error(request, "Please correct the errors in your punch request.")
+    else:
+        manual_punch_req_form = ManualPunchRequestForm(user=request.user)
+    
+    return render(request, 'payroll/my_manual_punches.html', {
+        'requests': requests_list,
+        'manual_punch_req_form': manual_punch_req_form
+    })
+
+@login_required
 def manual_punch_request(request):
     """
     Handles employee submission of a manual punch request.
     """
     if request.method == 'POST':
         form = ManualPunchRequestForm(request.POST, user=request.user)
+        referer = request.META.get('HTTP_REFERER', 'attendance_list')
         if form.is_valid():
             punch_req = form.save(commit=False)
             punch_req.employee = request.user
@@ -703,7 +752,7 @@ def manual_punch_request(request):
             
             if overlap:
                 messages.error(request, f"Overlapping hours! The requested time conflicts with an existing physical punch for {punch_req.date}.")
-                return redirect('attendance_list')
+                return redirect(referer)
                 
             # Check for overlap with other manual requests
             if ManualPunchRequest.objects.filter(
@@ -711,11 +760,14 @@ def manual_punch_request(request):
                 punch_in_time__lt=punch_req.punch_out_time, punch_out_time__gt=punch_req.punch_in_time
             ).exists():
                 messages.error(request, "This time range overlaps with another pending or approved manual request.")
-                return redirect('attendance_list')
+                return redirect(referer)
             
             punch_req.save()
             messages.success(request, "Manual punch request submitted for approval.")
-            return redirect('attendance_list')
+            return redirect(referer)
+        else:
+            messages.error(request, "Please correct the errors in your punch request.")
+            return redirect(referer)
     return redirect('attendance_list')
 
 @login_required
@@ -727,7 +779,9 @@ def manual_punch_approvals(request):
         messages.error(request, "Permission denied.")
         return redirect('dashboard')
         
-    pending_requests = ManualPunchRequest.objects.filter(status='PENDING').select_related('employee').order_by('-created_at')
+    pending_requests = ManualPunchRequest.objects.filter(
+        status='PENDING', employee__is_active=True
+    ).exclude(employee__status='ARCHIVED').select_related('employee').order_by('-created_at')
     
     # Filter to only show requests for subordinates if user is essentially a project manager
     if not (request.user.is_staff or getattr(request.user, 'role', '') in ['ADMIN', 'CEO', 'HR_MANAGER']):

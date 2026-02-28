@@ -218,19 +218,33 @@ def dashboard(request):
         on_leave_today = LeaveRequest.objects.filter(
             start_date__lte=today,
             end_date__gte=today,
-            status__in=[LeaveRequest.Status.APPROVED, LeaveRequest.Status.HR_PROCESSED]
-        ).select_related('employee', 'leave_type')
+            status__in=[LeaveRequest.Status.APPROVED, LeaveRequest.Status.HR_PROCESSED],
+            employee__is_active=True
+        ).exclude(employee__status='ARCHIVED').select_related('employee', 'leave_type')
         on_leave_count = on_leave_today.count()
         
-        pending_approvals_count = LeaveRequest.objects.filter(status=LeaveRequest.Status.PENDING, assigned_manager=user).count()
+        pending_approvals_count = LeaveRequest.objects.filter(
+            status=LeaveRequest.Status.PENDING, assigned_manager=user, employee__is_active=True
+        ).exclude(employee__status='ARCHIVED').count()
         
         # 4. Expiring Documents (Next 30 days)
         expiry_threshold = today + timedelta(days=30)
         expiring_docs_count = DocumentVault.objects.filter(expiry_date__range=[today, expiry_threshold]).count()
         
         # Pending Leave Requests List
-        pending_leave_requests = LeaveRequest.objects.filter(status=LeaveRequest.Status.PENDING, assigned_manager=user).select_related('employee', 'leave_type').order_by('-created_at')[:10]
+        pending_leave_requests = LeaveRequest.objects.filter(
+            status=LeaveRequest.Status.PENDING, assigned_manager=user, employee__is_active=True
+        ).exclude(employee__status='ARCHIVED').select_related('employee', 'leave_type').order_by('-created_at')[:10]
         pending_leaves = pending_leave_requests # Use the queryset for iteration in template
+        
+        # Pending Manual Punches
+        from payroll.models import ManualPunchRequest
+        pending_manual_punches = ManualPunchRequest.objects.filter(
+            status='PENDING', employee__is_active=True
+        ).exclude(employee__status='ARCHIVED').select_related('employee').order_by('-created_at')
+        if not (user.is_staff or getattr(user, 'role', '') in ['ADMIN', 'CEO', 'HR_MANAGER']):
+            pending_manual_punches = pending_manual_punches.filter(employee__managers=user)
+        pending_manual_punches = pending_manual_punches[:10]
         
         # Upcoming Holidays
         upcoming_holidays = PublicHoliday.objects.filter(date__gte=today).order_by('date')
@@ -355,6 +369,7 @@ def dashboard(request):
             'expiring_docs_count': expiring_docs_count,
             'pending_leaves': pending_leaves,
             'pending_leave_requests': pending_leave_requests,
+            'pending_manual_punches': pending_manual_punches,
             'total_gratuity_liability': total_liability,
             'upcoming_holidays': upcoming_holidays,
             'recent_activities': recent_activities,
@@ -371,6 +386,9 @@ def dashboard(request):
 
         # Context Data
         recent_leaves = LeaveRequest.objects.filter(employee=user).order_by('-created_at')[:5]
+        
+        from payroll.models import ManualPunchRequest
+        recent_manual_punches = ManualPunchRequest.objects.filter(employee=user).order_by('-created_at')[:5]
         
         # Attendance
         today = timezone.localtime()
@@ -509,7 +527,7 @@ def dashboard(request):
             'pending_leaves_count': pending_leaves_count,
             'total_leave_used': total_leave_used,
             'recent_leaves': recent_leaves,
-            'leave_balances': leave_balances,
+            'recent_manual_punches': recent_manual_punches,
             'leave_balances': leave_balances,
             'upcoming_holidays': upcoming_holidays,
             'avg_daily_attendance': avg_daily_attendance,

@@ -264,14 +264,14 @@
                 </div>
                 <div style="min-width: 130px;">
                     <label style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">From</label>
-                    <input type="date" name="start_date" value="{{ start_date|default:'' }}" 
-                           style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid var(--border-color); padding: 0 12px; font-size: 13px; font-weight: 600; background: var(--input-bg); color: var(--text-main);">
+                    <input type="date" name="start_date" value="{{ start_date|default:'' }}" onclick="this.showPicker()"
+                           style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid var(--border-color); padding: 0 12px; font-size: 13px; font-weight: 600; background: var(--input-bg); color: var(--text-main); cursor: pointer;">
                 </div>
 
                 <div style="min-width: 130px;">
                     <label style="font-size: 10px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">To</label>
-                    <input type="date" name="end_date" value="{{ end_date|default:'' }}" 
-                           style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid var(--border-color); padding: 0 12px; font-size: 13px; font-weight: 600; background: var(--input-bg); color: var(--text-main);">
+                    <input type="date" name="end_date" value="{{ end_date|default:'' }}" onclick="this.showPicker()"
+                           style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid var(--border-color); padding: 0 12px; font-size: 13px; font-weight: 600; background: var(--input-bg); color: var(--text-main); cursor: pointer;">
                 </div>
 
                 <div style="display: flex; gap: 8px;">
@@ -322,7 +322,7 @@
                                 <div style="font-size: 10.5px; color: var(--text-secondary); font-weight: 600;">{{ log.date|date:"l" }}</div>
                                 {% if log.remarks %}
                                 <div style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--primary); background: rgba(37,99,235,0.1); padding: 2px 6px; border-radius: 4px; letter-spacing: 0.05em;">
-                                    {% if log.remarks == 'Work from Home' or log.remarks == 'Work From Home' or 'WFH' in log.remarks or 'Work from Home' in log.remarks %}WFH{% else %}{{ log.remarks|cut:"Manual Punch Approved: "|truncatechars:18 }}{% endif %}
+                                    {% if log.remarks == 'Work from Home' or log.remarks == 'Work From Home' or 'WFH' in log.remarks or 'Work from Home' in log.remarks %}WFH{% else %}{{ log.remarks|cut:"Manual Punch Approved: "|truncatechars:35 }}{% endif %}
                                 </div>
                                 {% else %}
                                 <div style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); background: var(--gray-50); padding: 2px 6px; border-radius: 4px; letter-spacing: 0.05em; border: 1px solid var(--border-color);">
@@ -1269,6 +1269,27 @@ function toggleOtherReason() {
 
 <script>
     $(document).ready(function(){
+        // Restrict future dates for manual punch request
+        const dateInput = document.getElementById('req_date');
+        if (dateInput) {
+            const dtToday = new Date();
+            let month = dtToday.getMonth() + 1;
+            let day = dtToday.getDate();
+            const year = dtToday.getFullYear();
+            if(month < 10) month = '0' + month.toString();
+            if(day < 10) day = '0' + day.toString();
+            const maxDate = year + '-' + month + '-' + day;
+            
+            dateInput.setAttribute('max', maxDate);
+            
+            dateInput.addEventListener('change', function() {
+                if (this.value > maxDate) {
+                    alert('You cannot add future dates.');
+                    this.value = ''; // clear invalid selection
+                }
+            });
+        }
+
         // Initialize ClockPicker
         $('.time-input').clockpicker({
             placement: 'top',

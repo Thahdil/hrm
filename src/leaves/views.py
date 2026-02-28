@@ -102,15 +102,15 @@ def leave_list(request):
 
     # Permission Logic
     if user.is_superuser or user.is_admin() or user.is_ceo():
-        # Admin / CEO sees ALL (except cancelled)
-        leaves = LeaveRequest.objects.exclude(status='CANCELLED').order_by('-created_at')
+        # Admin / CEO sees ALL (except cancelled, and inactive employees)
+        leaves = LeaveRequest.objects.filter(employee__is_active=True).exclude(employee__status='ARCHIVED').exclude(status='CANCELLED').order_by('-created_at')
         
     elif user.is_hr():
         # HR sees MGR_APPROVED (waiting for HR) + History + Own Requests (except cancelled)
         leaves = LeaveRequest.objects.filter(
             Q(status__in=['MGR_APPROVED', 'HR_PROCESSED', 'APPROVED', 'REJECTED']) | 
             Q(employee=user)
-        ).exclude(status='CANCELLED').order_by('-created_at')
+        ).filter(employee__is_active=True).exclude(employee__status='ARCHIVED').exclude(status='CANCELLED').order_by('-created_at')
         
     else:
         # Check PM logic
@@ -122,7 +122,7 @@ def leave_list(request):
              # PM sees Assigned Requests + Own Requests (except cancelled)
             leaves = LeaveRequest.objects.filter(
                 Q(assigned_manager=user) | Q(employee=user)
-            ).exclude(status='CANCELLED').order_by('-created_at')
+            ).filter(employee__is_active=True).exclude(employee__status='ARCHIVED').exclude(status='CANCELLED').order_by('-created_at')
         else:
              # Regular Employee (shows all their requests including cancelled)
             leaves = LeaveRequest.objects.filter(employee=user).order_by('-created_at')

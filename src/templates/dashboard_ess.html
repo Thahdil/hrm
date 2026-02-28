@@ -172,7 +172,6 @@
                         <i class="ri-history-line" style="color: var(--primary); font-size: 18px;"></i>
                         <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: var(--text-main); letter-spacing: -0.01em;">Recent Requests</h3>
                     </div>
-                    <a href="{% url 'leave_list' %}" style="color: var(--primary); font-size: 12px; text-decoration: none; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; background: #eff6ff; padding: 6px 14px; border-radius: 8px;">History</a>
                 </div>
                 <div style="flex: 1; overflow-y: auto;" class="custom-scroll">
                     <table style="width: 100%; border-collapse: collapse;">
@@ -186,7 +185,7 @@
                         </thead>
                         <tbody>
                             {% for leave in recent_leaves %}
-                            <tr style="border-bottom: 1px solid var(--border-color);">
+                            <tr style="border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background='transparent'" onclick="window.location.href='{% url 'leave_list' %}'">
                                 <td style="padding: 16px 24px;">
                                     <div style="font-size: 13.5px; font-weight: 700; color: var(--text-main);">{{ leave.leave_type.name }}</div>
                                     <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">{{ leave.start_date|date:"D, d M" }}</div>
@@ -239,12 +238,41 @@
                                         {% endif %}
                                     </span>
                                 </td>
+                            {% endfor %}
+
+                            {% for punch in recent_manual_punches %}
+                            <tr style="border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background='transparent'" onclick="window.location.href='{% url 'my_manual_punches' %}'">
+                                <td style="padding: 16px 24px;">
+                                    <div style="font-size: 13.5px; font-weight: 700; color: var(--text-main);">Manual Punch</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">{{ punch.date|date:"D, d M" }}</div>
+                                </td>
+                                <td style="padding: 16px 24px; font-size: 13px; font-weight: 600; color: var(--text-secondary);">
+                                    --
+                                </td>
+                                <td style="padding: 16px 24px; font-size: 13px; font-weight: 600;">
+                                    <span style="color: var(--text-secondary); font-size: 11px; font-style: italic;">Not Required</span>
+                                </td>
+                                <td style="padding: 16px 24px; text-align: right;">
+                                    <span style="padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; display: inline-block; text-align: center;
+                                        {% if punch.status == 'APPROVED' %}background: var(--status-approved-bg); color: var(--status-approved-text); border: 1px solid var(--status-approved-border);
+                                        {% elif punch.status == 'PENDING' %}background: var(--status-pending-bg); color: var(--status-pending-text); border: 1px solid var(--status-pending-border);
+                                        {% else %}background: var(--status-rejected-bg); color: var(--status-rejected-text); border: 1px solid var(--status-rejected-border);{% endif %}">
+                                        
+                                        {% if punch.status == 'APPROVED' %}
+                                            APPROVED
+                                        {% else %}
+                                            {{ punch.status|upper }}
+                                        {% endif %}
+                                    </span>
+                                </td>
                             </tr>
-                            {% empty %}
+                            {% endfor %}
+
+                            {% if not recent_leaves and not recent_manual_punches %}
                             <tr>
                                 <td colspan="4" style="padding: 40px; text-align: center; color: var(--text-secondary); font-size: 14px;">No recent records</td>
                             </tr>
-                            {% endfor %}
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
