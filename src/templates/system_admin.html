@@ -212,6 +212,10 @@
         box-shadow: var(--shadow) !important;
     }
     
+    /* Override top borders to match icon colors */
+    .stat-card:nth-child(2)::before { background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%) !important; } /* Yellow */
+    .stat-card:nth-child(3)::before { background: linear-gradient(135deg, #10B981 0%, #34D399 100%) !important; } /* Green */
+    
     .admin-module-icon {
         width: 52px;
         height: 52px;

@@ -418,15 +418,19 @@
 
     /* Color Specifics for Stats */
     /* Attendance (Month) - Green */
+    .stat-card:first-child::before { background: linear-gradient(135deg, #10B981 0%, #34D399 100%) !important; }
     .stat-card:first-child:hover { box-shadow: 0 12px 30px rgba(16, 185, 129, 0.2) !important; border-color: rgba(16, 185, 129, 0.3) !important; }
     
     /* Pending - Yellow */
+    .stat-card:nth-child(2)::before { background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%) !important; }
     .stat-card:nth-child(2):hover { box-shadow: 0 12px 30px rgba(245, 158, 11, 0.2) !important; border-color: rgba(245, 158, 11, 0.3) !important; }
     
     /* Avg Attendance - Purple */
+    .stat-card:nth-child(3)::before { background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%) !important; }
     .stat-card:nth-child(3):hover { box-shadow: 0 12px 30px rgba(139, 92, 246, 0.2) !important; border-color: rgba(139, 92, 246, 0.3) !important; }
     
     /* Work Days - Blue */
+    .stat-card:last-child::before { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%) !important; }
     .stat-card:last-child:hover { box-shadow: 0 12px 30px rgba(59, 130, 246, 0.2) !important; border-color: rgba(59, 130, 246, 0.3) !important; }
 
 
