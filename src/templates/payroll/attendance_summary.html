@@ -41,7 +41,7 @@
                     <label style="font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Select Month / Year</label>
                     <input type="month" name="month" value="{{ selected_month }}" 
                            style="width: 100%; height: 42px; border-radius: 12px; border: 1px solid var(--border-color); padding: 0 16px; font-size: 14px; font-weight: 600; background: var(--input-bg); color: var(--text-main);"
-                           onchange="this.form.submit()">
+                           onchange="this.form.submit()" onclick="if(this.showPicker) this.showPicker();">
                 </div>
 
                 <div style="flex-grow: 1; max-width: 350px;">

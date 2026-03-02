@@ -210,10 +210,40 @@
                             </form>
                         </div>
                         {% else %}
-                        <div style="padding: 20px; text-align: center; color: var(--text-secondary); background: var(--gray-50); border-radius: 8px;">
+                        <div style="padding: 20px; text-align: center; color: var(--text-secondary); background: var(--gray-50); border-radius: 8px; margin-bottom: 16px;">
                             <i class="ri-file-search-line" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
                             Waiting for employee to upload document.
                         </div>
+                        
+                        {% if user.is_staff or user.is_admin or user.is_hr or user == leave.assigned_manager %}
+                            <div style="background: var(--bg-surface); padding: 20px; border: 1px solid var(--border-color); border-radius: 8px;">
+                                <form method="post" action="{% url 'leave_verify_document' leave.id %}">
+                                    {% csrf_token %}
+                                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">If the document is not provided, you can process this as Loss of Pay.</p>
+                                    
+                                    <div style="margin-bottom: 12px;">
+                                        <textarea name="rejection_reason" id="rejection_reason_pending" rows="2" placeholder="Rejection Reason (Required for Reject/LOP)" style="width: 100%; background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; font-size: 13px; resize: vertical; box-sizing: border-box;"></textarea>
+                                    </div>
+
+                                    <div style="display: flex; gap: 12px;">
+                                        <button type="submit" name="action" value="reject" class="btn" onclick="return validateRejectPending()" style="background: #dc2626; color: white; border: none; width: 100%; cursor: pointer;">
+                                            <i class="ri-close-circle-fill"></i> Reject & Process as LOP
+                                        </button>
+                                    </div>
+                                </form>
+                                <script>
+                                function validateRejectPending() {
+                                    var reason = document.getElementById('rejection_reason_pending').value;
+                                    if (!reason.trim()) {
+                                        alert("Please provide a reason for rejection.");
+                                        document.getElementById('rejection_reason_pending').focus();
+                                        return false;
+                                    }
+                                    return confirm("Confirm marking as Loss of Pay?");
+                                }
+                                </script>
+                            </div>
+                        {% endif %}
                         {% endif %}
                     
                     {% elif leave.document_status == 'UPLOADED' %}
@@ -266,6 +296,14 @@
                             <i class="ri-shield-check-line" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
                             <strong>Document Verified</strong><br>
                             Approved by {{ leave.verified_by.full_name|default:"HR" }}<br>
+                            <span style="font-size: 12px;">on {{ leave.verification_date|date:"M d, Y" }}</span>
+                        </div>
+                        
+                    {% elif leave.document_status == 'REJECTED' %}
+                        <div style="padding: 20px; text-align: center; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #b91c1c;">
+                            <i class="ri-error-warning-fill" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+                            <strong>Loss of Pay Processed</strong><br>
+                            Processed by {{ leave.verified_by.full_name|default:"HR" }}<br>
                             <span style="font-size: 12px;">on {{ leave.verification_date|date:"M d, Y" }}</span>
                         </div>
                     {% endif %}

@@ -76,7 +76,21 @@ def leave_verify_document(request, pk):
             leave.verified_by = user
             leave.verification_date = timezone.now()
             leave.rejection_reason = request.POST.get('rejection_reason', '')
+            
+            # Reversal Logic for Leave Balance since it was deducted on Approval
+            from .models import LeaveBalance
+            try:
+                balance = LeaveBalance.objects.get(
+                    employee=leave.employee,
+                    leave_type=leave.leave_type,
+                    year=leave.start_date.year
+                )
+                balance.days_used = max(0.0, float(balance.days_used) - float(leave.duration_days))
+                balance.save()
+            except LeaveBalance.DoesNotExist:
+                pass
+                
             leave.save()
-            messages.warning(request, "Document rejected. Leave marked as LOSS OF PAY.")
+            messages.warning(request, "Document rejected. Leave marked as LOSS OF PAY and balance restored.")
             
     return redirect('leave_detail', pk=pk)
