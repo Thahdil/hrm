@@ -30,6 +30,12 @@ def leave_list(request):
         for lt in valid_types:
             total_quota = float(lt.days_entitlement)
             
+            if getattr(lt, 'accrual_frequency', '') == 'MONTHLY':
+                if getattr(lt, 'reset_monthly', False):
+                    total_quota = total_quota / 12.0
+                else:
+                    total_quota = (total_quota / 12.0) * max(1, today.month)
+            
             if lt.reset_monthly:
                  reqs = LeaveRequest.objects.filter(
                     employee=user, leave_type=lt, status__in=['APPROVED', 'HR_PROCESSED'],
@@ -157,6 +163,13 @@ def leave_create(request):
     leave_balances = {}
     for lt in valid_types:
         total_quota = float(lt.days_entitlement)
+        
+        if getattr(lt, 'accrual_frequency', '') == 'MONTHLY':
+            if getattr(lt, 'reset_monthly', False):
+                total_quota = total_quota / 12.0
+            else:
+                total_quota = (total_quota / 12.0) * max(1, today.month)
+                
         used = 0.0
         
         if lt.reset_monthly:
