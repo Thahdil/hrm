@@ -294,7 +294,10 @@ def dashboard(request):
                 for lt in leave_types:
                     total_quota = float(lt.days_entitlement)
                     if getattr(lt, 'accrual_frequency', '') == 'MONTHLY':
-                        total_quota = total_quota / 12.0
+                        if getattr(lt, 'reset_monthly', False):
+                            total_quota = total_quota / 12.0
+                        else:
+                            total_quota = (total_quota / 12.0) * max(1, today.month)
                         
                     if lt.reset_monthly:
                         reqs = LeaveRequest.objects.filter(
@@ -426,7 +429,10 @@ def dashboard(request):
                 total_quota = float(lt.days_entitlement)
                 
                 if getattr(lt, 'accrual_frequency', '') == 'MONTHLY':
-                    total_quota = total_quota / 12.0
+                    if getattr(lt, 'reset_monthly', False):
+                        total_quota = total_quota / 12.0
+                    else:
+                        total_quota = (total_quota / 12.0) * max(1, today.month)
                         
                 if lt.reset_monthly:
                     reqs = LeaveRequest.objects.filter(
