@@ -477,6 +477,13 @@ class PayrollEntry(models.Model):
         return f"{self.employee.full_name} - {self.net_salary}"
 
     @property
+    def shortfall_hours_remainder(self):
+        from decimal import Decimal
+        # Remaining shortfall hours after accounting for full LOP days
+        remainder = self.shortfall_work_hours - (Decimal(self.days_absent) * Decimal('8.00'))
+        return max(Decimal('0.00'), remainder)
+
+    @property
     def waived_total(self):
         from django.db.models import Sum
         return self.breakdown_deductions.filter(is_waived=True).aggregate(Sum('amount'))['amount__sum'] or 0

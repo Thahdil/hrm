@@ -674,15 +674,50 @@ class PayrollService:
                 if log.approved_overtime_minutes:
                     approved_ot_minutes += log.approved_overtime_minutes
             
-            actual_work_hours = Decimal(total_worked_minutes) / Decimal('60.00')
-            approved_ot_hours = Decimal(approved_ot_minutes) / Decimal('60.00')
+            # Match UI display rounding (1 decimal place) so exact manual calculation aligns with system
+            actual_work_hours = round(Decimal(total_worked_minutes) / Decimal('60.00'), 1)
+            approved_ot_hours = round(Decimal(approved_ot_minutes) / Decimal('60.00'), 1)
+            
+            # --- Paid Leaves Handling ---
+            import datetime
+            leave_reqs = LeaveRequest.objects.filter(
+                employee=emp,
+                status='APPROVED',
+                start_date__lte=month_start.replace(day=num_days),
+                end_date__gte=month_start
+            )
+            
+            valid_leave_days = Decimal('0.00')
+            for req in leave_reqs:
+                if not req.leave_type.is_paid:
+                    continue
+                
+                # Rule: For sick leave, strictly require the document to be VERIFIED
+                if req.is_sick_leave and req.document_status != 'VERIFIED':
+                    continue
+                    
+                overlap_start = max(req.start_date, month_start)
+                overlap_end = min(req.end_date, month_start.replace(day=num_days))
+                
+                if req.half_day:
+                    if overlap_start <= req.start_date <= overlap_end:
+                        if not settings.is_holiday(req.start_date):
+                            valid_leave_days += Decimal('0.5')
+                else:
+                    for d in range((overlap_end - overlap_start).days + 1):
+                        curr_date = overlap_start + datetime.timedelta(days=d)
+                        if not settings.is_holiday(curr_date):
+                            valid_leave_days += Decimal('1.0')
+                            
+            valid_leave_hours = valid_leave_days * Decimal('8.00')
             
             # 3. Evaluate Shortfall (Monthly Satisfaction)
-            # "If worked_hours >= required_hours: shortfall = 0"
-            if actual_work_hours >= required_work_hours:
+            # Paid leaves act as accounted work hours
+            effective_worked_hours = actual_work_hours + valid_leave_hours
+            if effective_worked_hours >= required_work_hours:
                 shortfall_hours = Decimal('0.00')
             else:
-                shortfall_hours = required_work_hours - actual_work_hours
+                shortfall_hours = required_work_hours - effective_worked_hours
             
             # 4. Calculate LOP
             # "LOP_amount = shortfall_hours * hourly_rate"
@@ -714,7 +749,7 @@ class PayrollService:
                 # Let's just put working_days_count as a placeholder for days_worked or use distinct logs
                 # Actually days_worked in model is Integer. Let's use the Working Days Count as "Days Expected" or logs.count() as "Days Attended".
                 # For now, put logs.count() if preferred, but existing logic used 30.
-                days_absent=0, # Calculated dynamically via shortfall
+                days_absent=int(shortfall_hours // Decimal('8.00')), # Calculated dynamically via shortfall
                 total_full_days=0, # Not used in new model
                 total_half_days=0,
                 

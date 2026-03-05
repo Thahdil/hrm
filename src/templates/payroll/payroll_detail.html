@@ -107,7 +107,12 @@
                         </td>
                         <td style="padding: 16px 12px; text-align: right;">
                             <div style="font-weight: 600; font-size: 12px;">{{ entry.actual_work_hours|floatformat:1 }} / {{ entry.required_work_hours|floatformat:1 }} Hrs</div>
-                            <div style="font-size: 11px; color: var(--error);">{{ entry.days_absent }} LOP Days</div>
+                            <div style="font-size: 11px; color: var(--error);">
+                                {{ entry.days_absent }} LOP Days 
+                                {% if entry.shortfall_hours_remainder > 0 %}
+                                    <span style="opacity: 0.8;">({{ entry.shortfall_hours_remainder|floatformat:1 }} Hrs Short)</span>
+                                {% endif %}
+                            </div>
                         </td>
                         <td style="padding: 16px 12px; text-align: right;">
                             <div style="font-weight: 600; color: var(--success);">+ ₹{{ entry.ot_pay|intcomma }}</div>
