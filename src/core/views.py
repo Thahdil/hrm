@@ -291,44 +291,51 @@ def dashboard(request):
                 leave_types = LeaveType.objects.filter(is_active=True)
                 current_year = today.year
                 
-                for leave_type in leave_types:
-                    try:
-                        balance = LeaveBalance.objects.get(
-                            employee=user,
-                            leave_type=leave_type,
-                            year=current_year
+                for lt in leave_types:
+                    total_quota = float(lt.days_entitlement)
+                    if lt.reset_monthly:
+                        reqs = LeaveRequest.objects.filter(
+                            employee=user, leave_type=lt, status__in=['APPROVED', 'HR_PROCESSED'],
+                            start_date__month=today.month, start_date__year=current_year
                         )
-                        leave_balances.append({
-                            'name': leave_type.name,
-                            'code': leave_type.code,
-                            'used': balance.days_used,
-                            'total': balance.total_entitlement,
-                            'remaining': balance.remaining,
-                            'percentage': int((balance.days_used / balance.total_entitlement * 100) if balance.total_entitlement > 0 else 0)
-                        })
-                    except LeaveBalance.DoesNotExist:
-                        # Create balance if it doesn't exist
-                        balance = LeaveBalance.objects.create(
-                            employee=user,
-                            leave_type=leave_type,
-                            year=current_year,
-                            total_entitlement=leave_type.days_entitlement,
-                            days_used=0
+                    else:
+                        reqs = LeaveRequest.objects.filter(
+                            employee=user, leave_type=lt, status__in=['APPROVED', 'HR_PROCESSED'],
+                            start_date__year=current_year
                         )
-                        leave_balances.append({
-                            'name': leave_type.name,
-                            'code': leave_type.code,
-                            'used': 0,
-                            'total': leave_type.days_entitlement,
-                            'remaining': leave_type.days_entitlement,
-                            'percentage': 0
-                        })
+                    used = sum(float(r.duration_days) for r in reqs) or 0.0
+                    
+                    balance_obj, created = LeaveBalance.objects.get_or_create(
+                        employee=user, leave_type=lt, year=current_year,
+                        defaults={'total_entitlement': total_quota, 'days_used': used}
+                    )
+                    
+                    if float(balance_obj.total_entitlement) != total_quota or float(balance_obj.days_used) != float(used):
+                        balance_obj.total_entitlement = total_quota
+                        balance_obj.days_used = used
+                        balance_obj.save()
+                        
+                    used = float(balance_obj.days_used)
+                    total_quota = float(balance_obj.total_entitlement)
+                    remaining = total_quota - used
+
+                    percentage = int((used / total_quota * 100) if total_quota > 0 else 0)
+                    leave_balances.append({
+                        'name': lt.name,
+                        'code': lt.code,
+                        'used': used,
+                        'total': total_quota,
+                        'remaining': max(0, remaining),
+                        'percentage': percentage,
+                        'remaining_percentage': 100 - percentage,
+                        'is_unlimited': getattr(lt, 'allow_unlimited', False)
+                    })
             except Exception as e:
                 # Fallback to default values
                 leave_balances = [
-                    {'name': 'Annual Leave', 'code': 'ANN', 'used': 12, 'total': 30, 'remaining': 18, 'percentage': 40},
-                    {'name': 'Sick Leave', 'code': 'SICK', 'used': 3, 'total': 15, 'remaining': 12, 'percentage': 20},
-                    {'name': 'Personal Leave', 'code': 'PERS', 'used': 1, 'total': 5, 'remaining': 4, 'percentage': 20}
+                    {'name': 'Annual Leave', 'code': 'ANN', 'used': 12, 'total': 30, 'remaining': 18, 'percentage': 40, 'is_unlimited': False},
+                    {'name': 'Sick Leave', 'code': 'SICK', 'used': 3, 'total': 15, 'remaining': 12, 'percentage': 20, 'is_unlimited': False},
+                    {'name': 'Personal Leave', 'code': 'PERS', 'used': 1, 'total': 5, 'remaining': 4, 'percentage': 20, 'is_unlimited': False}
                 ]
         
         # Upcoming Meetings
@@ -413,62 +420,32 @@ def dashboard(request):
                 leave_types = leave_types.filter(eligibility_gender='ALL')
 
             for lt in leave_types:
-                # Calculate proper entitlement
-                # Exclude Sick Leave from "Fixed Monthly" logic so it can accumulate
-                is_fixed_monthly = (lt.accrual_frequency == 'MONTHLY' and (lt.duration_days == 1 or 'Normal' in lt.name) and 'Sick' not in lt.name)
+                total_quota = float(lt.days_entitlement)
                 
-                if is_fixed_monthly:
-                    # Non-accumulative: 1 day per month
-                    total_quota = 1.0
-                    # Calculate used THIS MONTH specifically
-                    requests = LeaveRequest.objects.filter(
-                        employee=user,
-                        leave_type=lt,
-                        status=LeaveRequest.Status.APPROVED,
-                        start_date__month=today.month,
-                        start_date__year=today.year
+                if lt.reset_monthly:
+                    reqs = LeaveRequest.objects.filter(
+                        employee=user, leave_type=lt, status__in=['APPROVED', 'HR_PROCESSED'],
+                        start_date__month=today.month, start_date__year=today.year
                     )
-                    used = sum(req.duration_days for req in requests)
                 else:
-                    # Standard logic: Accumulating Monthly or Annual
-                    total_quota = lt.days_entitlement
-                    if lt.accrual_frequency == 'MONTHLY':
-                        # Prorate based on COMPLETED months (Month 1 = 0, Month 2 = 1/12th, etc.)
-                        # This ensures accrual is "in arrears" or "earned", preventing balance available at start of month.
-                        total_quota = (lt.days_entitlement / 12) * (today.month - 1)
-
-                    # Calculate Used Days from Actual Requests (Source of Truth)
-                    # This ensures correct counting of half-days (0.5) and fully syncs nicely.
-                    annual_reqs = LeaveRequest.objects.filter(
-                        employee=user,
-                        leave_type=lt,
-                        status__in=['APPROVED', 'HR_PROCESSED'],
+                    reqs = LeaveRequest.objects.filter(
+                        employee=user, leave_type=lt, status__in=['APPROVED', 'HR_PROCESSED'],
                         start_date__year=today.year
                     )
-                    calculated_used = sum(r.duration_days for r in annual_reqs)
-
-                    balance_obj, created = LeaveBalance.objects.get_or_create(
-                        employee=user,
-                        leave_type=lt,
-                        year=today.year,
-                        defaults={'total_entitlement': total_quota, 'days_used': calculated_used}
-                    )
-                    
-                    # Sync Balance Object if needed
-                    should_save = False
-                    if balance_obj.total_entitlement != total_quota:
-                        balance_obj.total_entitlement = total_quota
-                        should_save = True
-                    
-                    if float(balance_obj.days_used) != float(calculated_used):
-                        balance_obj.days_used = calculated_used
-                        should_save = True
-                        
-                    if should_save:
-                        balance_obj.save()
-                    
-                    used = float(balance_obj.days_used)
-                    total_quota = float(balance_obj.total_entitlement)
+                used = sum(float(r.duration_days) for r in reqs) or 0.0
+                
+                balance_obj, created = LeaveBalance.objects.get_or_create(
+                    employee=user, leave_type=lt, year=today.year,
+                    defaults={'total_entitlement': total_quota, 'days_used': used}
+                )
+                
+                if float(balance_obj.total_entitlement) != total_quota or float(balance_obj.days_used) != float(used):
+                    balance_obj.total_entitlement = total_quota
+                    balance_obj.days_used = used
+                    balance_obj.save()
+                
+                used = float(balance_obj.days_used)
+                total_quota = float(balance_obj.total_entitlement)
 
                 remaining = total_quota - used
                 percentage = int((used / total_quota * 100) if total_quota > 0 else 0)
@@ -481,7 +458,7 @@ def dashboard(request):
                     'remaining': max(0, remaining),
                     'percentage': percentage,
                     'remaining_percentage': 100 - percentage,
-                    'is_unlimited': lt.allow_unlimited
+                    'is_unlimited': getattr(lt, 'allow_unlimited', False)
                 })
         except:
             pass

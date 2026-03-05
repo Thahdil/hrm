@@ -208,7 +208,7 @@
                         </td>
                         
                         <td style="padding: 16px 20px; border-bottom: 1px solid var(--border-color);">
-                            {% if leave.is_sick_leave and leave.leave_type.requires_document %}
+                            {% if leave.leave_type.requires_document %}
                                 {% if leave.document_status == 'VERIFIED' %}
                                     <span style="color: var(--success); font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
                                         <i class="ri-checkbox-circle-fill"></i> Accepted

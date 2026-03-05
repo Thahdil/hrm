@@ -28,76 +28,57 @@ def leave_list(request):
             valid_types = valid_types.filter(Q(eligibility_gender='ALL') | Q(eligibility_gender=user.gender))
 
         for lt in valid_types:
-            total_quota = lt.days_entitlement
-            used = 0.0
+            total_quota = float(lt.days_entitlement)
             
-            if lt.accrual_frequency == 'MONTHLY':
-                if lt.reset_monthly:
-                     # MONTHLY RESET: 1/12th entitlement, non-cumulative
-                     total_quota = (lt.days_entitlement / 12)
-                     
-                     # Check usage THIS MONTH only
-                     requests_this_month = LeaveRequest.objects.filter(
-                        employee=user,
-                        leave_type=lt,
-                        status__in=['APPROVED', 'HR_PROCESSED'],
-                        start_date__month=today.month,
-                        start_date__year=today.year
-                     )
-                     used_this_month = sum(r.duration_days for r in requests_this_month)
-                     
-                     # Add pending requests to "Used" so Balance decrements correctly
-                     pending_requests = LeaveRequest.objects.filter(
-                        employee=user,
-                        leave_type=lt,
-                        status='PENDING',
-                        start_date__month=today.month,
-                        start_date__year=today.year
-                     )
-                     pending_this_month = sum(r.duration_days for r in pending_requests)
-                     
-                     used = float(used_this_month) + float(pending_this_month)
-                else:
-                    # MONTHLY ACCRUAL: Prorate based on COMPLETED months
-                    # (e.g. In Feb (Month 2), you have completed Jan -> 1 day accrued)
-                    total_quota = (lt.days_entitlement / 12) * max(0, today.month - 1)
-            
-            # For Annual/Other, quota is already total_entitlement. 
-            # We don't need to recalculate usage here because 'days_used' in DB is primary source,
-            # UNLESS it's a dynamic types which we just calculated.
-            
-            # Actually, to be consistent with leave_create, we should probably update the DB entry 
-            # for Monthly types to reflect current status, then read from it.
+            if lt.reset_monthly:
+                 reqs = LeaveRequest.objects.filter(
+                    employee=user, leave_type=lt, status__in=['APPROVED', 'HR_PROCESSED'],
+                    start_date__month=today.month, start_date__year=today.year
+                 )
+                 used_appr = sum(float(r.duration_days) for r in reqs) or 0.0
+                 
+                 reqs_pend = LeaveRequest.objects.filter(
+                    employee=user, leave_type=lt, status='PENDING',
+                    start_date__month=today.month, start_date__year=today.year
+                 )
+                 used_pend = sum(float(r.duration_days) for r in reqs_pend) or 0.0
+                 used = used_appr + used_pend
+            else:
+                 reqs = LeaveRequest.objects.filter(
+                     employee=user, leave_type=lt, status__in=['APPROVED', 'HR_PROCESSED'],
+                     start_date__year=today.year
+                 )
+                 used_appr = sum(float(r.duration_days) for r in reqs) or 0.0
+                 
+                 reqs_pend = LeaveRequest.objects.filter(
+                     employee=user, leave_type=lt, status='PENDING',
+                     start_date__year=today.year
+                 )
+                 used_pend = sum(float(r.duration_days) for r in reqs_pend) or 0.0
+                 used = used_appr + used_pend
             
             balance_obj, created = LeaveBalance.objects.get_or_create(
-                employee=user,
-                leave_type=lt,
-                year=current_year,
+                employee=user, leave_type=lt, year=current_year,
                 defaults={'total_entitlement': total_quota, 'days_used': used}
             )
             
-            # Sync Logic
             should_save = False
-            if lt.accrual_frequency == 'MONTHLY':
-                # Always update entitlement for monthly to keep it current
-                if balance_obj.total_entitlement != total_quota:
-                    balance_obj.total_entitlement = total_quota
-                    should_save = True
-                
-                if lt.reset_monthly:
-                    # Always sync usage for reset types
-                    if float(balance_obj.days_used) != float(used):
-                        balance_obj.days_used = used
-                        should_save = True
+            if float(balance_obj.total_entitlement) != total_quota:
+                balance_obj.total_entitlement = total_quota
+                should_save = True
             
-            # HIDDEN CHECK: If configured to hide unless used, and usage is zero, skip display
-            if lt.hidden_unless_used and float(balance_obj.days_used) <= 0:
-                pass # Don't add to balances list
-            else:
-                balances.append(balance_obj)
+            if float(balance_obj.days_used) != float(used):
+                balance_obj.days_used = used
+                should_save = True
             
             if should_save:
                 balance_obj.save()
+            
+            # HIDDEN CHECK
+            if lt.hidden_unless_used and float(balance_obj.days_used) <= 0:
+                pass
+            else:
+                balances.append(balance_obj)
 
 
     # Permission Logic
@@ -175,75 +156,45 @@ def leave_create(request):
     # 3. Get Leave Balances for current year
     leave_balances = {}
     for lt in valid_types:
-        total_quota = lt.days_entitlement
+        total_quota = float(lt.days_entitlement)
         used = 0.0
         
-        if lt.accrual_frequency == 'MONTHLY':
-            if lt.reset_monthly:
-                # MONTHLY RESET: Allow 1/12th entitlement every month. Unused does NOT carry over.
-                total_quota = (lt.days_entitlement / 12)
-                
-                # Check usage THIS MONTH only
-                requests_this_month = LeaveRequest.objects.filter(
-                    employee=request.user,
-                    leave_type=lt,
-                    status__in=['APPROVED', 'HR_PROCESSED'],
-                    start_date__month=today.month,
-                    start_date__year=today.year
-                )
-                used_this_month = sum(r.duration_days for r in requests_this_month)
-                
-                used = float(used_this_month)
-                
-                # Check Pending separately to prevent double booking in UI (optional but good)
-                pending_requests = LeaveRequest.objects.filter(
-                    employee=request.user,
-                    leave_type=lt,
-                    status='PENDING',
-                    start_date__month=today.month,
-                    start_date__year=today.year
-                )
-                pending_this_month = sum(r.duration_days for r in pending_requests)
-                
-                # We count pending against "Used" for validation/blocking purposes
-                # This ensures they can't submit multiple requests exceeding the monthly quota
-                used += float(pending_this_month)
-                
-            else:
-                # ACCUMULATING MONTHLY: Prorate based on COMPLETED months
-                total_quota = (lt.days_entitlement / 12) * max(0, today.month - 1)
-                
-                # Sync Used Days from Approved/Processed requests for the YEAR
-                approved_requests = LeaveRequest.objects.filter(
-                    employee=request.user,
-                    leave_type=lt,
-                    status__in=['APPROVED', 'HR_PROCESSED'],
-                    start_date__year=current_year
-                )
-                used = sum(float(r.duration_days) for r in approved_requests) or 0.0
+        if lt.reset_monthly:
+            reqs = LeaveRequest.objects.filter(
+                employee=request.user, leave_type=lt, status__in=['APPROVED', 'HR_PROCESSED'],
+                start_date__month=today.month, start_date__year=today.year
+            )
+            used_appr = sum(float(r.duration_days) for r in reqs) or 0.0
+            
+            pending_requests = LeaveRequest.objects.filter(
+                employee=request.user, leave_type=lt, status='PENDING',
+                start_date__month=today.month, start_date__year=today.year
+            )
+            used_pend = sum(float(r.duration_days) for r in pending_requests) or 0.0
+            
+            used = used_appr + used_pend
         else:
-            # ANNUAL / OTHER: Full Entitlement Upfront
-            approved_requests = LeaveRequest.objects.filter(
-                employee=request.user,
-                leave_type=lt,
-                status__in=['APPROVED', 'HR_PROCESSED'],
+            reqs = LeaveRequest.objects.filter(
+                employee=request.user, leave_type=lt, status__in=['APPROVED', 'HR_PROCESSED'],
                 start_date__year=current_year
             )
-            used = sum(float(r.duration_days) for r in approved_requests) or 0.0
+            used_appr = sum(float(r.duration_days) for r in reqs) or 0.0
             
+            pending_requests = LeaveRequest.objects.filter(
+                employee=request.user, leave_type=lt, status='PENDING',
+                start_date__year=current_year
+            )
+            used_pend = sum(float(r.duration_days) for r in pending_requests) or 0.0
+            
+            used = used_appr + used_pend
 
         balance, created = LeaveBalance.objects.get_or_create(
-            employee=request.user,
-            leave_type=lt,
-            year=current_year,
+            employee=request.user, leave_type=lt, year=current_year,
             defaults={'total_entitlement': total_quota, 'days_used': used}
         )
         
         # Update if changed (Dynamic calculation)
-        if balance.total_entitlement != total_quota or float(balance.days_used) != float(used):
-             # Only update if it's a dynamic type (Monthly)
-             # Annual types usually get decremented on approval, but here we are recalculating "Used".
-             # This "Recalculate on View" approach ensures consistency.
+        if float(balance.total_entitlement) != total_quota or float(balance.days_used) != float(used):
              balance.total_entitlement = total_quota
              balance.days_used = used
              balance.save()

@@ -201,7 +201,7 @@
                                     {% endif %}
                                 </td>
                                 <td style="padding: 16px 24px; font-size: 13px; font-weight: 600;">
-                                    {% if leave.is_sick_leave and leave.leave_type.requires_document %}
+                                    {% if leave.leave_type.requires_document %}
                                         {% if leave.document_status == 'VERIFIED' %}
                                             <span style="color: var(--success); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
                                                 <i class="ri-checkbox-circle-fill"></i> Accepted

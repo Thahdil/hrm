@@ -158,14 +158,7 @@ class LeaveRequest(models.Model):
 
     def clean(self):
         # Auto-calculate end_date based on duration_days if set
-        # But SKIP for Annual/Maternity as they are now "Manual with Cap"
-        is_manual_cap = False
-        if self.leave_type_id and self.leave_type.name:
-            n = self.leave_type.name.lower()
-            if 'annual' in n or 'maternity' in n:
-                is_manual_cap = True
-
-        if not is_manual_cap and self.leave_type_id and hasattr(self.leave_type, 'duration_days') and self.leave_type.duration_days:
+        if self.leave_type_id and hasattr(self.leave_type, 'duration_days') and self.leave_type.duration_days:
             # If duration is 1 (Normal Day), End = Start
             if self.leave_type.duration_days == 1:
                 self.end_date = self.start_date
@@ -185,11 +178,8 @@ class LeaveRequest(models.Model):
         self.clean()
         
         # Auto-initialize document status based on Leave Type configuration
-        # Auto-initialize document status based on Leave Type configuration
-        # STRICT: User requested doc verification only for Sick Leave
-        if self.pk is None and self.leave_type.requires_document:
-             is_sick = 'sick' in self.leave_type.name.lower()
-             if is_sick and self.document_status == self.DocumentStatus.NONE:
+        if self.pk is None and getattr(self, 'leave_type', None) and self.leave_type.requires_document:
+             if self.document_status == self.DocumentStatus.NONE:
                  self.document_status = self.DocumentStatus.PENDING
                  
         super().save(*args, **kwargs)
