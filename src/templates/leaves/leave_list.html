@@ -125,7 +125,7 @@
             </div>
         </div>
 
-        <div class="card-body-scroll">
+        <div class="card-body-scroll" style="flex: 1; overflow: auto; background: var(--bg-surface); position: relative;">
             <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
                 <thead style="background: var(--bg-surface); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 var(--border-color);">
                     <tr style="background: var(--gray-50);">
@@ -595,6 +595,33 @@
 }
 .stat-card:hover i {
     transform: none !important;
+}
+/* Modern Floating Scrollbar */
+.card-body-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.3s;
+    overflow-y: auto;
+}
+.card-body-scroll:hover {
+    scrollbar-color: var(--gray-300) transparent;
+}
+.card-body-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.card-body-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.card-body-scroll::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 10px;
+    transition: background 0.3s;
+}
+.card-body-scroll:hover::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+}
+.card-body-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-400);
 }
 </style>
 

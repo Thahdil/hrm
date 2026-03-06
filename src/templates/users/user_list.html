@@ -7,7 +7,7 @@
 
 {% block content %}
 <div class="flex-1 dashboard-grid" style="padding-bottom: 80px;">
-    <div class="card full-height-card no-padding overflow-hidden">
+    <div class="card full-height-card flex-1 no-padding overflow-hidden" style="display: flex; flex-direction: column;">
         <div class="card-header-actions p-6 border-bottom mb-0">
             <div>
                 <h3 class="card-title">Registered Users</h3>
@@ -18,18 +18,18 @@
             </a>
         </div>
 
-        <div class="card-body-scroll">
+        <div class="card-body-scroll" style="flex: 1; overflow: auto; position: relative;">
             <div class="table-container shadow-none border-0 radius-0">
                 <table class="w-full">
-                    <thead style="position: sticky; top: 0; z-index: 10; background: var(--bg-surface); box-shadow: 0 1px 0 var(--border-color);">
-                        <tr style="background: var(--gray-50);">
-                            <th>Username</th>
-                            <th>Email</th>
+                    <thead style="position: sticky; top: 0; z-index: 10;">
+                        <tr style="background: var(--bg-surface);">
+                            <th style="position: sticky; top: 0; background: var(--gray-50); border-bottom: 1px solid var(--border-color);">Username</th>
+                            <th style="position: sticky; top: 0; background: var(--gray-50); border-bottom: 1px solid var(--border-color);">Email</th>
 
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Last Login</th>
-                            <th class="text-right">Actions</th>
+                            <th style="position: sticky; top: 0; background: var(--gray-50); border-bottom: 1px solid var(--border-color);">Role</th>
+                            <th style="position: sticky; top: 0; background: var(--gray-50); border-bottom: 1px solid var(--border-color);">Status</th>
+                            <th style="position: sticky; top: 0; background: var(--gray-50); border-bottom: 1px solid var(--border-color);">Last Login</th>
+                            <th class="text-right" style="position: sticky; top: 0; background: var(--gray-50); border-bottom: 1px solid var(--border-color);">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -143,5 +143,33 @@
     
     /* Table specific overrides */
     td { vertical-align: middle; }
+
+    /* Modern Floating Scrollbar */
+    .card-body-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: transparent transparent;
+        transition: scrollbar-color 0.3s;
+        overflow-y: auto;
+    }
+    .card-body-scroll:hover {
+        scrollbar-color: var(--gray-300) transparent;
+    }
+    .card-body-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+    .card-body-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .card-body-scroll::-webkit-scrollbar-thumb {
+        background: transparent;
+        border-radius: 10px;
+        transition: background 0.3s;
+    }
+    .card-body-scroll:hover::-webkit-scrollbar-thumb {
+        background: var(--gray-300);
+    }
+    .card-body-scroll::-webkit-scrollbar-thumb:hover {
+        background: var(--gray-400);
+    }
 </style>
 {% endblock %}
