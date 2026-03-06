@@ -66,24 +66,24 @@
         </div>
 
         <!-- Table View -->
-        <div class="card-body-scroll">
+        <div class="card-body-scroll" style="overflow-x: hidden;">
             <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
                 <thead style="background: var(--gray-50); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 var(--border-color);">
                     <tr>
-                        <th style="padding: 18px 32px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Employee</th>
-                        <th style="padding: 18px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Working Days</th>
-                        <th style="padding: 18px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Days Present</th>
-                        <th style="padding: 18px 20px; text-align: center; font-size: 11px; font-weight: 800; color: #ef4444; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Days Absent</th>
-                        <th style="padding: 18px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Leave Days</th>
-                        <th style="padding: 18px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Present Hours</th>
-                        <th style="padding: 18px 20px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Avg Daily Hours</th>
-                        <th style="padding: 18px 32px; text-align: right; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Details</th>
+                        <th style="padding: 18px 24px; text-align: left; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Employee</th>
+                        <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Working</th>
+                        <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Present</th>
+                        <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: #ef4444; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Absent</th>
+                        <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Leave</th>
+                        <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Tot. Hours</th>
+                        <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Avg. Hours</th>
+                        <th style="padding: 18px 24px; text-align: right; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Details</th>
                     </tr>
                 </thead>
                 <tbody style="background: var(--bg-surface);">
                     {% for row in report_data %}
                     <tr class="summary-row" onclick="navigateToDetail('{{ row.employee.id }}', '{{ selected_month }}')" style="cursor: pointer; transition: all 0.2s;">
-                        <td style="padding: 16px 32px; border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 16px 24px; border-bottom: 1px solid var(--border-color);">
                             <div style="display: flex; align-items: center; gap: 14px;">
                                 <div style="width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: white;
                                     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); flex-shrink: 0;">
@@ -97,14 +97,14 @@
                                 </div>
                             </div>
                         </td>
-                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 16px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">
                             <span style="font-weight: 700; color: var(--text-main); font-size: 14px;">{{ row.total_working_days }}</span>
                         </td>
-                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 16px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">
                             <div style="font-weight: 800; color: #059669; font-size: 14px;">{{ row.days_present }}</div>
                             <div style="font-size: 10px; color: var(--gray-400); font-weight: 700; text-transform: uppercase;">Unique In-Punches</div>
                         </td>
-                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 16px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">
                             <div style="font-weight: 900; color: {% if row.absent_days > 0 %}#ef4444{% else %}var(--gray-300){% endif %}; font-size: 15px;">
                                 {{ row.absent_days|floatformat:1 }}
                             </div>
@@ -112,7 +112,7 @@
                             <div style="font-size: 9px; color: #ef4444; font-weight: 800; text-transform: uppercase;">Unaccounted</div>
                             {% endif %}
                         </td>
-                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 16px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">
                             <div style="font-weight: 700; color: {% if row.leave_count > 0 %}var(--warning){% else %}var(--gray-400){% endif %}; font-size: 14.5px;">
                                 {{ row.leave_count|floatformat:1 }}
                             </div>
@@ -120,13 +120,13 @@
                             <div style="font-size: 10px; color: var(--gray-400); font-weight: 700; text-transform: uppercase;">Approved Leaves</div>
                             {% endif %}
                         </td>
-                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 16px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">
                             <div style="font-weight: 800; color: var(--primary); font-size: 15px; letter-spacing: -0.01em;">
                                 {{ row.total_present_hours }}
                             </div>
                             <div style="font-size: 10px; color: var(--gray-400); font-weight: 700; text-transform: uppercase;">Total Hours</div>
                         </td>
-                        <td style="padding: 16px 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 16px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">
                             {% if row.average_hours < threshold %}
                             <div style="display: inline-flex; flex-direction: column; align-items: center; background: rgba(239, 68, 68, 0.08); padding: 6px 16px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.15);">
                                 <div style="font-weight: 800; color: #ef4444; font-size: 15px;">{{ row.average_hours }}h</div>
@@ -139,7 +139,7 @@
                             </div>
                             {% endif %}
                         </td>
-                        <td style="padding: 16px 32px; text-align: right; border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 16px 24px; text-align: right; border-bottom: 1px solid var(--border-color);">
                             <div class="drill-down-icon" style="width: 34px; height: 34px; border-radius: 10px; background: var(--gray-50); display: inline-flex; align-items: center; justify-content: center; color: var(--gray-400); transition: all 0.2s;">
                                 <i class="ri-arrow-right-line" style="font-size: 18px;"></i>
                             </div>
@@ -173,6 +173,32 @@
         background: var(--primary);
         color: white;
         transform: translateX(4px);
+    }
+    /* Modern Floating Scrollbar */
+    .card-body-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: transparent transparent;
+        transition: scrollbar-color 0.3s;
+    }
+    .card-body-scroll:hover {
+        scrollbar-color: var(--gray-300) transparent;
+    }
+    .card-body-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+    .card-body-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .card-body-scroll::-webkit-scrollbar-thumb {
+        background: transparent;
+        border-radius: 10px;
+        transition: background 0.3s;
+    }
+    .card-body-scroll:hover::-webkit-scrollbar-thumb {
+        background: var(--gray-300);
+    }
+    .card-body-scroll::-webkit-scrollbar-thumb:hover {
+        background: var(--gray-400);
     }
 
     @media print {

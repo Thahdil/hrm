@@ -43,6 +43,10 @@ class MeetingForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
+        # Exclude the current user (organizer) from participants selection
+        if self.user:
+            self.fields['participants'].queryset = self.fields['participants'].queryset.exclude(pk=self.user.pk)
+        
         # Populate initial values for split fields if editing
         if self.instance and self.instance.pk:
             from django.utils import timezone

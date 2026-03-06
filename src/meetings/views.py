@@ -72,7 +72,7 @@ def schedule_meeting(request):
     
     # Create a mapping of user ID to Role Display for the frontend
     # This is to show correct roles in the participant list instead of "Employee" for everyone
-    users = User.objects.filter(is_active=True).exclude(is_superuser=True).exclude(role='ADMIN')
+    users = User.objects.filter(is_active=True).exclude(is_superuser=True).exclude(role='ADMIN').exclude(pk=request.user.pk)
     participant_roles = {user.pk: user.get_role_display() for user in users}
 
     return render(request, 'meetings/meeting_form.html', {
@@ -132,6 +132,12 @@ def add_participants(request, pk):
         
     if request.method == 'POST':
         participant_ids = request.POST.getlist('participants')
+        
+        # Always ensure organizer is included in participants
+        organizer_id = str(meeting.organizer.pk)
+        if organizer_id not in participant_ids:
+            participant_ids.append(organizer_id)
+            
         # Use set to sync participants (adds new ones and removes unselected ones)
         meeting.participants.set(participant_ids)
         
