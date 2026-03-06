@@ -5,6 +5,7 @@ from datetime import date
 from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from .models import PayrollBatch, PayrollEntry, AttendanceLog
 import pandas as pd
 import re
@@ -441,12 +442,16 @@ class PayrollService:
 
         # 5. COMMIT ACCUMULATED DATA
         logs_created = 0
-        for (user, att_date), data in global_data_map.items():
-            try:
-                PayrollService._save_attendance_record(user, att_date, data['punches'], data['status'])
-                logs_created += 1
-            except Exception as e:
-                errors.append(f"Save error for {user.username} on {att_date}: {str(e)}")
+        try:
+            with transaction.atomic():
+                for (user, att_date), data in global_data_map.items():
+                    try:
+                        PayrollService._save_attendance_record(user, att_date, data['punches'], data['status'])
+                        logs_created += 1
+                    except Exception as e:
+                        errors.append(f"Save error for {user.username} on {att_date}: {str(e)}")
+        except Exception as e:
+            errors.append(f"Import failed during commit: {str(e)}")
 
         if logs_created == 0 and not errors:
              errors.append("No valid attendance data found. Ensure Employee Names/IDs in Excel match the system.")
@@ -576,15 +581,13 @@ class PayrollService:
         summary_out = out_punches[-1] if out_punches else (sorted_punches[-1][0] if sorted_punches else None)
 
         # 4. Save Log
-        log, _ = AttendanceLog.objects.update_or_create(
-            employee=user, date=att_date,
-            defaults={
-                'check_in': summary_in, 
-                'check_out': summary_out,
-                'status': final_status, 
-                'entry_type': AttendanceLog.EntryType.AUTO
-            }
+        log, _ = AttendanceLog.objects.get_or_create(
+            employee=user, date=att_date
         )
+        log.check_in = summary_in
+        log.check_out = summary_out
+        log.status = final_status
+        log.entry_type = AttendanceLog.EntryType.AUTO
         
         # 5. Save Raw Punches (True breakdown)
         log.raw_punches.all().delete()
@@ -595,8 +598,8 @@ class PayrollService:
                 punch_type=p_type.upper()
             )
             
-        # 6. Final Calculation
-        log.recalculate_duration(punches_list=sorted_punches)
+        # 6. Final Calculation - Recalculate duration and save
+        log.recalculate_duration(punches_list=sorted_punches, skip_save=False)
 
 
     @staticmethod
@@ -630,197 +633,199 @@ class PayrollService:
         if batch.status == PayrollBatch.Status.DRAFT:
              batch.entries.all().delete()
 
-        for emp in employees:
-            basic = emp.salary_basic
-            allowance = emp.salary_allowance
-            gross_monthly = basic + allowance
-            hourly_rate = emp.hourly_salary
-            
-            # 1. Calculate Required Hours & Working Days
-            working_days_count = 0
-            required_work_hours = Decimal('0.00')
-            
-            # Iterate to count working days
-            for d in range(1, num_days + 1):
-                check_date = month_start.replace(day=d)
-                # Check holiday/weekend
-                if not settings.is_holiday(check_date):
-                    working_days_count += 1
-            
-            required_work_hours = Decimal(working_days_count) * Decimal('8.00')
-            
-            # 2. Get Actual Worked Data & Freeze Attendance
-            logs = AttendanceLog.objects.filter(
-                employee=emp, 
-                date__year=month_start.year, 
-                date__month=month_start.month
-            )
-            
-            total_worked_minutes = 0
-            approved_ot_minutes = 0
-            
-            for log in logs:
-                # Freeze
-                if not log.is_locked:
-                    log.is_locked = True
-                    # Recalculate duration one last time to be sure
-                    # log.recalculate_duration() # Optional: heavy operation, assume done on save
-                    log.save(update_fields=['is_locked'])
+        with transaction.atomic():
+            for emp in employees:
+                basic = emp.salary_basic
+                allowance = emp.salary_allowance
+                gross_monthly = basic + allowance
+                hourly_rate = emp.hourly_salary
                 
-                # Use total_work_minutes which is populated by recalculate_duration
-                if log.total_work_minutes:
-                    total_worked_minutes += log.total_work_minutes
+                # 1. Calculate Required Hours & Working Days
+                working_days_count = 0
+                required_work_hours = Decimal('0.00')
                 
-                if log.approved_overtime_minutes:
-                    approved_ot_minutes += log.approved_overtime_minutes
-            
-            # Match UI display rounding (1 decimal place) so exact manual calculation aligns with system
-            actual_work_hours = round(Decimal(total_worked_minutes) / Decimal('60.00'), 1)
-            approved_ot_hours = round(Decimal(approved_ot_minutes) / Decimal('60.00'), 1)
-            
-            # --- Paid Leaves Handling ---
-            import datetime
-            leave_reqs = LeaveRequest.objects.filter(
-                employee=emp,
-                status='APPROVED',
-                start_date__lte=month_start.replace(day=num_days),
-                end_date__gte=month_start
-            )
-            
-            valid_leave_days = Decimal('0.00')
-            for req in leave_reqs:
-                if not req.leave_type.is_paid:
-                    continue
+                # Iterate to count working days
+                for d in range(1, num_days + 1):
+                    check_date = month_start.replace(day=d)
+                    # Check holiday/weekend
+                    if not settings.is_holiday(check_date):
+                        working_days_count += 1
                 
-                # Rule: For sick leave, strictly require the document to be VERIFIED
-                if req.is_sick_leave and req.document_status != 'VERIFIED':
-                    continue
+                required_work_hours = Decimal(working_days_count) * Decimal('8.00')
+                
+                # 2. Get Actual Worked Data & Freeze Attendance
+                logs = AttendanceLog.objects.filter(
+                    employee=emp, 
+                    date__year=month_start.year, 
+                    date__month=month_start.month
+                )
+                
+                total_worked_minutes = 0
+                approved_ot_minutes = 0
+                
+                for log in logs:
+                    # Freeze
+                    if not log.is_locked:
+                        log.is_locked = True
+                        # Recalculate duration one last time to be sure
+                        # log.recalculate_duration() # Optional: heavy operation, assume done on save
+                        log.save(update_fields=['is_locked'])
                     
-                overlap_start = max(req.start_date, month_start)
-                overlap_end = min(req.end_date, month_start.replace(day=num_days))
+                    # Use total_work_minutes which is populated by recalculate_duration
+                    if log.total_work_minutes:
+                        total_worked_minutes += log.total_work_minutes
+                    
+                    if log.approved_overtime_minutes:
+                        approved_ot_minutes += log.approved_overtime_minutes
                 
-                if req.half_day:
-                    if overlap_start <= req.start_date <= overlap_end:
-                        if not settings.is_holiday(req.start_date):
-                            valid_leave_days += Decimal('0.5')
+                # Match UI display rounding (1 decimal place) so exact manual calculation aligns with system
+                actual_work_hours = round(Decimal(total_worked_minutes) / Decimal('60.00'), 1)
+                approved_ot_hours = round(Decimal(approved_ot_minutes) / Decimal('60.00'), 1)
+                
+                # --- Paid Leaves Handling ---
+                import datetime
+                leave_reqs = LeaveRequest.objects.filter(
+                    employee=emp,
+                    status__in=['MGR_APPROVED', 'HR_PROCESSED', 'APPROVED'],
+                    start_date__lte=month_start.replace(day=num_days),
+                    end_date__gte=month_start
+                )
+                
+                valid_leave_days = Decimal('0.00')
+                for req in leave_reqs:
+                    is_paid_leave = (req.payment_status == 'PAID') or (req.leave_type.is_paid and req.payment_status != 'LOP')
+                    if not is_paid_leave:
+                        continue
+                    
+                    # Rule: For sick leave, strictly require the document to be VERIFIED
+                    if req.is_sick_leave and req.document_status != 'VERIFIED':
+                        continue
+                        
+                    overlap_start = max(req.start_date, month_start)
+                    overlap_end = min(req.end_date, month_start.replace(day=num_days))
+                    
+                    if req.half_day:
+                        if overlap_start <= req.start_date <= overlap_end:
+                            if not settings.is_holiday(req.start_date):
+                                valid_leave_days += Decimal('0.5')
+                    else:
+                        for d in range((overlap_end - overlap_start).days + 1):
+                            curr_date = overlap_start + datetime.timedelta(days=d)
+                            if not settings.is_holiday(curr_date):
+                                valid_leave_days += Decimal('1.0')
+                                
+                valid_leave_hours = valid_leave_days * Decimal('8.00')
+                
+                # 3. Evaluate Shortfall (Monthly Satisfaction)
+                # Paid leaves act as accounted work hours
+                effective_worked_hours = actual_work_hours + valid_leave_hours
+                if effective_worked_hours >= required_work_hours:
+                    shortfall_hours = Decimal('0.00')
                 else:
-                    for d in range((overlap_end - overlap_start).days + 1):
-                        curr_date = overlap_start + datetime.timedelta(days=d)
-                        if not settings.is_holiday(curr_date):
-                            valid_leave_days += Decimal('1.0')
-                            
-            valid_leave_hours = valid_leave_days * Decimal('8.00')
-            
-            # 3. Evaluate Shortfall (Monthly Satisfaction)
-            # Paid leaves act as accounted work hours
-            effective_worked_hours = actual_work_hours + valid_leave_hours
-            if effective_worked_hours >= required_work_hours:
-                shortfall_hours = Decimal('0.00')
-            else:
-                shortfall_hours = required_work_hours - effective_worked_hours
-            
-            # 4. Calculate LOP
-            # "LOP_amount = shortfall_hours * hourly_rate"
-            lop_amount = shortfall_hours * hourly_rate
-            
-            # 5. Calculate OT Pay
-            # "approved_ot_pay = approved_ot_hours * hourly_rate * ot_multiplier"
-            ot_multiplier = Decimal('1.0') # Default 1.0 as standard if not specified, usually 1.25 or 1.5 in UAE/India
-            # User requirement 11: "ot_multiplier". Let's assume 1.0 unless we find a setting. 
-            # Given "Extra hours ... do NOT match OT", 1.0 is safe.
-            approved_ot_pay = approved_ot_hours * hourly_rate * ot_multiplier
-            
-            # 6. Final Calculation
-            # "gross_salary = base_salary + approved_ot_pay + other_earnings"
-            # Base salary is full monthly (basic + allowance)
-            base_pay = gross_monthly 
-            gross_earnings = base_pay + approved_ot_pay # + variable_pay if any
-            
-            # Create Entry
-            payroll_entry = PayrollEntry.objects.create(
-                batch=batch,
-                employee=emp,
-                basic_salary=basic,
-                allowances=allowance,
+                    shortfall_hours = required_work_hours - effective_worked_hours
                 
-                # Stats
-                days_worked=working_days_count, # Valid approximation or should use logs.count()? 
-                # User wants "Required Hours, Worked Hours". 
-                # Let's just put working_days_count as a placeholder for days_worked or use distinct logs
-                # Actually days_worked in model is Integer. Let's use the Working Days Count as "Days Expected" or logs.count() as "Days Attended".
-                # For now, put logs.count() if preferred, but existing logic used 30.
-                days_absent=int(shortfall_hours // Decimal('8.00')), # Calculated dynamically via shortfall
-                total_full_days=0, # Not used in new model
-                total_half_days=0,
+                # 4. Calculate LOP
+                # "LOP_amount = shortfall_hours * hourly_rate"
+                lop_amount = shortfall_hours * hourly_rate
                 
-                # New Fields
-                required_work_hours=round(required_work_hours, 2),
-                actual_work_hours=round(actual_work_hours, 2),
-                shortfall_work_hours=round(shortfall_hours, 2),
-                lop_deduction=round(lop_amount, 2),
-                approved_ot_hours=round(approved_ot_hours, 2),
-                approved_ot_minutes=approved_ot_minutes,
+                # 5. Calculate OT Pay
+                # "approved_ot_pay = approved_ot_hours * hourly_rate * ot_multiplier"
+                ot_multiplier = Decimal('1.0') # Default 1.0 as standard if not specified, usually 1.25 or 1.5 in UAE/India
+                # User requirement 11: "ot_multiplier". Let's assume 1.0 unless we find a setting. 
+                # Given "Extra hours ... do NOT match OT", 1.0 is safe.
+                approved_ot_pay = approved_ot_hours * hourly_rate * ot_multiplier
                 
-                # Financials
-                base_pay=round(base_pay, 2),
-                ot_pay=round(approved_ot_pay, 2),
-                gross_salary=round(gross_earnings, 2),
-                deductions=0,
-                net_salary=0,
-                iban=emp.iban or ""
-            )
-            
-            # 7. Deductions
-            total_deductions = Decimal('0.00')
-            
-            # A. Recurring Deductions
-            recurring = EmployeeDeduction.objects.filter(employee=emp, is_active=True)
-            for ded in recurring:
-                val = ded.amount
-                if ded.percentage > 0:
-                     val = (basic * ded.percentage) / 100
+                # 6. Final Calculation
+                # "gross_salary = base_salary + approved_ot_pay + other_earnings"
+                # Base salary is full monthly (basic + allowance)
+                base_pay = gross_monthly 
+                gross_earnings = base_pay + approved_ot_pay # + variable_pay if any
                 
-                PayrollDeduction.objects.create(
-                    payroll_entry=payroll_entry,
-                    component=ded.component,
-                    amount=val,
-                    approved_amount=val,
-                    is_waived=False
+                # Create Entry
+                payroll_entry = PayrollEntry.objects.create(
+                    batch=batch,
+                    employee=emp,
+                    basic_salary=basic,
+                    allowances=allowance,
+                    
+                    # Stats
+                    days_worked=working_days_count, # Valid approximation or should use logs.count()? 
+                    # User wants "Required Hours, Worked Hours". 
+                    # Let's just put working_days_count as a placeholder for days_worked or use distinct logs
+                    # Actually days_worked in model is Integer. Let's use the Working Days Count as "Days Expected" or logs.count() as "Days Attended".
+                    # For now, put logs.count() if preferred, but existing logic used 30.
+                    days_absent=int(shortfall_hours // Decimal('8.00')), # Calculated dynamically via shortfall
+                    total_full_days=0, # Not used in new model
+                    total_half_days=0,
+                    
+                    # New Fields
+                    required_work_hours=round(required_work_hours, 2),
+                    actual_work_hours=round(actual_work_hours, 2),
+                    shortfall_work_hours=round(shortfall_hours, 2),
+                    lop_deduction=round(lop_amount, 2),
+                    approved_ot_hours=round(approved_ot_hours, 2),
+                    approved_ot_minutes=approved_ot_minutes,
+                    
+                    # Financials
+                    base_pay=round(base_pay, 2),
+                    ot_pay=round(approved_ot_pay, 2),
+                    gross_salary=round(gross_earnings, 2),
+                    deductions=0,
+                    net_salary=0,
+                    iban=emp.iban or ""
                 )
-                total_deductions += val
                 
-            # B. LOP Deduction (As a specialized deduction or just subtract from Net?)
-            # Requirement 17: "net_salary = gross_salary - total_deductions - LOP_amount"
-            # We can better visualize it by adding a System Deduction for LOP
-            if lop_amount > 0:
-                # Find or Create LOP Component
-                lop_component, _ = DeductionComponent.objects.get_or_create(
-                    name="Loss of Pay (Shortfall)",
-                    defaults={'is_statutory': True, 'is_recurring': False} 
-                )
-                # It acts as a Company Deduction (Section 14 says "Company deductions (LOP adjustments...)" implies it can be waived)
-                # Section 13 says Statutory are non-waivable.
-                # Section 14 says Company (LOP adjustments...) may be waived.
-                # So LOP is Company Deduction.
-                lop_component.is_statutory = False
-                lop_component.save()
+                # 7. Deductions
+                total_deductions = Decimal('0.00')
                 
-                PayrollDeduction.objects.create(
-                    payroll_entry=payroll_entry,
-                    component=lop_component,
-                    amount=lop_amount,
-                    approved_amount=lop_amount,
-                    is_waived=False
-                )
-                total_deductions += lop_amount
-
-            # Final Net
-            # ensure net_salary >= 0
-            net_pay = max(Decimal('0.00'), gross_earnings - total_deductions)
-            
-            payroll_entry.deductions = round(total_deductions, 2)
-            payroll_entry.net_salary = round(net_pay, 2)
-            payroll_entry.save()
+                # A. Recurring Deductions
+                recurring = EmployeeDeduction.objects.filter(employee=emp, is_active=True)
+                for ded in recurring:
+                    val = ded.amount
+                    if ded.percentage > 0:
+                         val = (basic * ded.percentage) / 100
+                    
+                    PayrollDeduction.objects.create(
+                        payroll_entry=payroll_entry,
+                        component=ded.component,
+                        amount=val,
+                        approved_amount=val,
+                        is_waived=False
+                    )
+                    total_deductions += val
+                    
+                # B. LOP Deduction (As a specialized deduction or just subtract from Net?)
+                # Requirement 17: "net_salary = gross_salary - total_deductions - LOP_amount"
+                # We can better visualize it by adding a System Deduction for LOP
+                if lop_amount > 0:
+                    # Find or Create LOP Component
+                    lop_component, _ = DeductionComponent.objects.get_or_create(
+                        name="Loss of Pay (Shortfall)",
+                        defaults={'is_statutory': True, 'is_recurring': False} 
+                    )
+                    # It acts as a Company Deduction (Section 14 says "Company deductions (LOP adjustments...)" implies it can be waived)
+                    # Section 13 says Statutory are non-waivable.
+                    # Section 14 says Company (LOP adjustments...) may be waived.
+                    # So LOP is Company Deduction.
+                    lop_component.is_statutory = False
+                    lop_component.save()
+                    
+                    PayrollDeduction.objects.create(
+                        payroll_entry=payroll_entry,
+                        component=lop_component,
+                        amount=lop_amount,
+                        approved_amount=lop_amount,
+                        is_waived=False
+                    )
+                    total_deductions += lop_amount
+    
+                # Final Net
+                # ensure net_salary >= 0
+                net_pay = max(Decimal('0.00'), gross_earnings - total_deductions)
+                
+                payroll_entry.deductions = round(total_deductions, 2)
+                payroll_entry.net_salary = round(net_pay, 2)
+                payroll_entry.save()
 
     @staticmethod
     def get_monthly_attendance_report(month_date: date):
@@ -877,10 +882,9 @@ class PayrollService:
             avg_hours = total_hours / Decimal(days_present) if days_present > 0 else Decimal('0.00')
             
             # B. Leave Count
-            # Count days within this month that are part of an APPROVED LeaveRequest
             leave_reqs = LeaveRequest.objects.filter(
                 employee=emp,
-                status='APPROVED',
+                status__in=['MGR_APPROVED', 'HR_PROCESSED', 'APPROVED'],
                 start_date__lte=end_date,
                 end_date__gte=start_date
             )

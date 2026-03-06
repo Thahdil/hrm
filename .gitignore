@@ -7,3 +7,6 @@ __pycache__/
 db_unified.dbml
 **.sqlite3
 **.db
+src/media/sif_files/BankTransfer_202602_qkCTBge.csv
+src/media/sif_files/BankTransfer_202602_ckbZGPy.csv
+src/media/sif_files/BankTransfer_202603.csv

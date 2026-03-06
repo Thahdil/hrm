@@ -3,10 +3,35 @@ Signal handlers for automatic audit logging
 Tracks model-level changes with old/new value comparison
 """
 from django.db.models.signals import post_save, post_delete, pre_save
+from django.db.backends.signals import connection_created
 from django.dispatch import receiver
 from django.contrib.contenttypes.models import ContentType
 from core.models import AuditLog
 import threading
+
+
+@receiver(connection_created)
+def set_sqlite_pragma(sender, connection, **kwargs):
+    """
+    Optimizes SQLite for concurrency and performance.
+    WAL mode allows simultaneous readers and writers.
+    """
+    if connection.vendor == 'sqlite':
+        import platform
+        cursor = connection.cursor()
+        
+        # Optimize SQLite for concurrency and performance.
+        # WAL mode is great for production Linux servers but can cause 
+        # 'Disk I/O Error' on macOS if the folder is synced (iCloud/Dropbox).
+        mode = 'WAL' if platform.system() != 'Darwin' else 'DELETE'
+        
+        try:
+            cursor.execute(f'PRAGMA journal_mode={mode};')
+            cursor.execute('PRAGMA synchronous=NORMAL;')
+            cursor.execute('PRAGMA busy_timeout=10000;') # 10s wait
+        except Exception:
+            # Fallback to DELETE if WAL fails
+            cursor.execute('PRAGMA journal_mode=DELETE;')
 
 # Thread-local storage for tracking old values
 _thread_locals = threading.local()
