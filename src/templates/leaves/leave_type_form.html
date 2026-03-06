@@ -102,6 +102,38 @@
                         <h4 class="section-title" style="margin-bottom: 16px; margin-left: 4px;">Additional Settings</h4>
                         
                         <div style="display: flex; gap: 24px;">
+                            <label class="toggle-card" style="border-left: 4px solid var(--primary);">
+                                <div class="toggle-checkbox-wrapper">
+                                    {{ form.allow_half_day }}
+                                </div>
+                                <div>
+                                    <div class="toggle-title">Allow Half Day</div>
+                                    <div class="toggle-desc">Permit employees to request 0.5 day leave</div>
+                                </div>
+                            </label>
+
+                            <label class="toggle-card">
+                                <div class="toggle-checkbox-wrapper">
+                                    {{ form.allow_unlimited }}
+                                </div>
+                                <div>
+                                    <div class="toggle-title">Unlimited Leave</div>
+                                    <div class="toggle-desc">Skip entitlement and balance checks</div>
+                                </div>
+                            </label>
+
+                            <label class="toggle-card">
+                                <div class="toggle-checkbox-wrapper">
+                                    {{ form.hidden_unless_used }}
+                                </div>
+                                <div>
+                                    <div class="toggle-title">Hidden Policy</div>
+                                    <div class="toggle-desc">Only show on dashboard once used by employee</div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div style="display: flex; gap: 24px; margin-top: 16px;">
                             <label class="toggle-card">
                                 <div class="toggle-checkbox-wrapper">
                                     {{ form.is_paid }}
@@ -138,7 +170,7 @@
                                 </div>
                                 <div>
                                     <div class="toggle-title">Require Document</div>
-                                    <div class="toggle-desc">Must upload proof after approval (e.g. Sick Leave)</div>
+                                    <div class="toggle-desc">Must upload proof after approval (medical cert, etc)</div>
                                 </div>
                             </label>
                         </div>
