@@ -177,7 +177,7 @@
             <div>
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
                     {% if request.GET.from == 'summary' %}
-                    <a href="{% url 'attendance_summary' %}" style="width: 36px; height: 36px; background: var(--gray-100); color: var(--text-secondary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; text-decoration: none; transition: all 0.2s; margin-right: 4px;" onmouseover="this.style.background='var(--gray-200)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='var(--gray-100)'; this.style.color='var(--text-secondary)'">
+                    <a href="{% url 'attendance_summary' %}?month={{ start_date|slice:':7' }}&q={{ request.GET.from_q }}" style="width: 36px; height: 36px; background: var(--gray-100); color: var(--text-secondary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; text-decoration: none; transition: all 0.2s; margin-right: 4px;" onmouseover="this.style.background='var(--gray-200)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='var(--gray-100)'; this.style.color='var(--text-secondary)'">
                         <i class="ri-arrow-left-line"></i>
                     </a>
                     {% endif %}
@@ -186,10 +186,32 @@
                     </div>
                     <h1 style="font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.02em;">Daily Attendance Logs</h1>
                 </div>
-                <p style="font-size: 12.5px; color: var(--gray-500); margin: 0; font-weight: 500;">
-                    <span style="color: var(--primary); font-weight: 700;">{{ logs|length }}</span> biometric records synchronized
+                <p style="font-size: 13px; color: var(--gray-500); margin: 0; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                    <span style="display: flex; align-items: center; gap: 4px;">
+                        <span style="color: var(--primary); font-weight: 800;">{{ real_log_count }}</span> 
+                        <span style="color: var(--gray-400);">biometric records</span>
+                    </span>
+                    {% if reconstructed_count > 0 %}
+                    <span style="color: var(--gray-300);">|</span>
+                    <span style="display: flex; align-items: center; gap: 4px;">
+                        <span style="color: var(--warning); font-weight: 800;">{{ reconstructed_count }}</span> 
+                        <span style="color: var(--gray-400);">days reconstructed</span>
+                    </span>
+                    {% endif %}
                 </p>
             </div>
+
+            {% if request.GET.from == 'summary' and real_log_count == 0 %}
+            <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 12px 24px; border-radius: 12px; display: flex; align-items: center; gap: 16px; margin-right: 20px;">
+                <div style="width: 32px; height: 32px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
+                    <i class="ri-error-warning-line"></i>
+                </div>
+                <div>
+                    <div style="font-size: 13px; font-weight: 800; color: #ef4444; margin-bottom: 2px;">No Attendance Data Found</div>
+                    <p style="font-size: 11px; color: var(--gray-500); margin: 0; font-weight: 600;">Showing system-generated placeholders for <strong>{{ search_query }}</strong>. Please check if biometric logs have been imported for this period.</p>
+                </div>
+            </div>
+            {% endif %}
 
             {% if user.is_staff or user.role == 'ADMIN' or user.role == 'HR_MANAGER' or user.role == 'CEO' %}
             <div style="display: flex; gap: 12px;">
@@ -325,9 +347,15 @@
                                     {% if log.remarks == 'Work from Home' or log.remarks == 'Work From Home' or 'WFH' in log.remarks or 'Work from Home' in log.remarks %}WFH{% else %}{{ log.remarks|cut:"Manual Punch Approved: "|truncatechars:35 }}{% endif %}
                                 </div>
                                 {% else %}
+                                {% if not log.pk %}
+                                <div style="font-size: 8px; font-weight: 900; text-transform: uppercase; color: var(--gray-400); background: var(--gray-100); padding: 1px 5px; border-radius: 3px; letter-spacing: 0.1em;">
+                                    SYSTEM RECONSTRUCTED
+                                </div>
+                                {% else %}
                                 <div style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); background: var(--gray-50); padding: 2px 6px; border-radius: 4px; letter-spacing: 0.05em; border: 1px solid var(--border-color);">
                                     IN OFFICE
                                 </div>
+                                {% endif %}
                                 {% endif %}
                             </div>
                         </td>
@@ -388,6 +416,10 @@
                             {% elif log.status == 'HalfDay' %}
                             <div style="display: inline-flex; align-items: center; gap: 5px; background: var(--status-pending-bg); color: var(--status-pending-text); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid var(--status-pending-bg);">
                                 <i class="ri-time-line" style="font-size: 12px;"></i> HALF DAY
+                            </div>
+                            {% elif log.status == 'Leave' %}
+                            <div style="display: inline-flex; align-items: center; gap: 5px; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; padding: 4px 14px; border-radius: 20px; font-size: 10px; font-weight: 900; border: 1px solid rgba(139, 92, 246, 0.2);">
+                                <i class="ri-suitcase-line" style="font-size: 12px;"></i> ON LEAVE
                             </div>
                             {% elif log.status == 'DISPUTED' %}
                             <div style="display: inline-flex; align-items: center; gap: 5px; background: var(--status-rejected-bg); color: var(--status-rejected-text); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800;">

@@ -44,6 +44,7 @@ class AttendanceLog(models.Model):
         from datetime import datetime, timedelta
         
         if punches_data is None:
+            if not self.pk: return []
             punches = list(self.raw_punches.all().order_by('time'))
             if not punches: return []
             punches_data = [(p.time, p.punch_type.lower()) for p in punches]
@@ -136,7 +137,7 @@ class AttendanceLog(models.Model):
         """Returns duration in 'X hrs Y mins' format following the 'Raw Punch Truth' logic"""
         status_upper = str(self.status or "").upper()
         # 0. Zero-Duration Rule (Strictly enforced as per user request)
-        if any(kw in status_upper for kw in ['ABSENT', 'WEEKLYOFF', 'HOLIDAY']):
+        if any(kw in status_upper for kw in ['ABSENT', 'WEEKLYOFF', 'HOLIDAY', 'LEAVE']):
             return "0 hrs 0 mins"
 
         cleaned = self._get_cleaned_punches()
@@ -161,7 +162,7 @@ class AttendanceLog(models.Model):
     def segments(self):
         """Returns paired IN/OUT segments for breakdown using the 'Raw Punch Truth' logic"""
         status_upper = str(self.status).upper()
-        if any(kw in status_upper for kw in ['ABSENT', 'WEEKLYOFF', 'HOLIDAY']):
+        if any(kw in status_upper for kw in ['ABSENT', 'WEEKLYOFF', 'HOLIDAY', 'LEAVE']):
             return []
 
         cleaned = self._get_cleaned_punches()

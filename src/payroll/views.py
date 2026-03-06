@@ -114,8 +114,12 @@ def attendance_list(request):
     
     # Filters
     search_query = request.GET.get('search', '').strip()
+    emp_pk = request.GET.get('employee_id')
     date_filter = None
     
+    if emp_pk:
+        logs = logs.filter(employee_id=emp_pk)
+
     if search_query:
         # Check if search query is a date
         from datetime import datetime
@@ -130,7 +134,7 @@ def attendance_list(request):
                 Q(employee__full_name__icontains=search_query) |
                 Q(employee__username__icontains=search_query) |
                 Q(employee__employee_id__icontains=search_query) |
-                Q(employee__id__icontains=search_id)
+                Q(employee__id__exact=search_id if search_id.isdigit() else -1)
             )
         
     status_filter = request.GET.get('status', '')
@@ -149,29 +153,140 @@ def attendance_list(request):
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
     
+    view_start_date = None
+    view_end_date = None
+
     if start_date_str:
         from datetime import datetime
         try:
-            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-            logs = logs.filter(date__gte=start_date)
+            view_start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            logs = logs.filter(date__gte=view_start_date)
         except ValueError:
             pass
             
     if end_date_str:
         from datetime import datetime
         try:
-            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-            logs = logs.filter(date__lte=end_date)
+            view_end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            logs = logs.filter(date__lte=view_end_date)
         except ValueError:
             pass
+
+    # --- ADVANCED: Full Log Reconstruction (For "Summary" drill-down) ---
+    # If viewing a specific employee for a specific month, fill in the "Missing" days (Absences/Weekends)
+    if request.GET.get('from') == 'summary' and view_start_date and view_end_date and (search_query or emp_pk):
+        # Try to identify which employee we are looking at precisely
+        # (We use the filtered logs or re-query if logs are empty)
+        target_employee = None
+        
+        if emp_pk:
+            target_employee = User.objects.filter(id=emp_pk).first()
+        
+        if not target_employee:
+            if logs.exists():
+                # Check if all logs are for the same employee
+                emp_ids = logs.values_list('employee_id', flat=True).distinct()
+                if emp_ids.count() == 1:
+                    target_employee = User.objects.get(id=emp_ids[0])
+            
+            if not target_employee and search_query:
+                # Try to resolve employee from search query if no logs found
+                search_id = search_query.replace('EMP-', '').replace('emp-', '')
+                emp_match = User.objects.filter(
+                    Q(full_name__iexact=search_query) |
+                    Q(username__iexact=search_query) |
+                    Q(employee_id__iexact=search_query) |
+                    Q(id=search_id if search_id.isdigit() else -1)
+                ).first()
+                if emp_match:
+                    target_employee = emp_match
+
+        if target_employee:
+            # We have a specific employee! Let's build a day-by-day log list.
+            from datetime import timedelta
+            from core.models import CompanySettings
+            from leaves.models import LeaveRequest
+            import calendar
+            
+            settings = CompanySettings.load()
+            full_logs = []
+            
+            # Map existing logs by date for quick access
+            log_map = {log.date: log for log in logs}
+            
+            curr = view_start_date
+            while curr <= view_end_date:
+                if curr in log_map:
+                    full_logs.append(log_map[curr])
+                else:
+                    # Create a "Virtual" log for this date
+                    virtual_status = "Absent"
+                    is_holiday_flag = False
+                    is_absent_flag = True
+                    is_compliant_flag = False
+                    
+                    if settings.is_holiday(curr):
+                        # Determine if it's a WeeklyOff or a Holiday
+                        # (is_holiday returns True for both)
+                        if curr.weekday() == 6: # Sunday
+                             virtual_status = "WeeklyOff"
+                        elif settings.second_saturday_holiday and curr.weekday() == 5:
+                             # Check if it's 2nd Saturday
+                             month_calendar = calendar.monthcalendar(curr.year, curr.month)
+                             saturdays = [row[calendar.SATURDAY] for row in month_calendar if row[calendar.SATURDAY] != 0]
+                             if len(saturdays) > 1 and curr.day == saturdays[1]:
+                                 virtual_status = "WeeklyOff"
+                             else:
+                                 virtual_status = "Holiday"
+                        else:
+                             virtual_status = "Holiday"
+                        
+                        is_holiday_flag = True
+                        is_absent_flag = False
+                    else:
+                        # Check if they are on APPROVED Leave this day
+                        has_leave = LeaveRequest.objects.filter(
+                            employee=target_employee,
+                            status__in=['MGR_APPROVED', 'HR_PROCESSED', 'APPROVED'],
+                            start_date__lte=curr,
+                            end_date__gte=curr
+                        ).exists()
+                        if has_leave:
+                            virtual_status = "Leave"
+                            is_absent_flag = False
+                    
+                    v_log = AttendanceLog(
+                        employee=target_employee,
+                        date=curr,
+                        status=virtual_status,
+                        is_absent=is_absent_flag,
+                        is_compliant=False,
+                        total_work_minutes=0
+                    )
+                    full_logs.append(v_log)
+                curr += timedelta(days=1)
+            
+            # Sort reversed to match original behavior
+            logs = sorted(full_logs, key=lambda x: x.date, reverse=True)
 
     # Pending requests count for manager badge
     pending_count = 0
     if request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['ADMIN', 'HR_MANAGER', 'CEO']):
         pending_count = ManualPunchRequest.objects.filter(status='PENDING').count()
 
+    # Calculate real log count (excluding virtual ones)
+    real_log_count = 0
+    reconstructed_count = 0
+    if isinstance(logs, list):
+        real_log_count = sum(1 for log in logs if log.pk)
+        reconstructed_count = len(logs) - real_log_count
+    else:
+        real_log_count = logs.count()
+
     return render(request, 'payroll/attendance_list.html', {
         'logs': logs,
+        'real_log_count': real_log_count,
+        'reconstructed_count': reconstructed_count,
         'search_query': search_query,
         'status_filter': status_filter,
         'start_date': start_date_str,
