@@ -678,8 +678,12 @@ class PayrollService:
                     if log.approved_overtime_minutes:
                         approved_ot_minutes += log.approved_overtime_minutes
                 
+                # Deduct approved OT from total to find the base regular worked time.
+                # This prevents double dipping where the OT hours implicitly offset absences AND get paid as OT.
+                base_worked_minutes = max(0, total_worked_minutes - approved_ot_minutes)
+                
                 # Match UI display rounding (1 decimal place) so exact manual calculation aligns with system
-                actual_work_hours = round(Decimal(total_worked_minutes) / Decimal('60.00'), 1)
+                actual_work_hours = round(Decimal(base_worked_minutes) / Decimal('60.00'), 1)
                 approved_ot_hours = round(Decimal(approved_ot_minutes) / Decimal('60.00'), 1)
                 
                 # --- Paid Leaves Handling ---
@@ -723,6 +727,14 @@ class PayrollService:
                     shortfall_hours = Decimal('0.00')
                 else:
                     shortfall_hours = required_work_hours - effective_worked_hours
+                    
+                # --- Compensate LOP with OT ---
+                if shortfall_hours > Decimal('0.00') and approved_ot_hours > Decimal('0.00'):
+                    compensation = min(shortfall_hours, approved_ot_hours)
+                    shortfall_hours -= compensation
+                    approved_ot_hours -= compensation
+                    # Add back the compensated hours to actual_work_hours for UI display logic
+                    actual_work_hours += compensation
                 
                 # 4. Calculate LOP
                 # "LOP_amount = shortfall_hours * hourly_rate"

@@ -55,8 +55,8 @@ class CompanySettings(models.Model):
 
     def is_holiday(self, check_date):
         """
-        Logic to determine if a given date is a holiday based on settings.
-        Handles fixed working/non-working days, Sundays, and 2nd Saturday.
+        Logic to determine if a given date is a holiday.
+        Strictly defined by user: Only 2nd Saturdays, Sundays, and Public Holidays limit.
         """
         # 1. Check Public Holidays first
         if PublicHoliday.objects.filter(date=check_date).exists():
@@ -66,25 +66,15 @@ class CompanySettings(models.Model):
         if PublicHoliday.objects.filter(is_recurring=True, date__month=check_date.month, date__day=check_date.day).exists():
             return True
 
-        # 2. Check Sundays (Default Holiday)
+        # 2. Check Sundays (Always a Holiday)
         if check_date.weekday() == 6: # Sunday
-            return not self.work_sunday # Usually True
-            
-        # 3. Check Saturday & 2nd Saturday
-        if check_date.weekday() == 5: # Saturday
-            # Is it the 2nd Saturday? (Day between 8 and 14)
-            is_second_sat = 8 <= check_date.day <= 14
-            if is_second_sat and self.second_saturday_holiday:
-                return True
-            return not self.work_saturday
-
-        # 4. Check other weekday overrides
-        days = [
-            self.work_monday, self.work_tuesday, self.work_wednesday, 
-            self.work_thursday, self.work_friday
-        ]
-        if not days[check_date.weekday()]:
             return True
+            
+        # 3. Check 2nd Saturday (Always a Holiday)
+        if check_date.weekday() == 5: # Saturday
+            is_second_sat = 8 <= check_date.day <= 14
+            if is_second_sat:
+                return True
 
         return False
 
