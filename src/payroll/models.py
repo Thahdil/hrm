@@ -3,21 +3,21 @@ from django.conf import settings
 
 class AttendanceLog(models.Model):
     employee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='attendance_logs')
-    date = models.DateField()
+    date = models.DateField(db_index=True)
     check_in = models.TimeField(null=True, blank=True)
     check_out = models.TimeField(null=True, blank=True)
-    is_absent = models.BooleanField(default=False)
+    is_absent = models.BooleanField(default=False, db_index=True)
     
     # Compliance & Duration
-    total_work_minutes = models.IntegerField(default=0, help_text="Total minutes worked")
+    total_work_minutes = models.IntegerField(default=0, help_text="Total minutes worked", db_index=True)
     is_compliant = models.BooleanField(default=False, help_text="True if > 8 hours (480 mins)")
     
     # Payroll & OT
     approved_overtime_minutes = models.IntegerField(default=0, help_text="Manager approved OT minutes")
-    is_locked = models.BooleanField(default=False, help_text="If true, attendance cannot be modified by sync/manual edits")
+    is_locked = models.BooleanField(default=False, help_text="If true, attendance cannot be modified by sync/manual edits", db_index=True)
     
     # Audit
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Status(models.TextChoices):
@@ -29,7 +29,7 @@ class AttendanceLog(models.Model):
         DISPUTED = "DISPUTED", "Disputed"
         VOID = "VOID", "Void"
 
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PRESENT)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PRESENT, db_index=True)
     
     def _get_cleaned_punches(self, punches_data=None):
         """
@@ -404,8 +404,8 @@ class ManualPunchRequest(models.Model):
 
 class RawPunch(models.Model):
     attendance_log = models.ForeignKey(AttendanceLog, on_delete=models.CASCADE, related_name='raw_punches')
-    time = models.TimeField()
-    punch_type = models.CharField(max_length=10, blank=True, help_text="IN, OUT, or raw code")
+    time = models.TimeField(db_index=True)
+    punch_type = models.CharField(max_length=10, blank=True, help_text="IN, OUT, or raw code", db_index=True)
     
     class Meta:
         ordering = ['time']
@@ -416,12 +416,12 @@ class PayrollBatch(models.Model):
         FINALIZED = "FINALIZED", "Finalized"
         VOID = "VOID", "Void"
 
-    month = models.DateField(help_text="First day of the month for this payroll")
+    month = models.DateField(help_text="First day of the month for this payroll", db_index=True)
     generated_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     sif_file = models.FileField(upload_to='sif_files/', null=True, blank=True)
     
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT, db_index=True)
 
     def __str__(self):
         return f"Payroll {self.month.strftime('%B %Y')}"

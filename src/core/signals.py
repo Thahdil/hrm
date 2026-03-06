@@ -28,6 +28,8 @@ def set_sqlite_pragma(sender, connection, **kwargs):
         try:
             cursor.execute(f'PRAGMA journal_mode={mode};')
             cursor.execute('PRAGMA synchronous=NORMAL;')
+            cursor.execute('PRAGMA cache_size=-64000;')
+            cursor.execute('PRAGMA temp_store=MEMORY;')
             cursor.execute('PRAGMA busy_timeout=10000;') # 10s wait
         except Exception:
             # Fallback to DELETE if WAL fails

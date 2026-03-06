@@ -10,3 +10,6 @@ db_unified.dbml
 src/media/sif_files/BankTransfer_202602_qkCTBge.csv
 src/media/sif_files/BankTransfer_202602_ckbZGPy.csv
 src/media/sif_files/BankTransfer_202603.csv
+src/media/sif_files/BankTransfer_202602_HI9YW4a.csv
+.gitignore
+src/media/sif_files/BankTransfer_202603_FtvD6k5.csv
