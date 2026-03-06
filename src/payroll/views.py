@@ -676,7 +676,7 @@ def attendance_summary(request):
         'selected_month': month_str,
         'report_date': report_date,
         'search_query': search_query,
-        'threshold': 7.5 # Threshold for average hours highlight
+        'threshold': 8.0 # Threshold for average hours highlight
     })
 
 from .forms import ManualPunchRequestForm
