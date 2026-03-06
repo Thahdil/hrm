@@ -5,11 +5,12 @@ __pycache__/
 .DS_Store
 .env
 db_unified.dbml
+# Database files
 **.sqlite3
 **.db
-src/media/sif_files/BankTransfer_202602_qkCTBge.csv
-src/media/sif_files/BankTransfer_202602_ckbZGPy.csv
-src/media/sif_files/BankTransfer_202603.csv
-src/media/sif_files/BankTransfer_202602_HI9YW4a.csv
-.gitignore
-src/media/sif_files/BankTransfer_202603_FtvD6k5.csv
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Media and attachments
+src/media/sif_files/*
+!src/media/sif_files/.gitkeep

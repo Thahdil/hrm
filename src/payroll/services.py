@@ -914,12 +914,41 @@ class PayrollService:
                 else:
                     days = (overlap_end - overlap_start).days + 1
                     leave_days += Decimal(str(days))
+
+            # C. Absent Days
+            # Logic: Working days where there is NO punch AND NO approved leave (taking into account half-days)
+            absent_days = Decimal('0.00')
+            for d in range(1, num_days + 1):
+                check_date = date(year, month, d)
+                if settings.is_holiday(check_date):
+                    continue
+                
+                has_punch = AttendanceLog.objects.filter(employee=emp, date=check_date, check_in__isnull=False).exists()
+                if has_punch:
+                    continue
+                    
+                # Check for leaves on this day
+                day_leaves = LeaveRequest.objects.filter(
+                    employee=emp,
+                    status__in=['MGR_APPROVED', 'HR_PROCESSED', 'APPROVED'],
+                    start_date__lte=check_date,
+                    end_date__gte=check_date
+                )
+                
+                if not day_leaves.exists():
+                    absent_days += Decimal('1.0')
+                else:
+                    # If only half-day leaves exist and no punch, it's 0.5 absent
+                    is_full_leave = any(not r.half_day for r in day_leaves)
+                    if not is_full_leave:
+                        absent_days += Decimal('0.5')
             
             report_data.append({
                 'employee': emp,
                 'total_working_days': working_days_count,
                 'days_present': days_present,
                 'leave_count': leave_days,
+                'absent_days': absent_days,
                 'total_present_hours': round(total_hours, 2),
                 'average_hours': round(avg_hours, 2),
             })
