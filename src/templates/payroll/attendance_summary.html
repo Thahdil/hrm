@@ -1,14 +1,37 @@
 {% extends 'base_modern.html' %}
+{% load static %}
 
-{% block title %}Attendance Summary - EONS HRM{% endblock %}
+{% block title %}Attendance Summary - {{ report_date|date:"F Y" }} - EONS HRM{% endblock %}
 {% block header_title %}Attendance Summary Report{% endblock %}
 
 {% block content %}
 <div class="flex-1" style="width: 100%; animation: fadeIn 0.4s ease-out; display: flex; flex-direction: column; padding-bottom: 80px;">
     <div class="card full-height-card" style="border: none; background: var(--bg-surface); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-md);">
         
+        <!-- PDF Header (visible only on print) -->
+        <div class="print-only-header" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1.5px solid #000000; margin-bottom: 24px;">
+                <!-- Logo Block -->
+                <div style="width: 20%; display: flex; align-items: center;">
+                    <img src="{% static 'img/logo_color.png' %}" alt="Logo" style="height: 38px; width: auto; object-fit: contain;">
+                </div>
+                
+                <!-- Centered Title Block -->
+                <div style="width: 60%; text-align: center;">
+                    <h1 style="font-size: 24px; font-weight: 800; color: #000000; margin: 0; letter-spacing: -0.01em; text-transform: uppercase;">Attendance Summary</h1>
+                    <p style="font-size: 13px; color: #000000; margin: 4px 0 0 0; font-weight: 700;">Report for Period: {{ report_date|date:"F Y" }}</p>
+                </div>
+                
+                <!-- Metadata Block -->
+                <div style="text-align: right; width: 20%;">
+                    <div style="font-size: 10px; font-weight: 800; color: #000000; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Nexteons Solutions</div>
+                    <div style="font-size: 9px; color: #4b5563; font-weight: 600;">Generated on: {% now "d M Y, H:i" %}</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Header -->
-        <div style="padding: 24px 32px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--gray-100); flex-shrink: 0;">
+        <div class="report-header-section" style="padding: 24px 32px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--gray-100); flex-shrink: 0;">
             <div>
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
                     <a href="{% url 'attendance_list' %}" style="width: 40px; height: 40px; background: var(--gray-100); color: var(--text-secondary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='var(--gray-200)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='var(--gray-100)'; this.style.color='var(--text-secondary)'">
@@ -35,7 +58,7 @@
         </div>
 
         <!-- Filter Bar -->
-        <div style="padding: 16px 32px; background: var(--gray-50); border-bottom: 1px solid var(--border-color);">
+        <div class="filter-bar-container" style="padding: 16px 32px; background: var(--gray-50); border-bottom: 1px solid var(--border-color);">
             <form method="get" id="summaryFilterForm" style="display: flex; gap: 16px; align-items: flex-end;">
                 <div style="min-width: 200px;">
                     <label style="font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Select Month / Year</label>
@@ -56,7 +79,7 @@
                 
                 <div style="flex-grow: 1;"></div>
                 
-                <div style="display: flex; align-items: center; gap: 20px; background: white; padding: 8px 16px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <div class="filter-legend" style="display: flex; align-items: center; gap: 20px; background: white; padding: 8px 16px; border-radius: 12px; border: 1px solid var(--border-color);">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="width: 12px; height: 12px; border-radius: 3px; background: #ef4444;"></span>
                         <span style="font-size: 12px; font-weight: 600; color: var(--gray-600);">Below Threshold (< {{ threshold }}h)</span>
@@ -68,15 +91,15 @@
         <!-- Table View -->
         <div class="card-body-scroll" style="overflow-x: hidden;">
             <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
-                <thead style="background: var(--gray-50); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 var(--border-color);">
+                <thead class="force-light-header" id="attendanceTableHeader" style="background: var(--gray-50); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 var(--border-color);">
                     <tr>
                         <th style="padding: 18px 24px; text-align: left; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Employee</th>
                         <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Working</th>
                         <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Present</th>
                         <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: #ef4444; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Absent</th>
-                        <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Leave</th>
-                        <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Tot. Hours</th>
-                        <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Avg. Hours</th>
+                        <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);"><span class="hide-on-print">Leave</span><span class="show-on-print" style="display: none;">Approved Leaves</span></th>
+                        <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Tot.<br>Hours</th>
+                        <th style="padding: 18px 12px; text-align: center; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Avg.<br>Hours</th>
                         <th style="padding: 18px 24px; text-align: right; font-size: 10.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color);">Details</th>
                     </tr>
                 </thead>
@@ -85,15 +108,22 @@
                     <tr class="summary-row" onclick="navigateToDetail('{{ row.employee.id }}', '{{ selected_month }}')" style="cursor: pointer; transition: all 0.2s;">
                         <td style="padding: 16px 24px; border-bottom: 1px solid var(--border-color);">
                             <div style="display: flex; align-items: center; gap: 14px;">
-                                <div style="width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: white;
+                                <div class="emp-avatar" style="width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: white;
                                     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); flex-shrink: 0;">
                                     {{ row.employee.full_name|default:row.employee.username|slice:":1"|upper }}
                                 </div>
                                 <div>
                                     <div style="font-weight: 700; color: var(--text-main); font-size: 14.5px;">{{ row.employee.full_name|default:row.employee.username|upper }}</div>
-                                    <div style="font-size: 11px; color: var(--text-secondary); font-family: monospace; font-weight: 700; opacity: 0.8;">
-                                        {% if row.employee.employee_id %}{{ row.employee.employee_id }}{% else %}EMP-{{ row.employee.pk|stringformat:"03d" }}{% endif %}
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+                                        <div style="font-size: 10.5px; color: var(--text-secondary); font-family: monospace; font-weight: 700; opacity: 0.8;">
+                                            {% if row.employee.employee_id %}{{ row.employee.employee_id }}{% else %}EMP-{{ row.employee.pk|stringformat:"03d" }}{% endif %}
+                                        </div>
+                                        <div style="height: 12px; width: 1px; background: var(--gray-200);"></div>
+                                        <div style="font-size: 10px; font-weight: 600; color: var(--primary); text-transform: uppercase;">{{ row.employee.get_department_display }}</div>
                                     </div>
+                                    {% if row.employee.designation %}
+                                    <div style="font-size: 10.5px; color: var(--gray-500); font-weight: 500; margin-top: 1px;">{{ row.employee.get_designation_display }}</div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </td>
@@ -101,15 +131,15 @@
                             <span style="font-weight: 700; color: var(--text-main); font-size: 14px;">{{ row.total_working_days }}</span>
                         </td>
                         <td style="padding: 16px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">
-                            <div style="font-weight: 800; color: #059669; font-size: 14px;">{{ row.days_present }}</div>
+                            <div class="text-green" style="font-weight: 800; color: #059669; font-size: 14px;">{{ row.days_present }}</div>
                             <div style="font-size: 10px; color: var(--gray-400); font-weight: 700; text-transform: uppercase;">Unique In-Punches</div>
                         </td>
                         <td style="padding: 16px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">
-                            <div style="font-weight: 900; color: {% if row.absent_days > 0 %}#ef4444{% else %}var(--gray-300){% endif %}; font-size: 15px;">
+                            <div class="text-red" style="font-weight: 900; color: {% if row.absent_days > 0 %}#ef4444{% else %}var(--gray-300){% endif %}; font-size: 15px;">
                                 {{ row.absent_days|floatformat:1 }}
                             </div>
                             {% if row.absent_days > 0 %}
-                            <div style="font-size: 9px; color: #ef4444; font-weight: 800; text-transform: uppercase;">Unaccounted</div>
+                            <div class="text-red" style="font-size: 9px; color: #ef4444; font-weight: 800; text-transform: uppercase;">Unaccounted</div>
                             {% endif %}
                         </td>
                         <td style="padding: 16px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">
@@ -121,21 +151,21 @@
                             {% endif %}
                         </td>
                         <td style="padding: 16px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">
-                            <div style="font-weight: 800; color: var(--primary); font-size: 15px; letter-spacing: -0.01em;">
+                            <div class="text-blue" style="font-weight: 800; color: var(--primary); font-size: 15px; letter-spacing: -0.01em;">
                                 {{ row.total_present_hours }}
                             </div>
                             <div style="font-size: 10px; color: var(--gray-400); font-weight: 700; text-transform: uppercase;">Total Hours</div>
                         </td>
                         <td style="padding: 16px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">
                             {% if row.average_hours < threshold %}
-                            <div style="display: inline-flex; flex-direction: column; align-items: center; background: rgba(239, 68, 68, 0.08); padding: 6px 16px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.15);">
-                                <div style="font-weight: 800; color: #ef4444; font-size: 15px;">{{ row.average_hours }}h</div>
-                                <div style="font-size: 9px; color: #ef4444; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;">Performance Alert</div>
+                            <div class="alert-box-red" style="display: inline-flex; flex-direction: column; align-items: center; background: rgba(239, 68, 68, 0.08); padding: 6px 16px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.15);">
+                                <div class="text-red" style="font-weight: 800; color: #ef4444; font-size: 15px;">{{ row.average_hours }}h</div>
+                                <div class="text-red" style="font-size: 9px; color: #ef4444; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;">Performance Alert</div>
                             </div>
                             {% else %}
-                            <div style="display: inline-flex; flex-direction: column; align-items: center; background: rgba(5, 150, 105, 0.08); padding: 6px 16px; border-radius: 12px; border: 1px solid rgba(5, 150, 105, 0.15);">
-                                <div style="font-weight: 800; color: #059669; font-size: 15px;">{{ row.average_hours }}h</div>
-                                <div style="font-size: 9px; color: #059669; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;">Satisfactory</div>
+                            <div class="alert-box-green" style="display: inline-flex; flex-direction: column; align-items: center; background: rgba(5, 150, 105, 0.08); padding: 6px 16px; border-radius: 12px; border: 1px solid rgba(5, 150, 105, 0.15);">
+                                <div class="text-green" style="font-weight: 800; color: #059669; font-size: 15px;">{{ row.average_hours }}h</div>
+                                <div class="text-green" style="font-size: 9px; color: #059669; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;">Satisfactory</div>
                             </div>
                             {% endif %}
                         </td>
@@ -202,16 +232,228 @@
     }
 
     @media print {
-        .app-container aside, .top-bar-actions, .btn, #summaryFilterForm {
+        @page {
+            size: landscape;
+            margin: 0; /* Set to 0 to suppress browser-default headers (Date, URL, Title) */
+        }
+
+        body {
+            padding: 15mm !important; /* Re-apply margin manually inside the page to prevent clipping and ensure consistent side padding */
+        }
+
+        /* 1. UNIVERSAL LIGHT THEME ENFORCEMENT */
+        :root, [data-theme="dark"], .dark, body.dark, html.dark {
+            --bg-surface: #ffffff !important;
+            --bg-body: #ffffff !important;
+            --text-main: #000000 !important;
+            --text-secondary: #000000 !important;
+            --border-color: #000000 !important;
+            --primary: #000000 !important;
+            --warning: #000000 !important;
+            --danger: #000000 !important;
+            --success: #000000 !important;
+            color-scheme: light !important;
+        }
+
+        .show-on-print {
+            display: inline-block !important;
+        }
+        .hide-on-print {
             display: none !important;
         }
-        .main-content {
-            margin-left: 0 !important;
+
+        /* 2. KILL ALL UI ARTIFACTS & BACKGROUNDS AND ENFORCE BLACK COLORS */
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+            transition: none !important;
+            color: #000000 !important; /* Force all text to black in PDF */
+        }
+
+        /* 3. LAYOUT & CONTAINER RESET - ENSURE FULL WIDTH & NO OVERFLOW */
+        .app-container, .main-content, .card, .content-area, .flex-1, .viewport-fill, .full-height-card, .card-body-scroll {
+            background: #ffffff !important;
+            color: #000000 !important;
+            display: block !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+            position: static !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            width: 100% !important;
+            box-shadow: none !important;
+        }
+
+        /* Ensure HTML and Body respect the padding but lose the default margin/background */
+        html, body {
+            background: #ffffff !important;
+            color: #000000 !important;
+            margin: 0 !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+
+        /* 4. PDF HEADER - CLEAN & MINIMAL */
+        .print-only-header {
+            display: block !important;
+            width: 100% !important;
+            margin-bottom: 20px !important;
+        }
+
+        /* 5. TABLE ARCHITECTURE - FORMAL REPORT GRID */
+        table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            table-layout: fixed !important; /* Ensure columns don't overflow */
+            margin-top: 0 !important;
+            border: 1px solid #000000 !important;
+        }
+
+        thead {
+            display: table-header-group !important;
+        }
+
+        thead tr {
+            background-color: #f1f5f9 !important;
+        }
+
+        th {
+            border: 1px solid #000000 !important;
+            padding: 8px 4px !important;
+            font-size: 10.5px !important;
+            font-weight: bold !important;
+            text-transform: uppercase !important;
+            color: #000000 !important;
+            text-align: center !important;
+        }
+
+        th:first-child {
+            width: 25% !important;
+            text-align: left !important;
+            padding-left: 8px !important;
+        }
+
+        /* 6. DATA ROWS */
+        tbody tr {
+            page-break-inside: avoid !important;
+        }
+
+        td {
+            border: 1px solid #000000 !important;
+            padding: 2px 6px !important; /* Minimized padding for lowest row height */
+            font-size: 11px !important; 
+            font-weight: 800 !important; 
+            color: #000000 !important;
+            vertical-align: middle !important;
+            word-wrap: break-word !important;
+        }
+
+        /* NUCLEAR UNIFORMITY FOR ALL DATA NUMBERS (Cols 2-7) */
+        td:not(:first-child) div, 
+        td:not(:not(:first-child)) div, /* Coverage for nested elements in first cell if needed */
+        td:not(:first-child) span {
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            line-height: 1.2 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: block !important;
+            text-align: center !important;
+        }
+
+        /* Hide all sub-labels (small text below numbers) for a clean data-only table */
+        td div[style*="font-size: 10px"],
+        td div[style*="font-size: 9px"],
+        td div[style*="text-transform: uppercase"]:not(th) {
+            display: none !important;
+            height: 0 !important;
+            overflow: hidden !important;
+        }
+
+        td:first-child {
+            text-align: left !important;
+            padding-left: 8px !important;
+        }
+
+        /* Target ONLY the main container in the first cell, do NOT match sub-divs like avatars */
+        td:first-child > div {
+            display: block !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            gap: 0 !important;
+        }
+
+        /* NUCLEAR HIDE FOR AVATAR - Ensuring specificity wins */
+        .emp-avatar, 
+        div.emp-avatar,
+        td .emp-avatar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            position: absolute !important;
+            pointer-events: none !important;
+        }
+
+        /* Hide Dept/Designation sub-info */
+        td div[style*="height: 12px; width: 1px"], 
+        td div[style*="text-transform: uppercase"]:not(th),
+        td div[style*="color: var(--gray-500)"] {
+            display: none !important;
+            height: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* Employee Name & ID styling for PDF */
+        td div[style*="font-weight: 700"] {
+            font-size: 11px !important;
+            line-height: 1.1 !important;
+            margin: 0 !important;
             padding: 0 !important;
         }
-        .card {
-            box-shadow: none !important;
+
+        td div[style*="font-family: monospace"] {
+            display: block !important;
+            font-size: 8px !important;
+            margin-top: 0 !important;
+            opacity: 1 !important;
+            color: #4b5563 !important;
+        }
+
+        /* Hide drill-down and other UI elements */
+        .drill-down-icon, .ri-arrow-left-line, .btn, .filter-bar-container, 
+        .report-header-section, aside.sidebar, .top-bar, .sidebar-overlay, .filter-legend {
+            display: none !important;
+        }
+
+        /* Simplify badges for print */
+        .alert-box-red, .alert-box-green {
+            background: transparent !important;
             border: none !important;
+            padding: 0 !important;
+            display: block !important;
+            text-align: center !important;
+        }
+
+        .text-red { color: #000000 !important; font-weight: bold !important; }
+        .text-green { color: #000000 !important; }
+        .text-blue { color: #000000 !important; }
+
+        /* Hide the details column in PDF */
+        th:last-child, td:last-child {
+            display: none !important;
+        }
+
+        /* Ensure messages are hidden */
+        .alert {
+            display: none !important;
         }
     }
 </style>

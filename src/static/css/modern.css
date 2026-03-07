@@ -2733,3 +2733,135 @@ html[data-theme="dark"] .border-top,
 html[data-theme="dark"] .border-bottom {
     border-color: #374151 !important;
 }
+
+/* ========================================
+   GLOBAL PRINT STYLES - CLEAN PDF EXPORT
+   ======================================== */
+@media print {
+
+    /* 1. Universal Light Mode for Printing */
+    :root {
+        --bg-body: #ffffff !important;
+        --bg-surface: #ffffff !important;
+        --text-main: #000000 !important;
+        --text-secondary: #000000 !important;
+        --border-color: #000000 !important;
+        --gray-50: #ffffff !important;
+        --gray-100: #ffffff !important;
+        --gray-200: #000000 !important;
+        /* Forces lines to be visible */
+    }
+
+    html,
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    /* 2. Hide Global UI Components */
+    aside.sidebar,
+    .sidebar-overlay,
+    .top-bar,
+    .top-bar-actions,
+    .mobile-menu-toggle,
+    .mobile-close-sidebar,
+    .nav-badge,
+    #theme-toggle-btn,
+    .user-profile,
+    .btn,
+    .btn-outline,
+    .btn-primary,
+    .btn-danger,
+    .modal-overlay,
+    .filter-bar-container,
+    .page-title-section {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* 3. Reset Layout for full-width print */
+    .app-container {
+        display: block !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    .content-area {
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        margin-bottom: 0 !important;
+        background: transparent !important;
+    }
+
+    /* 4. Table Printing Consistency */
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        page-break-inside: auto !important;
+        border: 1px solid #000000 !important;
+        margin-bottom: 20px !important;
+    }
+
+    thead {
+        display: table-header-group !important;
+        background-color: #f1f5f9 !important;
+    }
+
+    th,
+    td {
+        border: 1px solid #000000 !important;
+        padding: 6px 4px !important;
+        font-size: 10px !important;
+        color: #000000 !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+    }
+
+    th {
+        font-weight: bold !important;
+        text-transform: uppercase !important;
+        font-size: 9px !important;
+    }
+
+    tr {
+        page-break-inside: avoid !important;
+        page-break-after: auto !important;
+    }
+
+    /* Kill standard avatar visuals in print */
+    .emp-avatar,
+    .user-avatar {
+        display: none !important;
+    }
+
+    /* 5. Clean text for print */
+    a[href]::after {
+        content: none !important;
+        /* Don't show URLs in formal reports */
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
