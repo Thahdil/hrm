@@ -41,27 +41,13 @@ def leave_list(request):
                     employee=user, leave_type=lt, status__in=['APPROVED', 'HR_PROCESSED'],
                     start_date__month=today.month, start_date__year=today.year
                  )
-                 used_appr = sum(float(r.duration_days) for r in reqs) or 0.0
-                 
-                 reqs_pend = LeaveRequest.objects.filter(
-                    employee=user, leave_type=lt, status='PENDING',
-                    start_date__month=today.month, start_date__year=today.year
-                 )
-                 used_pend = sum(float(r.duration_days) for r in reqs_pend) or 0.0
-                 used = used_appr + used_pend
+                 used = sum(float(r.duration_days) for r in reqs) or 0.0
             else:
                  reqs = LeaveRequest.objects.filter(
                      employee=user, leave_type=lt, status__in=['APPROVED', 'HR_PROCESSED'],
                      start_date__year=today.year
                  )
-                 used_appr = sum(float(r.duration_days) for r in reqs) or 0.0
-                 
-                 reqs_pend = LeaveRequest.objects.filter(
-                     employee=user, leave_type=lt, status='PENDING',
-                     start_date__year=today.year
-                 )
-                 used_pend = sum(float(r.duration_days) for r in reqs_pend) or 0.0
-                 used = used_appr + used_pend
+                 used = sum(float(r.duration_days) for r in reqs) or 0.0
             
             balance_obj, created = LeaveBalance.objects.get_or_create(
                 employee=user, leave_type=lt, year=current_year,
@@ -177,29 +163,13 @@ def leave_create(request):
                 employee=request.user, leave_type=lt, status__in=['APPROVED', 'HR_PROCESSED'],
                 start_date__month=today.month, start_date__year=today.year
             )
-            used_appr = sum(float(r.duration_days) for r in reqs) or 0.0
-            
-            pending_requests = LeaveRequest.objects.filter(
-                employee=request.user, leave_type=lt, status='PENDING',
-                start_date__month=today.month, start_date__year=today.year
-            )
-            used_pend = sum(float(r.duration_days) for r in pending_requests) or 0.0
-            
-            used = used_appr + used_pend
+            used = sum(float(r.duration_days) for r in reqs) or 0.0
         else:
             reqs = LeaveRequest.objects.filter(
                 employee=request.user, leave_type=lt, status__in=['APPROVED', 'HR_PROCESSED'],
                 start_date__year=current_year
             )
-            used_appr = sum(float(r.duration_days) for r in reqs) or 0.0
-            
-            pending_requests = LeaveRequest.objects.filter(
-                employee=request.user, leave_type=lt, status='PENDING',
-                start_date__year=current_year
-            )
-            used_pend = sum(float(r.duration_days) for r in pending_requests) or 0.0
-            
-            used = used_appr + used_pend
+            used = sum(float(r.duration_days) for r in reqs) or 0.0
 
         balance, created = LeaveBalance.objects.get_or_create(
             employee=request.user, leave_type=lt, year=current_year,
