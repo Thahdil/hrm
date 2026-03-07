@@ -241,18 +241,63 @@
             padding: 15mm !important; /* Re-apply margin manually inside the page to prevent clipping and ensure consistent side padding */
         }
 
-        /* 1. UNIVERSAL LIGHT THEME ENFORCEMENT */
-        :root, [data-theme="dark"], .dark, body.dark, html.dark {
-            --bg-surface: #ffffff !important;
-            --bg-body: #ffffff !important;
-            --text-main: #000000 !important;
-            --text-secondary: #000000 !important;
-            --border-color: #000000 !important;
-            --primary: #000000 !important;
-            --warning: #000000 !important;
-            --danger: #000000 !important;
-            --success: #000000 !important;
-            color-scheme: light !important;
+        /* FORCE WHITE PDF — Nuclear reset + specificity killers */
+        html, html[data-theme="dark"], html[data-theme="dark"] body,
+        html[data-theme="dark"] *, html[data-theme="dark"] *::before,
+        html[data-theme="dark"] *::after {
+            background-color: #ffffff !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+
+        /* Specificity killers: mirror the dark mode attribute-selector rules inside print.
+           These beat "html[data-theme='dark'] *" because they have higher specificity. */
+        html[data-theme="dark"] thead[style*="background: var(--gray-50)"],
+        html[data-theme="dark"] div[style*="background: var(--gray-50)"],
+        html[data-theme="dark"] div[style*="background: var(--bg-surface)"],
+        html[data-theme="dark"] div[style*="background: var(--gray-100)"],
+        html[data-theme="dark"] div[style*="background: #f8fafc"],
+        html[data-theme="dark"] thead[style*="background: #f8fafc"],
+        html[data-theme="dark"] div[style*="background: white"],
+        html[data-theme="dark"] div[style*="background: #FFFFFF"],
+        html[data-theme="dark"] .card-body-scroll,
+        html[data-theme="dark"] [style*="background-color: #121212"],
+        html[data-theme="dark"] [style*="background-color: #1E1E1E"],
+        html[data-theme="dark"] [style*="background-color: #262626"],
+        html[data-theme="dark"] [style*="background-color: #2A2A2A"] {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+        }
+
+        /* Force all text colors to black even for attribute-selector overrides */
+        html[data-theme="dark"] p,
+        html[data-theme="dark"] span,
+        html[data-theme="dark"] div,
+        html[data-theme="dark"] label,
+        html[data-theme="dark"] h1,
+        html[data-theme="dark"] h2,
+        html[data-theme="dark"] h3,
+        html[data-theme="dark"] h4,
+        html[data-theme="dark"] td,
+        html[data-theme="dark"] th,
+        html[data-theme="dark"] p[style*="color: #64748b"],
+        html[data-theme="dark"] div[style*="color: #64748b"],
+        html[data-theme="dark"] span[style*="color: #64748b"],
+        html[data-theme="dark"] div[style*="color: var(--gray-700)"],
+        html[data-theme="dark"] div[style*="color: var(--gray-900)"] {
+            color: #000000 !important;
+        }
+
+        /* Pin thead to light gray LAST — overrides the white wildcard above */
+        html[data-theme="dark"] thead,
+        html[data-theme="dark"] thead tr,
+        html[data-theme="dark"] thead[style*="background: var(--gray-50)"],
+        html[data-theme="dark"] thead th,
+        #attendanceTableHeader,
+        html[data-theme="dark"] #attendanceTableHeader {
+            background-color: #f1f5f9 !important;
+            background: #f1f5f9 !important;
+            color: #000000 !important;
         }
 
         .show-on-print {
@@ -319,8 +364,18 @@
             display: table-header-group !important;
         }
 
-        thead tr {
+        /* Pin header row to light gray - must come AFTER the nuclear * reset */
+        thead tr,
+        html[data-theme="dark"] thead tr {
             background-color: #f1f5f9 !important;
+            background: #f1f5f9 !important;
+        }
+
+        /* Pin all data rows and cells to white */
+        tbody tr,
+        html[data-theme="dark"] tbody tr {
+            background-color: #ffffff !important;
+            background: #ffffff !important;
         }
 
         th {
@@ -346,6 +401,8 @@
 
         td {
             border: 1px solid #000000 !important;
+            background-color: #ffffff !important;
+            background: #ffffff !important;
             padding: 2px 6px !important; /* Minimized padding for lowest row height */
             font-size: 11px !important; 
             font-weight: 800 !important; 
@@ -468,19 +525,143 @@
     }
 
     function navigateToDetail(employeePk, monthStr) {
-        // Calculate start and end date for the selected month to filter detailed logs
         const [year, month] = monthStr.split('-').map(Number);
         const lastDay = new Date(year, month, 0).getDate();
         const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
         const endDate = `${year}-${month.toString().padStart(2, '0')}-${lastDay.toString().padStart(2, '0')}`;
-        
-        // Get current search query to pass back later
         const currentQ = document.getElementsByName('q')[0].value;
-        
-        // Build URL for attendance_list with filters
-        // Using dedicated employee_id parameter (PK) for exact matching
         const url = `{% url 'attendance_list' %}?employee_id=${employeePk}&start_date=${startDate}&end_date=${endDate}&from=summary&from_q=${encodeURIComponent(currentQ)}`;
         window.location.href = url;
     }
+
+    // ── PRINT WHITE-THEME INJECTION ──────────────────────────────────────────
+    // Strategy: inject a <style> tag at the very END of <head>, wrapped in
+    // @media print, so it ONLY affects the PDF render — never the live UI.
+    //
+    // Because the injected tag is the LAST stylesheet loaded, it wins all
+    // source-order tiebreaks at equal CSS specificity, beating every dark mode
+    // rule without touching data-theme or flashing the visible page.
+    // ────────────────────────────────────────────────────────────────────────
+
+    const PRINT_OVERRIDE_ID = '_pdf_white_override';
+
+    const PRINT_WHITE_CSS = `
+        @media print {
+            /* ── ROOT & BODY ── */
+            html[data-theme="dark"],
+            html[data-theme="dark"] body { background: #ffffff !important; background-color: #ffffff !important; color: #000000 !important; }
+
+            /* ── ALL ELEMENTS (universal baseline) ── */
+            html[data-theme="dark"] * { background-color: #ffffff !important; background: #ffffff !important; color: #000000 !important; }
+
+            /* ── CLASS-LEVEL DARK OVERRIDES (specificity 0,0,2,x) ── */
+            html[data-theme="dark"] .card,
+            html[data-theme="dark"] .stat-card,
+            html[data-theme="dark"] .card-header,
+            html[data-theme="dark"] .card-footer,
+            html[data-theme="dark"] .full-height-card,
+            html[data-theme="dark"] .card-body-scroll,
+            html[data-theme="dark"] .glass-card,
+            html[data-theme="dark"] .modal-content,
+            html[data-theme="dark"] .dropdown-menu,
+            html[data-theme="dark"] .popover,
+            html[data-theme="dark"] .premium-table,
+            html[data-theme="dark"] .action-tile,
+            html[data-theme="dark"] .admin-module-card,
+            html[data-theme="dark"] .info-alert,
+            html[data-theme="dark"] .search-suggestions { background: #ffffff !important; background-color: #ffffff !important; color: #000000 !important; border-color: #cccccc !important; }
+
+            /* ── HIGH-SPECIFICITY COMPOUND OVERRIDES (class + inline-style = 0,0,3,x) ──
+               These mirror the exact dark mode rules that beat our class-only selectors above.
+               "html[data-theme='dark'] .card[style*='...']" has specificity 0,0,3,1.
+               By repeating them here (injected LAST in head) we win the source-order tie. ── */
+            html[data-theme="dark"] .card[style*="background: var(--bg-surface)"],
+            html[data-theme="dark"] .card-header[style*="background: var(--bg-surface)"],
+            html[data-theme="dark"] .card[style*="background: var(--bg-body)"],
+            html[data-theme="dark"] .card[style*="background: var(--gray-50)"],
+            html[data-theme="dark"] .card[style*="background: white"],
+            html[data-theme="dark"] .card[style*="border: none"],
+            html[data-theme="dark"] div[style*="background: var(--bg-surface)"],
+            html[data-theme="dark"] div[style*="background: var(--bg-body)"],
+            html[data-theme="dark"] section[style*="background: var(--bg-surface)"],
+            html[data-theme="dark"] .full-height-card[style*="background"],
+            html[data-theme="dark"] .card-body-scroll[style*="background"] { background: #ffffff !important; background-color: #ffffff !important; color: #000000 !important; }
+
+            /* ── TEXT ELEMENTS ── */
+            html[data-theme="dark"] h1, html[data-theme="dark"] h2,
+            html[data-theme="dark"] h3, html[data-theme="dark"] h4,
+            html[data-theme="dark"] h5, html[data-theme="dark"] h6,
+            html[data-theme="dark"] p, html[data-theme="dark"] span,
+            html[data-theme="dark"] label, html[data-theme="dark"] div,
+            html[data-theme="dark"] a, html[data-theme="dark"] .text-muted { color: #000000 !important; }
+
+            /* ── TABLE STRUCTURE ── */
+            html[data-theme="dark"] table { background: #ffffff !important; background-color: #ffffff !important; border-color: #000000 !important; }
+            html[data-theme="dark"] th,
+            html[data-theme="dark"] td { background: #ffffff !important; background-color: #ffffff !important; color: #000000 !important; border-color: #000000 !important; }
+            html[data-theme="dark"] tr { background: #ffffff !important; background-color: #ffffff !important; }
+            html[data-theme="dark"] tr:hover { background: #ffffff !important; background-color: #ffffff !important; }
+
+            /* ── THEAD / TH: light gray header (must come AFTER white reset) ── */
+            html[data-theme="dark"] thead,
+            html[data-theme="dark"] thead tr,
+            html[data-theme="dark"] thead th,
+            html[data-theme="dark"] .premium-table thead,
+            html[data-theme="dark"] .premium-table th,
+            #attendanceTableHeader,
+            html[data-theme="dark"] #attendanceTableHeader { background: #f1f5f9 !important; background-color: #f1f5f9 !important; color: #000000 !important; }
+
+            /* ── ATTRIBUTE-SELECTOR DARK OVERRIDES (specificity includes [style*]) ── */
+            html[data-theme="dark"] div[style*="background: var(--gray-50)"],
+            html[data-theme="dark"] thead[style*="background: var(--gray-50)"],
+            html[data-theme="dark"] section[style*="background: var(--gray-50)"],
+            html[data-theme="dark"] div[style*="background: var(--bg-surface)"],
+            html[data-theme="dark"] div[style*="background: var(--gray-100)"],
+            html[data-theme="dark"] div[style*="background: #f8fafc"],
+            html[data-theme="dark"] thead[style*="background: #f8fafc"],
+            html[data-theme="dark"] div[style*="background: #FAFBFC"],
+            html[data-theme="dark"] div[style*="background: white"],
+            html[data-theme="dark"] div[style*="background: #FFFFFF"],
+            html[data-theme="dark"] div[style*="background:#FFFFFF"],
+            html[data-theme="dark"] [style*="background-color: #121212"],
+            html[data-theme="dark"] [style*="background-color: #1E1E1E"],
+            html[data-theme="dark"] [style*="background-color: #262626"],
+            html[data-theme="dark"] [style*="background-color: #2A2A2A"] { background: #ffffff !important; background-color: #ffffff !important; color: #000000 !important; }
+
+            /* ── RE-PIN THEAD ATTR SELECTORS to light gray ── */
+            html[data-theme="dark"] thead[style*="background: var(--gray-50)"],
+            html[data-theme="dark"] thead[style*="background: #f8fafc"] { background: #f1f5f9 !important; background-color: #f1f5f9 !important; }
+
+            /* ── INPUT / FORM ELEMENTS ── */
+            html[data-theme="dark"] input,
+            html[data-theme="dark"] select,
+            html[data-theme="dark"] textarea { background: #ffffff !important; background-color: #ffffff !important; color: #000000 !important; border-color: #cccccc !important; }
+        }
+    `;
+
+    function _injectPrintStyle() {
+        if (document.getElementById(PRINT_OVERRIDE_ID)) return; // already injected
+        const style = document.createElement('style');
+        style.id = PRINT_OVERRIDE_ID;
+        style.textContent = PRINT_WHITE_CSS;
+        document.head.appendChild(style); // LAST in <head> → wins source-order ties
+    }
+
+    function _removePrintStyle() {
+        const el = document.getElementById(PRINT_OVERRIDE_ID);
+        if (el) el.remove();
+    }
+
+    // Inject before print renders, remove after dialog closes
+    window.addEventListener('beforeprint', _injectPrintStyle);
+    window.addEventListener('afterprint',  _removePrintStyle);
+
+    // Override window.print so the "Export PDF" button also triggers injection
+    const _originalPrint = window.print.bind(window);
+    window.print = function () {
+        _injectPrintStyle();
+        _originalPrint();
+        // _removePrintStyle is handled by afterprint event
+    };
 </script>
 {% endblock %}

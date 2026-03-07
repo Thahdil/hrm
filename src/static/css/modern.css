@@ -2739,8 +2739,12 @@ html[data-theme="dark"] .border-bottom {
    ======================================== */
 @media print {
 
-    /* 1. Universal Light Mode for Printing */
-    :root {
+    /* 1. Universal Light Mode for Printing (Forces white background even if UI is dark) */
+    :root,
+    [data-theme="dark"],
+    .dark,
+    body.dark,
+    html.dark {
         --bg-body: #ffffff !important;
         --bg-surface: #ffffff !important;
         --text-main: #000000 !important;
@@ -2749,7 +2753,114 @@ html[data-theme="dark"] .border-bottom {
         --gray-50: #ffffff !important;
         --gray-100: #ffffff !important;
         --gray-200: #000000 !important;
-        /* Forces lines to be visible */
+        --primary: #000000 !important;
+        --warning: #000000 !important;
+        --danger: #000000 !important;
+        --success: #000000 !important;
+        --info: #000000 !important;
+        color-scheme: light !important;
+    }
+
+    /* NUCLEAR DARK MODE RESET: Override every dark-mode background/color rule for print.
+       These selectors match the dark mode overrides above and flip them back to white/black.
+       This is necessary because dark mode rules use !important and would otherwise win. */
+    html[data-theme="dark"],
+    html[data-theme="dark"] body,
+    html[data-theme="dark"] *,
+    html[data-theme="dark"] *::before,
+    html[data-theme="dark"] *::after {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        border-color: #cccccc !important;
+    }
+
+    /* ── SPECIFICITY KILLERS ──
+       The dark mode rules use attribute selectors (e.g. thead[style*="..."]) which
+       have HIGHER specificity than "html[data-theme='dark'] *".
+       We mirror every one of those selectors here inside @media print to beat them. */
+
+    /* Kill: thead[style*="background: var(--gray-50)"] → #262626 */
+    html[data-theme="dark"] div[style*="background: var(--gray-50)"],
+    html[data-theme="dark"] thead[style*="background: var(--gray-50)"],
+    html[data-theme="dark"] section[style*="background: var(--gray-50)"] {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+    }
+
+    /* Kill: thead[style*="background: #f8fafc"] → #1E1E1E */
+    html[data-theme="dark"] div[style*="background: #f8fafc"],
+    html[data-theme="dark"] thead[style*="background: #f8fafc"],
+    html[data-theme="dark"] section[style*="background: #f8fafc"],
+    html[data-theme="dark"] div[style*="background: #FAFBFC"],
+    html[data-theme="dark"] div[style*="background: #fafbfc"],
+    html[data-theme="dark"] div[style*="background: white"],
+    html[data-theme="dark"] div[style*="background: #FFFFFF"],
+    html[data-theme="dark"] div[style*="background:#FFFFFF"],
+    html[data-theme="dark"] .card-body-scroll {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+    }
+
+    /* Kill: common dark inline backgrounds */
+    html[data-theme="dark"] [style*="background: var(--bg-surface)"],
+    html[data-theme="dark"] [style*="background: var(--gray-100)"],
+    html[data-theme="dark"] [style*="background-color: #121212"],
+    html[data-theme="dark"] [style*="background-color: #1E1E1E"],
+    html[data-theme="dark"] [style*="background-color: #262626"],
+    html[data-theme="dark"] [style*="background-color: #2A2A2A"] {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+    }
+
+    /* Kill: dark mode text overrides with attribute selectors */
+    html[data-theme="dark"] p[style*="color: #64748b"],
+    html[data-theme="dark"] div[style*="color: #64748b"],
+    html[data-theme="dark"] span[style*="color: #64748b"],
+    html[data-theme="dark"] label[style*="color: #64748b"],
+    html[data-theme="dark"] div[style*="color: var(--gray-700)"],
+    html[data-theme="dark"] span[style*="color: var(--gray-700)"],
+    html[data-theme="dark"] div[style*="color: var(--gray-900)"],
+    html[data-theme="dark"] span[style*="color: var(--gray-900)"],
+    html[data-theme="dark"] p,
+    html[data-theme="dark"] span,
+    html[data-theme="dark"] label,
+    html[data-theme="dark"] .text-muted,
+    html[data-theme="dark"] h1,
+    html[data-theme="dark"] h2,
+    html[data-theme="dark"] h3,
+    html[data-theme="dark"] h4,
+    html[data-theme="dark"] h5,
+    html[data-theme="dark"] h6,
+    html[data-theme="dark"] td,
+    html[data-theme="dark"] th {
+        color: #000000 !important;
+    }
+
+    /* Restore meaningful borders/lines for the table structure */
+    html[data-theme="dark"] table,
+    html[data-theme="dark"] th,
+    html[data-theme="dark"] td {
+        border-color: #000000 !important;
+    }
+
+    /* Pin thead to light gray — comes LAST so it wins over the white wildcard above */
+    html[data-theme="dark"] thead,
+    html[data-theme="dark"] thead tr,
+    html[data-theme="dark"] thead[style*="background: var(--gray-50)"],
+    html[data-theme="dark"] thead th,
+    #attendanceTableHeader,
+    html[data-theme="dark"] #attendanceTableHeader {
+        background-color: #f1f5f9 !important;
+        background: #f1f5f9 !important;
+        color: #000000 !important;
+    }
+
+    /* Pin tbody rows and cells to white */
+    html[data-theme="dark"] tbody tr,
+    html[data-theme="dark"] tbody td {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
     }
 
     html,
@@ -2824,17 +2935,37 @@ html[data-theme="dark"] .border-bottom {
 
     thead {
         display: table-header-group !important;
+    }
+
+    /* Pin header row to light-gray regardless of theme */
+    thead tr,
+    html[data-theme="dark"] thead tr {
         background-color: #f1f5f9 !important;
+        background: #f1f5f9 !important;
+    }
+
+    /* Pin data rows to white regardless of theme */
+    tbody tr,
+    html[data-theme="dark"] tbody tr {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
     }
 
     th,
     td {
         border: 1px solid #000000 !important;
+        background-color: #ffffff !important;
+        background: #ffffff !important;
         padding: 6px 4px !important;
         font-size: 10px !important;
         color: #000000 !important;
         text-align: center !important;
         vertical-align: middle !important;
+    }
+
+    thead th {
+        background-color: #f1f5f9 !important;
+        background: #f1f5f9 !important;
     }
 
     th {
@@ -2863,5 +2994,8 @@ html[data-theme="dark"] .border-bottom {
     * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        transition: none !important;
+        text-shadow: none !important;
+        box-shadow: none !important;
     }
 }
