@@ -109,14 +109,16 @@ def meeting_detail(request, pk):
             'meeting': meeting,
             'all_eligible_users': all_eligible_users,
             'current_participant_ids': list(participant_ids),
-            'is_participant': request.user in meeting.participants.all()
+            'is_participant': request.user in meeting.participants.all(),
+            'is_past': meeting.end_time < timezone.now()
         })
         
     return render(request, 'meetings/meeting_detail.html', {
         'meeting': meeting,
         'all_eligible_users': all_eligible_users,
         'current_participant_ids': list(participant_ids),
-        'is_participant': request.user in meeting.participants.all()
+        'is_participant': request.user in meeting.participants.all(),
+        'is_past': meeting.end_time < timezone.now()
     })
 
 @login_required
@@ -128,6 +130,10 @@ def add_participants(request, pk):
     is_participant = request.user in meeting.participants.all()
     if request.user != meeting.organizer and not is_participant:
         messages.error(request, "You do not have permission to add participants.")
+        return redirect('meeting_list')
+        
+    if meeting.end_time < timezone.now():
+        messages.error(request, "Cannot modify participants for a past meeting.")
         return redirect('meeting_list')
         
     if request.method == 'POST':
@@ -165,6 +171,10 @@ def meeting_delete(request, pk):
         messages.error(request, "Only the organizer can cancel this meeting.")
         return redirect('meeting_list')
         
+    if meeting.end_time < timezone.now():
+        messages.error(request, "Cannot cancel a meeting that has already ended.")
+        return redirect('meeting_list')
+        
     if request.method == 'POST':
         # Log the activity before deletion
         from core.models import AuditLog
@@ -193,6 +203,10 @@ def meeting_edit(request, pk):
     if request.user != meeting.organizer:
         from django.http import JsonResponse
         return JsonResponse({'success': False, 'error': 'You do not have permission to edit this meeting. Only the organizer can do this.'})
+
+    if meeting.end_time < timezone.now():
+        from django.http import JsonResponse
+        return JsonResponse({'success': False, 'error': 'Cannot edit a past meeting.'})
 
     field_update = request.POST.get('field_update')
     from django.http import JsonResponse

@@ -151,7 +151,7 @@
                 <div class="nav-section">
                     <div class="nav-section-title">System</div>
                     
-                    <a href="{% url 'system_admin' %}" class="nav-item {% if 'system-admin' in request.path or 'administration' in request.path %}active{% endif %}">
+                    <a href="{% url 'system_admin' %}" class="nav-item {% if 'system-admin' in request.path and 'roles-permissions' not in request.path and 'logs' not in request.path and 'company-profile' not in request.path and 'holidays' not in request.path or request.path == '/system-admin/' %}active{% endif %}">
                         <i class="ri-settings-3-line"></i>
                         <span>Administration</span>
                     </a>

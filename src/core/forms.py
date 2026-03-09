@@ -28,3 +28,5 @@ class PublicHolidayForm(forms.ModelForm):
             'date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
             'is_recurring': forms.CheckboxInput(attrs={'class': 'form-checkbox'})
         }
+
+

@@ -14,8 +14,13 @@ def user_list(request):
         messages.error(request, "Access Denied")
         return redirect('dashboard')
         
-    users = User.objects.all().order_by('-date_joined')
-    return render(request, 'users/user_list.html', {'users': users})
+    role_filter = request.GET.get('role')
+    qs = User.objects.all().order_by('-date_joined')
+    if role_filter:
+        from django.db.models import Q
+        qs = qs.filter(Q(role=role_filter) | Q(additional_role=role_filter))
+    
+    return render(request, 'users/user_list.html', {'users': qs})
 
 @login_required
 def user_create(request):

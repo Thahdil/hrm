@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from meetings.models import Meeting
 from django.contrib.auth.decorators import login_required
 from employees.models import DocumentVault
@@ -142,6 +142,9 @@ def holiday_settings(request):
         'holidays': holidays,
         'holiday_form': holiday_form
     })
+
+@login_required
+
 
 @login_required
 def public_holiday_add(request):
@@ -523,3 +526,4 @@ def dashboard(request):
             'upcoming_meetings': upcoming_meetings,
         }
         return render(request, 'dashboard_ess.html', context)
+
