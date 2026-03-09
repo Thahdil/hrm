@@ -146,7 +146,7 @@
                 </thead>
                 <tbody style="background: var(--bg-surface);">
                     {% for leave in leaves %}
-                    <tr class="data-row" style="transition: all 0.25s ease;" data-assigned-manager="{{ leave.assigned_manager.id }}" data-current-user="{{ request.user.id }}">
+                    <tr class="data-row" style="transition: all 0.25s ease;" data-assigned-manager="{{ leave.assigned_manager.id }}" data-current-user="{{ request.user.id }}" data-status="{{ leave.status }}" data-start-date="{{ leave.start_date|date:'Y-m' }}">
                         {% if is_admin %}
                         <td style="padding: 16px 32px; border-bottom: 1px solid var(--border-color);">
                             <div style="display: flex; align-items: center; gap: 14px;">
@@ -395,23 +395,12 @@
             let visibleCount = 0;
 
             tableRows.forEach(row => {
-                // Get data from columns
-                const leaveStatus = row.querySelector('td:nth-child(7) span')?.textContent.trim().toUpperCase() || '';
-                
-                // Date parsing
-                const dateText = row.querySelector('td:nth-child(4) div:first-child')?.textContent.trim() || '';
-                let rowMonth = '';
-                if (dateText) {
-                    const dateObj = new Date(dateText);
-                    if (!isNaN(dateObj)) {
-                        const year = dateObj.getFullYear();
-                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                        rowMonth = `${year}-${month}`;
-                    }
-                }
+                // Read from data attributes — reliable regardless of column count
+                const leaveStatus = (row.dataset.status || '').toUpperCase();
+                const rowMonth = row.dataset.startDate || '';
 
                 // Check matches
-                const matchesStatus = statusTerm === '' || leaveStatus.includes(statusTerm);
+                const matchesStatus = statusTerm === '' || leaveStatus === statusTerm;
                 const matchesDate = dateTerm === '' || rowMonth === dateTerm;
                 
                 // Manager check
