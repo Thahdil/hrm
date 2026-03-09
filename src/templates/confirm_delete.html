@@ -1,0 +1,25 @@
+{% extends 'base_modern.html' %}
+
+{% block title %}Confirm Delete{% endblock %}
+{% block header_title %}Delete Confirmation{% endblock %}
+{% block page_subtitle %}You are about to delete a system record.{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 40px auto; padding: 24px;">
+    <div style="text-align: center; margin-bottom: 24px;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--error-light); color: var(--error); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 16px;">
+            <i class="ri-alert-line"></i>
+        </div>
+        <h2 style="font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">Delete {{ title }}?</h2>
+        <p style="color: var(--text-secondary); margin: 0;">Are you sure you want to permanently delete <strong>{{ object_name }}</strong>? This action cannot be undone.</p>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <a href="{% url cancel_url %}" class="btn btn-outline" style="flex: 1; text-align: center;">Cancel</a>
+            <button type="submit" class="btn btn-danger" style="flex: 1; background: var(--error); border-color: var(--error); color: white;">Yes, Delete</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
