@@ -256,40 +256,15 @@ class PayrollService:
         users_qs = User.objects.filter(is_active=True)
         
         # Maps for fast lookup
-        all_users_by_emp_id = {}
-        all_users_by_fullname = {}
+        all_users_by_emp_numeric_id = {}
         
         for u in users_qs:
-            # Full Name match (normalized)
-            if u.full_name:
-                all_users_by_fullname[u.full_name.strip().lower()] = u
-            if u.first_name:
-                all_users_by_fullname[u.first_name.strip().lower()] = u
-            if u.last_name:
-                all_users_by_fullname[u.last_name.strip().lower()] = u
-            
-            # Username match
-            all_users_by_fullname[u.username.strip().lower()] = u
-
-            # Employee ID matches
-            ids_to_register = []
+            # Employee ID matches: ONLY numericals from employee code
             if u.employee_id:
-                ids_to_register.append(str(u.employee_id).strip().lower())
-                # Add numeric only version
                 num_only = re.sub(r'\D', '', str(u.employee_id))
-                if num_only: ids_to_register.append(num_only)
-            
-            if u.aadhaar_number:
-                ids_to_register.append(str(u.aadhaar_number).strip().lower())
-
-            # Register all ID variants
-            for k in ids_to_register:
-                all_users_by_emp_id[k] = u
-                all_users_by_emp_id[k.lstrip('0')] = u # Support '08' -> '8'
-            
-            # PK match
-            all_users_by_emp_id[str(u.id)] = u
-            all_users_by_emp_id[str(u.id).zfill(2)] = u
+                if num_only:
+                    all_users_by_emp_numeric_id[num_only] = u
+                    all_users_by_emp_numeric_id[num_only.lstrip('0')] = u
         
         # 2. Load Data
         engine = 'openpyxl'
@@ -311,7 +286,7 @@ class PayrollService:
         errors = []
         debug_trace = []
         
-        debug_trace.append(f"Loaded {len(users_qs)} users. ID Keys: {list(all_users_by_emp_id.keys())[:5]}...")
+        debug_trace.append(f"Loaded {len(users_qs)} users. ID Keys: {list(all_users_by_emp_numeric_id.keys())[:5]}...")
         
         for sheet_name, df in all_dfs.items():
             debug_trace.append(f"Processing Sheet '{sheet_name}'. Rows: {len(df)}")
@@ -327,50 +302,22 @@ class PayrollService:
 
                 # A. ATTEMPT USER MATCH ON EVERY ROW
                 row_user = None
-                # Optimized scan for user identification
-                # A. ATTEMPT USER MATCH ON EVERY ROW
-                row_user = None
-                potential_id_user = None
 
                 # Scan entire row first to find best match
                 for cell in row:
                     c_str = str(cell).strip()
-                    if not c_str or c_str.lower() == 'nan' or len(c_str) < 2: continue
+                    if not c_str or c_str.lower() == 'nan': continue
                     
-                    c_key = c_str.lower()
-                    
-                    # 1. Name Match (Highest Priority)
-                    if c_key in all_users_by_fullname: 
-                        row_user = all_users_by_fullname[c_key]; break
-                    
-                    # Cleaned Name Match
-                    c_clean = re.sub(r'^(name|employee|emp|staff|mr\.|mrs\.|ms\.|dr\.)[\s\:\-\.]*', '', c_key).strip()
-                    if c_clean and len(c_clean) > 2 and c_clean in all_users_by_fullname:
-                        row_user = all_users_by_fullname[c_clean]; break
+                    # Skip time-like strings to avoid accidental ID matches from hours/minutes
+                    if ':' in c_str:
+                        continue
                         
-                    # Fuzzy Word Match
-                    words = re.split(r'[^a-z0-9]', c_key)
-                    found_name = False
-                    for w in words:
-                         if len(w) >= 3 and w in all_users_by_fullname:
-                             row_user = all_users_by_fullname[w]
-                             found_name = True
-                             break
-                    if found_name: break 
-
-                    # 2. ID Match (Candidate)
-                    if not potential_id_user:
-                        if c_key in all_users_by_emp_id: 
-                            potential_id_user = all_users_by_emp_id[c_key]
-                        elif re.sub(r'^(EMP|ID|NO)[\-\s\:]*', '', c_str, flags=re.IGNORECASE).lower() in all_users_by_emp_id:
-                             potential_id_user = all_users_by_emp_id[re.sub(r'^(EMP|ID|NO)[\-\s\:]*', '', c_str, flags=re.IGNORECASE).lower()]
-                        else:
-                            num_id = re.sub(r'\D', '', c_str)
-                            if num_id and num_id in all_users_by_emp_id: 
-                                potential_id_user = all_users_by_emp_id[num_id]
-
-                if not row_user and potential_id_user:
-                    row_user = potential_id_user
+                    # Only take numericals to match against employee code
+                    num_id = re.sub(r'\D', '', c_str)
+                    
+                    if num_id and num_id in all_users_by_emp_numeric_id:
+                        row_user = all_users_by_emp_numeric_id[num_id]
+                        break
 
                 if row_user:
                     # User found. Switch context.
