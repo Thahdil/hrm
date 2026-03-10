@@ -202,3 +202,37 @@ def toggle_project_status(request, pk):
         messages.success(request, f"Project '{project.name}' has been {status}.")
 
     return redirect('project_detail', pk=project.pk)
+
+
+@login_required
+def edit_project_team(request, pk):
+    """
+    Update the assigned team for a project. Restricted to CEO/Admin/Project Managers.
+    """
+    is_authorized = request.user.role in ['ADMIN', 'CEO'] or getattr(request.user, 'is_project_manager', False)
+    if not is_authorized:
+        messages.error(request, "Permission denied.")
+        return redirect('project_list')
+
+    project = get_object_or_404(Project, pk=pk)
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        employee_ids = request.POST.getlist('employees')
+        
+        if name:
+            project.name = name
+        if description is not None:
+            project.description = description
+            
+        project.save()
+        project.assigned_employees.set(employee_ids)
+        messages.success(request, f"Project '{project.name}' updated successfully.")
+        
+    # Redirect back to the referring page if available, else project list
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    return redirect('project_list')
+

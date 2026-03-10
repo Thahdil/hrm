@@ -6,5 +6,6 @@ urlpatterns = [
     path('<int:pk>/', views.project_detail, name='project_detail'),
     path('add-hours/', views.add_project_hours, name='add_project_hours'),
     path('<int:pk>/toggle-status/', views.toggle_project_status, name='toggle_project_status'),
+    path('<int:pk>/edit-team/', views.edit_project_team, name='edit_project_team'),
 ]
 

@@ -246,15 +246,82 @@
         visibility: visible;
         transform: translateX(-50%) translateY(-12px);
     }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+        opacity: 1;
+    }
+
+    .custom-modal-content {
+        background: var(--bg-surface);
+        border-radius: var(--radius-lg);
+        width: 100%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        position: relative;
+    }
+
+    .modal-overlay.active .custom-modal-content {
+        transform: translateY(0);
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 24px;
+        right: 24px;
+        background: none;
+        border: none;
+        color: var(--white);
+        font-size: 24px;
+        cursor: pointer;
+        z-index: 2;
+        opacity: 0.8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+    }
+
+    .modal-close:hover {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.1);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="row" style="gap: 32px; padding: 0 16px;">
     {% if is_authorized %}
-    <!-- Aesthetic Create Column -->
-    <div class="col-md-4">
-        <div class="project-card" style="position: sticky; top: 100px;">
+    <!-- Modal Overlay -->
+    <div id="projectModal" class="modal-overlay" onclick="if(event.target === this) closeProjectModal()">
+        <div class="custom-modal-content">
+            <button class="modal-close" onclick="closeProjectModal()">
+                <i class="ri-close-line"></i>
+            </button>
             <div class="project-header-gradient">
                 <h3 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px;">New Project</h3>
                 <p style="margin: 8px 0 0 0; opacity: 0.8; font-size: 13px;">Define your next big milestone.</p>
@@ -314,13 +381,21 @@
     {% endif %}
 
     <!-- Active Projects -->
-    <div class="{% if is_authorized %}col-md-8{% else %}col-md-12{% endif %}">
-        <!-- Portfolio Search Bar -->
-        <div style="margin-bottom: 16px; position: relative;">
-            <i class="ri-search-line" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 16px; pointer-events: none;"></i>
-            <input type="text" id="portfolio-search" placeholder="Search portfolios by name..."
-                style="width: 100%; height: 44px; padding: 0 16px 0 42px; border-radius: var(--radius-md); border: 1.5px solid var(--gray-200); background: var(--bg-surface); color: var(--text-main); font-size: 14px; font-weight: 500; outline: none; transition: border-color 0.2s;"
-                onfocus="this.style.borderColor='var(--primary)';" onblur="this.style.borderColor='var(--gray-200)';">
+    <div class="col-md-12">
+        <div style="display: flex; gap: 16px; margin-bottom: 24px; align-items: center;">
+            <!-- Portfolio Search Bar -->
+            <div style="flex: 1; position: relative;">
+                <i class="ri-search-line" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 16px; pointer-events: none;"></i>
+                <input type="text" id="portfolio-search" placeholder="Search portfolios by name..."
+                    style="width: 100%; height: 44px; padding: 0 16px 0 42px; border-radius: var(--radius-md); border: 1.5px solid var(--gray-200); background: var(--bg-surface); color: var(--text-main); font-size: 14px; font-weight: 500; outline: none; transition: border-color 0.2s;"
+                    onfocus="this.style.borderColor='var(--primary)';" onblur="this.style.borderColor='var(--gray-200)';">
+            </div>
+
+            {% if is_authorized %}
+            <button onclick="openProjectModal()" class="btn btn-primary" style="height: 44px; border-radius: var(--radius-md); font-weight: 700; padding: 0 24px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); display: flex; align-items: center; border: none; cursor: pointer;">
+                <i class="ri-add-line" style="margin-right: 8px; font-size: 18px;"></i> New Project
+            </button>
+            {% endif %}
         </div>
 
         <!-- Tab Switcher -->
@@ -357,7 +432,14 @@
 
                         <div style="border-top: 1px solid var(--gray-100); padding-top: 16px;">
                             <div>
-                                <div style="font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; margin-bottom: 8px;">Assigned Team</div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div style="font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase;">Assigned Team</div>
+                                    {% if is_authorized %}
+                                    <button type="button" onclick="event.preventDefault(); openEditTeamModal('{{ project.id }}', '{{ project.name|escapejs }}', '{{ project.description|escapejs }}', [{% for emp in project.assigned_employees.all %}{{ emp.id }}{% if not forloop.last %},{% endif %}{% endfor %}])" style="background: none; border: none; color: var(--primary); font-size: 11px; font-weight: 800; text-transform: uppercase; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='var(--primary-light)'; this.style.color='white';" onmouseout="this.style.background='none'; this.style.color='var(--primary)';">
+                                        <i class="ri-edit-2-line"></i> Edit
+                                    </button>
+                                    {% endif %}
+                                </div>
                                 <div class="avatar-stack">
                                     {% for emp in project.assigned_employees.all|slice:":5" %}
                                     <div class="avatar-stack-item">{{ emp.full_name|default:emp.username|slice:":1"|upper }}</div>
@@ -421,6 +503,14 @@
                         </p>
 
                         <div style="border-top: 1px solid var(--gray-100); padding-top: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div style="font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase;">Assigned Team</div>
+                                {% if is_authorized %}
+                                <button type="button" onclick="event.preventDefault(); openEditTeamModal('{{ project.id }}', '{{ project.name|escapejs }}', '{{ project.description|escapejs }}', [{% for emp in project.assigned_employees.all %}{{ emp.id }}{% if not forloop.last %},{% endif %}{% endfor %}])" style="background: none; border: none; color: var(--gray-500); font-size: 11px; font-weight: 800; text-transform: uppercase; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='var(--gray-200)'; this.style.color='var(--gray-700)';" onmouseout="this.style.background='none'; this.style.color='var(--gray-500)';">
+                                    <i class="ri-edit-2-line"></i> Edit
+                                </button>
+                                {% endif %}
+                            </div>
                             <div class="avatar-stack">
                                 {% for emp in project.assigned_employees.all|slice:":5" %}
                                 <div class="avatar-stack-item" style="background: var(--gray-300);">
@@ -451,8 +541,148 @@
         {% endif %}
         </div><!-- end section-completed -->
     </div>
+
+    <!-- Edit Team Modal -->
+    {% if is_authorized %}
+    <div id="editTeamModal" class="modal-overlay" onclick="if(event.target === this) closeEditTeamModal()">
+        <div class="custom-modal-content">
+            <button class="modal-close" onclick="closeEditTeamModal()">
+                <i class="ri-close-line"></i>
+            </button>
+            <div class="project-header-gradient" style="background: linear-gradient(135deg, #4b5563, #1f2937);">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px;">Edit Project: <span id="edit-team-project-name"></span></h3>
+                <p style="margin: 8px 0 0 0; opacity: 0.8; font-size: 13px;">Manage details and team members for this project.</p>
+            </div>
+            <div class="card-body" style="padding: 24px;">
+                <form id="edit-team-form" method="post">
+                    {% csrf_token %}
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label class="advanced-label">Strategic Project Name</label>
+                        <div class="input-icon-wrapper">
+                            <i class="ri-folder-add-line"></i>
+                            <input type="text" id="edit-project-name-input" name="name" class="premium-input form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label class="advanced-label">Objective / Execution Detail</label>
+                        <div class="input-icon-wrapper" style="align-items: flex-start;">
+                            <i class="ri-text-snippet" style="top: 14px;"></i>
+                            <textarea id="edit-project-desc-input" name="description" class="premium-input form-control" rows="4" style="padding-top: 14px;"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label class="advanced-label">Team Deployment Pool</label>
+                        
+                        <!-- Search Bar -->
+                        <div class="input-icon-wrapper" style="margin-bottom: 16px;">
+                            <i class="ri-search-eye-line"></i>
+                            <input type="text" id="edit-employee-search" class="premium-input form-control" placeholder="Search to add or remove members..." 
+                                   style="height: 46px;">
+                        </div>
+
+                        <div class="employee-scroll-list" id="edit-employee-list">
+                            {% for emp in all_employees %}
+                            <label class="employee-checkbox-item edit-employee-item">
+                                <input type="checkbox" name="employees" value="{{ emp.id }}" class="edit-team-checkbox" style="accent-color: var(--primary); width: 18px; height: 18px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 32px; height: 32px; background: var(--gray-200); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--gray-700);">
+                                        {{ emp.full_name|default:emp.username|slice:":1"|upper }}
+                                    </div>
+                                    <span style="font-size: 14px; font-weight: 500;">{{ emp.full_name|default:emp.username }}</span>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: var(--radius-md); height: 50px; font-weight: 700; font-size: 15px; background: var(--gray-800); border: none; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
+                        Save Project Configuration <i class="ri-check-line" style="margin-left: 8px;"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 <script>
+    // Edit Team Modal Functions
+    function openEditTeamModal(projectId, projectName, projectDesc, teamIds) {
+        const modal = document.getElementById('editTeamModal');
+        const form = document.getElementById('edit-team-form');
+        const titleSpan = document.getElementById('edit-team-project-name');
+        
+        // Setup form action correctly using Django URL pattern equivalent
+        form.action = `/projects/${projectId}/edit-team/`;
+        titleSpan.textContent = projectName;
+
+        // Set name and description values
+        document.getElementById('edit-project-name-input').value = projectName;
+        document.getElementById('edit-project-desc-input').value = projectDesc;
+
+        // Reset and check appropriate checkboxes
+        const checkboxes = document.querySelectorAll('.edit-team-checkbox');
+        checkboxes.forEach(cb => {
+            cb.checked = teamIds.includes(parseInt(cb.value));
+        });
+        
+        // Reset search
+        const searchInput = document.getElementById('edit-employee-search');
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+        }
+
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            modal.classList.add('active');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeEditTeamModal() {
+        const modal = document.getElementById('editTeamModal');
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+        document.body.style.overflow = '';
+    }
+
+    // Edit Team Employee search
+    document.getElementById('edit-employee-search')?.addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        const items = document.querySelectorAll('.edit-employee-item');
+        items.forEach(item => {
+            const nameSpan = item.querySelector('span');
+            if (nameSpan) {
+                const name = nameSpan.textContent.toLowerCase();
+                item.style.display = name.includes(term) ? 'flex' : 'none';
+            }
+        });
+    });
+
+    // Modal Functions
+    function openProjectModal() {
+        const modal = document.getElementById('projectModal');
+        modal.style.display = 'flex';
+        // Small delay to allow display flex to apply before opacity transition
+        setTimeout(() => {
+            modal.classList.add('active');
+        }, 10);
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    function closeProjectModal() {
+        const modal = document.getElementById('projectModal');
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300); // Match transition duration
+        document.body.style.overflow = '';
+    }
+
     // Tab Switcher
     function switchTab(tab) {
         const activeSection = document.getElementById('section-active');
