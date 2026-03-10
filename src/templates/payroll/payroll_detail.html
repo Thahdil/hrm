@@ -128,9 +128,18 @@
                             <div style="font-size: 16px; font-weight: 800; color: var(--text-main);">₹{{ entry.net_salary|intcomma }}</div>
                         </td>
                         <td style="padding: 16px 24px; text-align: center;">
-                            <a href="{% url 'payslip_detail' entry.id %}" target="_blank" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; border-radius: 8px; border-color: var(--border-color); color: var(--text-main);">
-                                <i class="ri-printer-line"></i> Payslip
-                            </a>
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <a href="{% url 'payslip_detail' entry.id %}" target="_blank" class="btn btn-outline" style="padding: 6px 12px; font-size: 11px; border-radius: 8px; border-color: var(--border-color); color: var(--text-main); white-space: nowrap;">
+                                    <i class="ri-printer-line"></i> Payslip
+                                </a>
+                                {% if request.user.is_admin or request.user.is_hr or request.user.is_ceo %}
+                                    {% if entry.shortfall_work_hours > 0 %}
+                                    <a href="{% url 'lop_adjustment_request_payroll' entry.id %}" class="btn btn-outline" style="padding: 6px 12px; font-size: 11px; border-radius: 8px; border-color: var(--warning); color: var(--warning); display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                                        <i class="ri-edit-line"></i> Adjust LOP
+                                    </a>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

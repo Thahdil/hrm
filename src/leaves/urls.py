@@ -20,4 +20,14 @@ urlpatterns = [
     
     # API for live updates
     path('api/check-updates/', views.check_updates, name='api_check_updates'),
+    
+    # LOP Adjustments
+    path('lop-adjustments/', views.lop_adjustment_list, name='lop_adjustment_list'),
+    path('lop-adjustments/request/', views.lop_adjustment_request, name='lop_adjustment_request'),
+    path('lop-adjustments/request/<int:payroll_id>/', views.lop_adjustment_request, name='lop_adjustment_request_payroll'),
+    path('lop-adjustments/<int:pk>/', views.lop_adjustment_detail, name='lop_adjustment_detail'),
+    path('lop-adjustments/<int:pk>/approve/', views.lop_adjustment_approve, name='lop_adjustment_approve'),
+    path('lop-adjustments/<int:pk>/delete/', views.lop_adjustment_delete, name='lop_adjustment_delete'),
+    path('lop-adjustments/log/', views.lop_adjustment_report, name='lop_adjustment_log'),
+    path('lop-adjustments/bulk/', views.lop_adjustment_bulk, name='lop_adjustment_bulk'),
 ]

@@ -1,6 +1,5 @@
 from django import forms
-from .models import LeaveRequest, LeaveType
-from .models import TicketRequest
+from .models import LeaveType, LeaveRequest, TicketRequest, LOPAdjustment
 
 class LeaveRequestForm(forms.ModelForm):
     class Meta:
@@ -151,3 +150,54 @@ class LeaveTypeForm(forms.ModelForm):
             cleaned_data['code'] = final_code
             
         return cleaned_data
+
+class LOPAdjustmentForm(forms.ModelForm):
+    class Meta:
+        model = LOPAdjustment
+        fields = ['requested_annual_leave_days', 'reason']
+        widgets = {
+            'requested_annual_leave_days': forms.NumberInput(attrs={
+                'class': 'form-input', 
+                'step': '0.5', 
+                'min': '0.5',
+                'placeholder': 'e.g. 1.0 or 1.5'
+            }),
+            'reason': forms.Textarea(attrs={
+                'class': 'form-textarea', 
+                'rows': 3, 
+                'placeholder': 'Explain why this conversion is needed (e.g. emergency during LOP period)'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.max_lop = kwargs.pop('max_lop', None)
+        self.max_al = kwargs.pop('max_al', None)
+        super().__init__(*args, **kwargs)
+        
+        help_text = []
+        if self.max_al is not None:
+             help_text.append(f"Balance: {self.max_al}d")
+        if self.max_lop is not None:
+             help_text.append(f"Max LOP: {self.max_lop}d")
+        
+        if help_text:
+             self.fields['requested_annual_leave_days'].help_text = " | ".join(help_text)
+             
+        # Add HTML level max constraint for better UX
+        max_allowed = min(val for val in [self.max_lop, self.max_al] if val is not None)
+        if max_allowed is not None:
+             self.fields['requested_annual_leave_days'].widget.attrs['max'] = str(max_allowed)
+
+    def clean_requested_annual_leave_days(self):
+        days = self.cleaned_data.get('requested_annual_leave_days')
+        if days is not None:
+            # 1. Increment Check (Must be multiple of 0.5)
+            if (float(days) * 2) % 1 != 0:
+                raise forms.ValidationError("Days must be in increments of 0.5 (e.g. 1, 1.5, 2).")
+                
+            # 2. Balance Checks
+            if self.max_lop is not None and float(days) > float(self.max_lop):
+                raise forms.ValidationError(f"Cannot convert more than available LOP days ({self.max_lop}).")
+            if self.max_al is not None and float(days) > float(self.max_al):
+                raise forms.ValidationError(f"Insufficient Annual Leave balance ({self.max_al} days).")
+        return days

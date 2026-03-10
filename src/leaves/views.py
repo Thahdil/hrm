@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import LeaveRequest, LeaveType
-from .models import LeaveRequest, LeaveType
-from .forms import LeaveRequestForm, LeaveTypeForm
+from .models import LeaveRequest, LeaveType, LeaveBalance, LOPAdjustment
+from .forms import LeaveRequestForm, LeaveTypeForm, LOPAdjustmentForm
 from django.contrib import messages
 from core.models import AuditLog
 from django.db.models import Q
+from payroll.models import PayrollEntry
 
 @login_required
 def leave_list(request):
@@ -112,11 +112,36 @@ def leave_list(request):
         start_time__gte=today_start
     ).distinct().order_by('start_time')[:5]
 
+    # Check for convertible LOP (Employee only)
+    has_lop_to_convert = False
+    latest_lop_entry = None
+    if not is_admin:
+        latest_lop_entry = PayrollEntry.objects.filter(employee=request.user, shortfall_work_hours__gt=0).order_by('-created_at').first()
+        if latest_lop_entry:
+            # Also check if there isn't already a pending adjustment for this entry
+            pending_adj = LOPAdjustment.objects.filter(payroll_entry=latest_lop_entry, status='PENDING').exists()
+            if not pending_adj:
+                # Also check that the employee has enough Annual Leave balance (at least 0.5 days)
+                import math
+                try:
+                    from django.utils import timezone as tz
+                    ann_type = LeaveType.objects.get(code='ANN')
+                    al_bal = LeaveBalance.objects.filter(
+                        employee=request.user, leave_type=ann_type, year=tz.now().year
+                    ).first()
+                    al_remaining = math.floor(float(al_bal.remaining) * 2) / 2.0 if al_bal else 0.0
+                    if al_remaining >= 0.5:
+                        has_lop_to_convert = True
+                except LeaveType.DoesNotExist:
+                    pass  # No AL leave type configured - button stays hidden
+
     return render(request, 'leaves/leave_list.html', {
         'leaves': leaves, 
         'is_admin': is_admin, 
         'balances': balances,
-        'upcoming_meetings': upcoming_meetings
+        'upcoming_meetings': upcoming_meetings,
+        'has_lop_to_convert': has_lop_to_convert,
+        'latest_lop_entry': latest_lop_entry
     })
 
 @login_required
@@ -594,14 +619,511 @@ def check_updates(request):
     user = request.user
     
     # Return status of the user's recent requests (last 20 for coverage)
-    recent_leaves = LeaveRequest.objects.filter(employee=user).order_by('-created_at')[:20]
-    
-    data = []
-    for leave in recent_leaves:
-        data.append({
-            'id': leave.id,
-            'status': leave.status,
-            'updated_at': leave.updated_at.isoformat() if leave.updated_at else ''
-        })
-        
     return JsonResponse({'requests': data})
+
+@login_required
+def lop_adjustment_request(request, payroll_id=None):
+    """
+    Initiate a request to convert LOP to Annual Leave.
+    """
+    user = request.user
+    payroll_entry = None
+    max_lop = 0.0
+    
+    # 1. Determine Employee and Max LOP
+    if payroll_id:
+        payroll_entry = get_object_or_404(PayrollEntry, pk=payroll_id)
+        # Auth check
+        is_manager = payroll_entry.employee.managers.filter(pk=user.id).exists()
+        if payroll_entry.employee != user and not (user.is_admin() or user.is_hr() or user.is_ceo() or is_manager):
+             messages.error(request, "Permission denied.")
+             return redirect('payroll_list')
+        
+        emp = payroll_entry.employee
+        # Convert total hours to days, floored to the nearest 0.5 day (e.g., 7.3 -> 7.0, 7.8 -> 7.5)
+        import math
+        max_lop = math.floor((float(payroll_entry.shortfall_work_hours) / 8.0) * 2) / 2.0
+        
+        # Check if already pending
+        if LOPAdjustment.objects.filter(payroll_entry=payroll_entry, status='PENDING').exists():
+            messages.warning(request, "There is already a pending adjustment for this payroll entry.")
+            return redirect('payroll_detail', pk=payroll_entry.batch.pk)
+    else:
+        emp = user
+        # Find most recent entry with actual shortfall
+        payroll_entry = PayrollEntry.objects.filter(employee=emp, shortfall_work_hours__gt=0).order_by('-created_at').first()
+        if payroll_entry:
+             # Check if already pending
+            if LOPAdjustment.objects.filter(payroll_entry=payroll_entry, status='PENDING').exists():
+                messages.warning(request, "Pending conversion request already exists.")
+                return redirect('leave_list')
+            import math
+            max_lop = math.floor((float(payroll_entry.shortfall_work_hours) / 8.0) * 2) / 2.0
+        else:
+            messages.info(request, "No convertible Loss of Pay found in your payroll history.")
+            return redirect('leave_list')
+
+    if max_lop <= 0:
+        messages.warning(request, "No LOP hours available to convert.")
+        return redirect('leave_list')
+
+    # 2. Get Annual Leave Balance
+    try:
+        ann_type = LeaveType.objects.get(code='ANN')
+        from django.utils import timezone
+        import math
+        balance, _ = LeaveBalance.objects.get_or_create(
+            employee=emp,
+            leave_type=ann_type,
+            year=timezone.now().year
+        )
+        # Floor to nearest 0.5 to avoid floating point remnants (e.g. 0.09 -> 0.0)
+        raw_al = float(balance.remaining)
+        max_al = math.floor(raw_al * 2) / 2.0
+    except LeaveType.DoesNotExist:
+        messages.error(request, "Annual Leave policy (ANN) not found.")
+        return redirect('leave_list')
+
+    if max_al <= 0:
+        messages.warning(request, "You have no Annual Leave balance available to convert LOP.")
+        return redirect('leave_list')
+
+    # Cap max_lop by available AL — can't convert more than you have AL for
+    max_lop = min(max_lop, max_al)
+
+    if request.method == 'POST':
+        form = LOPAdjustmentForm(request.POST, max_lop=max_lop, max_al=max_al)
+        if form.is_valid():
+            adj = form.save(commit=False)
+            adj.employee = emp
+            adj.payroll_entry = payroll_entry
+            adj.requested_by = user
+            adj.original_lop_days = max_lop
+            adj.remaining_lop_days = float(max_lop) - float(adj.requested_annual_leave_days)
+            adj.converted_hours = float(adj.requested_annual_leave_days) * 8.0
+            
+            # Auto-approve for all users
+            from django.db import transaction
+            from decimal import Decimal
+            from django.utils import timezone
+            from django.db.models import Sum
+            from payroll.models import PayrollDeduction, DeductionComponent
+            
+            try:
+                with transaction.atomic():
+                    # 1. Update Leave Balance
+                    ann_type = LeaveType.objects.get(code='ANN')
+                    balance, _ = LeaveBalance.objects.get_or_create(
+                        employee=adj.employee, 
+                        leave_type=ann_type, 
+                        year=timezone.now().year
+                    )
+                    
+                    if float(balance.remaining) < float(adj.requested_annual_leave_days):
+                         raise ValueError("Insufficient Annual Leave balance remaining.")
+                    
+                    balance.days_used = float(balance.days_used) + float(adj.requested_annual_leave_days)
+                    balance.save()
+                    
+                    # 2. Update Payroll Entry
+                    if adj.payroll_entry:
+                         pe = adj.payroll_entry
+                         pe.shortfall_work_hours = max(Decimal('0'), pe.shortfall_work_hours - Decimal(str(adj.converted_hours)))
+                         pe.days_absent = max(0, pe.days_absent - int(adj.requested_annual_leave_days))
+                         pe.lop_deduction = round(pe.shortfall_work_hours * pe.employee.hourly_salary, 2)
+                         
+                         lop_component = DeductionComponent.objects.filter(name="Loss of Pay (Shortfall)").first()
+                         if lop_component:
+                             lop_ded = PayrollDeduction.objects.filter(payroll_entry=pe, component=lop_component).first()
+                             if lop_ded:
+                                 if pe.lop_deduction > 0:
+                                     lop_ded.amount = pe.lop_deduction
+                                     lop_ded.approved_amount = pe.lop_deduction
+                                     lop_ded.save()
+                                 else:
+                                     lop_ded.delete()
+                         
+                         total_ded = pe.breakdown_deductions.filter(is_waived=False).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                         pe.deductions = round(total_ded, 2)
+                         pe.net_salary = max(Decimal('0.00'), pe.gross_salary - pe.deductions)
+                         pe.save()
+
+                    adj.status = LOPAdjustment.Status.APPROVED
+                    adj.authorized_by = user
+                    adj.authorized_at = timezone.now()
+                    adj.save()
+                    messages.success(request, f"Successfully converted {adj.requested_annual_leave_days} days of LOP for {emp.full_name}.")
+            except Exception as e:
+                messages.error(request, f"Direct conversion failed: {str(e)}")
+                return render(request, 'leaves/lop_adjustment_form.html', {
+                    'form': form, 'payroll_entry': payroll_entry, 'employee': emp, 'max_lop': max_lop, 'max_al': max_al, 'hourly_rate': float(emp.hourly_salary or 0)
+                })
+            
+            if payroll_entry and payroll_entry.batch:
+                return redirect('payroll_detail', pk=payroll_entry.batch.pk)
+            return redirect('leave_list')
+    else:
+        form = LOPAdjustmentForm(max_lop=max_lop, max_al=max_al)
+        
+    return render(request, 'leaves/lop_adjustment_form.html', {
+        'form': form,
+        'payroll_entry': payroll_entry,
+        'employee': emp,
+        'max_lop': max_lop,
+        'max_al': max_al,
+        'hourly_rate': float(emp.hourly_salary or 0)
+    })
+
+@login_required
+def lop_adjustment_list(request):
+    """
+    Birds-eye view for Admin/CEO/HR of all LOP conversions.
+    """
+    user = request.user
+    if not (user.is_admin() or user.is_hr() or user.is_ceo()):
+        # Regular employees see their own
+        adjustments = LOPAdjustment.objects.filter(employee=user).order_by('-created_at')
+    else:
+        adjustments = LOPAdjustment.objects.all().order_by('-created_at')
+        
+    return render(request, 'leaves/lop_adjustment_list.html', {'adjustments': adjustments})
+
+@login_required
+def lop_adjustment_detail(request, pk):
+    adj = get_object_or_404(LOPAdjustment, pk=pk)
+    user = request.user
+    
+    # Permission check
+    is_manager = adj.employee.managers.filter(pk=user.id).exists()
+    if not (user.is_admin() or user.is_hr() or user.is_ceo() or adj.employee == user or is_manager):
+         messages.error(request, "Permission denied.")
+         return redirect('leave_list')
+         
+    return render(request, 'leaves/lop_adjustment_detail.html', {'adj': adj})
+
+@login_required
+def lop_adjustment_approve(request, pk):
+    adj = get_object_or_404(LOPAdjustment, pk=pk)
+    user = request.user
+    
+    if not (user.is_admin() or user.is_hr() or user.is_ceo()):
+        messages.error(request, "Only Admin, CEO, or HR can approve this adjustment.")
+        return redirect('lop_adjustment_detail', pk=pk)
+
+    if adj.status != LOPAdjustment.Status.PENDING:
+         messages.info(request, "This adjustment has already been processed.")
+         return redirect('lop_adjustment_detail', pk=pk)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'approve':
+            from django.db import transaction
+            from decimal import Decimal
+            try:
+                with transaction.atomic():
+                    # 1. Update Leave Balance
+                    ann_type = LeaveType.objects.get(code='ANN')
+                    balance, _ = LeaveBalance.objects.get_or_create(
+                        employee=adj.employee, 
+                        leave_type=ann_type, 
+                        year=adj.created_at.year
+                    )
+                    
+                    if float(balance.remaining) < float(adj.requested_annual_leave_days):
+                         raise ValueError("Insufficient Annual Leave balance remaining.")
+                    
+                    balance.days_used = float(balance.days_used) + float(adj.requested_annual_leave_days)
+                    balance.save()
+                    
+                    # 2. Update Payroll Entry if linked
+                    if adj.payroll_entry:
+                         pe = adj.payroll_entry
+                         # Reduce shortfall
+                         pe.shortfall_work_hours = max(Decimal('0'), pe.shortfall_work_hours - Decimal(str(adj.converted_hours)))
+                         
+                         # Also reduce days_absent count if full days adjusted
+                         adjusted_full_days = int(adj.requested_annual_leave_days)
+                         pe.days_absent = max(0, pe.days_absent - adjusted_full_days)
+                         
+                         # Recalculate LOP deduction amount
+                         hourly_rate = pe.employee.hourly_salary
+                         pe.lop_deduction = round(pe.shortfall_work_hours * hourly_rate, 2)
+                         
+                         # Update the PayrollDeduction record for LOP
+                         from payroll.models import PayrollDeduction, DeductionComponent
+                         lop_component = DeductionComponent.objects.filter(name="Loss of Pay (Shortfall)").first()
+                         if lop_component:
+                             lop_ded = PayrollDeduction.objects.filter(
+                                 payroll_entry=pe, component=lop_component
+                             ).first()
+                             if lop_ded:
+                                 if pe.lop_deduction > 0:
+                                     lop_ded.amount = pe.lop_deduction
+                                     lop_ded.approved_amount = pe.lop_deduction
+                                     lop_ded.save()
+                                 else:
+                                     lop_ded.delete()
+                         
+                         # Recalculate total deductions from all PayrollDeduction records
+                         from django.db.models import Sum
+                         total_ded = pe.breakdown_deductions.filter(is_waived=False).aggregate(
+                             total=Sum('amount')
+                         )['total'] or Decimal('0.00')
+                         pe.deductions = round(total_ded, 2)
+                         
+                         # Update net salary
+                         pe.net_salary = max(Decimal('0.00'), pe.gross_salary - pe.deductions)
+                         pe.save()
+
+                    adj.status = LOPAdjustment.Status.APPROVED
+                    adj.authorized_by = user
+                    from django.utils import timezone
+                    adj.authorized_at = timezone.now()
+                    adj.save()
+                    
+                    messages.success(request, f"Approved: {adj.requested_annual_leave_days} days converted.")
+            except ValueError as e:
+                messages.error(request, str(e))
+                return redirect('lop_adjustment_detail', pk=pk)
+            except Exception as e:
+                messages.error(request, f"An error occurred: {str(e)}")
+                return redirect('lop_adjustment_detail', pk=pk)
+            
+        elif action == 'reject':
+            adj.status = LOPAdjustment.Status.REJECTED
+            adj.rejection_reason = request.POST.get('rejection_reason', '')
+            adj.authorized_by = user
+            adj.save()
+            messages.warning(request, "Adjustment request rejected.")
+            
+    return redirect('lop_adjustment_detail', pk=pk)
+
+@login_required
+def lop_adjustment_report(request):
+    """
+    Adjustment Log for Monthly Reconciliation and Trend Tracking.
+    """
+    user = request.user
+    if not (user.is_admin() or user.is_hr() or user.is_ceo()):
+        return redirect('dashboard')
+        
+    adjustments = LOPAdjustment.objects.filter(status='APPROVED').order_by('-authorized_at')
+    
+    # Simple Monthly Grouping / Stats
+    from django.db.models import Sum, Count
+    stats = adjustments.aggregate(
+        total_days=Sum('requested_annual_leave_days'),
+        total_count=Count('id')
+    )
+    
+    # Trend: Top employees using this conversion
+    trends = LOPAdjustment.objects.filter(status='APPROVED').values(
+        'employee__full_name', 'employee__employee_id'
+    ).annotate(
+        req_count=Count('id'),
+        total_days=Sum('requested_annual_leave_days')
+    ).order_by('-total_days')[:10]
+    
+    return render(request, 'leaves/lop_adjustment_log.html', {
+        'adjustments': adjustments,
+        'stats': stats,
+        'trends': trends
+    })
+
+@login_required
+def lop_adjustment_bulk(request):
+    """
+    Batch process interface for HR.
+    """
+    user = request.user
+    if not (user.is_admin() or user.is_hr() or user.is_ceo()):
+        return redirect('dashboard')
+        
+    pending = LOPAdjustment.objects.filter(status='PENDING')
+    
+    if request.method == 'POST':
+        selected_ids = request.POST.getlist('adj_ids')
+        action = request.POST.get('batch_action')
+        
+        if not selected_ids:
+            messages.warning(request, "No requests selected.")
+        else:
+            from django.db import transaction
+            from decimal import Decimal
+            from django.utils import timezone
+            
+            count = 0
+            errors = []
+            
+            for adj_id in selected_ids:
+                try:
+                    with transaction.atomic():
+                        adj = LOPAdjustment.objects.select_for_update().get(pk=adj_id, status=LOPAdjustment.Status.PENDING)
+                        
+                        if action == 'approve':
+                            # 1. Update Leave Balance
+                            ann_type = LeaveType.objects.get(code='ANN')
+                            balance, _ = LeaveBalance.objects.get_or_create(
+                                employee=adj.employee, 
+                                leave_type=ann_type, 
+                                year=adj.created_at.year
+                            )
+                            
+                            if float(balance.remaining) < float(adj.requested_annual_leave_days):
+                                 errors.append(f"Insufficient balance for {adj.employee.full_name}")
+                                 continue
+                            
+                            balance.days_used = float(balance.days_used) + float(adj.requested_annual_leave_days)
+                            balance.save()
+                            
+                            # 2. Update Payroll Entry if linked
+                            if adj.payroll_entry:
+                                 pe = adj.payroll_entry
+                                 pe.shortfall_work_hours = max(Decimal('0'), pe.shortfall_work_hours - Decimal(str(adj.converted_hours)))
+                                 
+                                 # Reduce days_absent proportionally
+                                 adjusted_full_days = int(adj.requested_annual_leave_days)
+                                 pe.days_absent = max(0, pe.days_absent - adjusted_full_days)
+                                 
+                                 pe.lop_deduction = round(pe.shortfall_work_hours * pe.employee.hourly_salary, 2)
+                                 
+                                 # Update the PayrollDeduction record for LOP
+                                 from payroll.models import PayrollDeduction, DeductionComponent
+                                 lop_component = DeductionComponent.objects.filter(name="Loss of Pay (Shortfall)").first()
+                                 if lop_component:
+                                     lop_ded = PayrollDeduction.objects.filter(
+                                         payroll_entry=pe, component=lop_component
+                                     ).first()
+                                     if lop_ded:
+                                         if pe.lop_deduction > 0:
+                                             lop_ded.amount = pe.lop_deduction
+                                             lop_ded.approved_amount = pe.lop_deduction
+                                             lop_ded.save()
+                                         else:
+                                             lop_ded.delete()
+                                 
+                                 # Recalculate total deductions from all PayrollDeduction records
+                                 from django.db.models import Sum
+                                 total_ded = pe.breakdown_deductions.filter(is_waived=False).aggregate(
+                                     total=Sum('amount')
+                                 )['total'] or Decimal('0.00')
+                                 pe.deductions = round(total_ded, 2)
+                                 
+                                 pe.net_salary = max(Decimal('0.00'), pe.gross_salary - pe.deductions)
+                                 pe.save()
+
+                            adj.status = LOPAdjustment.Status.APPROVED
+                            adj.authorized_by = user
+                            adj.authorized_at = timezone.now()
+                            adj.save()
+                            count += 1
+                            
+                        elif action == 'reject':
+                            adj.status = LOPAdjustment.Status.REJECTED
+                            adj.authorized_by = user
+                            adj.save()
+                            count += 1
+                except Exception as e:
+                    errors.append(f"Error processing request for {adj.employee.full_name}: {str(e)}")
+            
+            if count:
+                messages.success(request, f"Successfully processed {count} adjustments.")
+            if errors:
+                for err in errors:
+                    messages.error(request, err)
+            
+            return redirect('lop_adjustment_bulk')
+            
+    return render(request, 'leaves/lop_adjustment_bulk.html', {'pending': pending})
+
+@login_required
+def lop_adjustment_delete(request, pk):
+    """
+    Remove an LOP adjustment and reverse any changes made to attendance/balance.
+    """
+    adj = get_object_or_404(LOPAdjustment, pk=pk)
+    user = request.user
+    
+    # Permissions
+    if not (user.is_admin() or user.is_hr() or user.is_ceo()):
+         # Employees can remove their own PENDING requests
+         if not (adj.employee == user and adj.status == LOPAdjustment.Status.PENDING):
+              messages.error(request, "Permission denied.")
+              return redirect('lop_adjustment_list')
+
+    if request.method == 'POST':
+        from django.db import transaction
+        from decimal import Decimal
+        try:
+            with transaction.atomic():
+                if adj.status == LOPAdjustment.Status.APPROVED:
+                    # 1. Revert Leave Balance
+                    try:
+                        ann_type = LeaveType.objects.get(code='ANN')
+                        # Find balance for the year it was created (matching approval year)
+                        balance = LeaveBalance.objects.filter(
+                            employee=adj.employee, 
+                            leave_type=ann_type, 
+                            year=adj.created_at.year
+                        ).first()
+                        
+                        if balance:
+                            balance.days_used = max(0.0, float(balance.days_used) - float(adj.requested_annual_leave_days))
+                            balance.save()
+                    except LeaveType.DoesNotExist:
+                        pass # Policy might have been deleted, but we should still revert payroll
+                    
+                    # 2. Restore Payroll Entry Stats
+                    if adj.payroll_entry:
+                        pe = adj.payroll_entry
+                        # Add back shortfall hours
+                        pe.shortfall_work_hours += Decimal(str(adj.converted_hours))
+                        
+                        # Add back days_absent
+                        adjusted_full_days = int(adj.requested_annual_leave_days)
+                        pe.days_absent += adjusted_full_days
+                        
+                        # Recalculate LOP deduction amount
+                        hourly_rate = pe.employee.hourly_salary
+                        pe.lop_deduction = round(pe.shortfall_work_hours * hourly_rate, 2)
+                        
+                        # Update the PayrollDeduction record for LOP
+                        from payroll.models import PayrollDeduction, DeductionComponent
+                        lop_component = DeductionComponent.objects.filter(name="Loss of Pay (Shortfall)").first()
+                        if lop_component:
+                            lop_ded = PayrollDeduction.objects.filter(
+                                payroll_entry=pe, component=lop_component
+                            ).first()
+                            if lop_ded:
+                                # Restore the original LOP amount
+                                lop_ded.amount = pe.lop_deduction
+                                lop_ded.approved_amount = pe.lop_deduction
+                                lop_ded.save()
+                            else:
+                                # Re-create the LOP deduction record if it was deleted
+                                if pe.lop_deduction > 0:
+                                    PayrollDeduction.objects.create(
+                                        payroll_entry=pe,
+                                        component=lop_component,
+                                        amount=pe.lop_deduction,
+                                        approved_amount=pe.lop_deduction,
+                                        is_waived=False
+                                    )
+                        
+                        # Recalculate total deductions from all PayrollDeduction records
+                        from django.db.models import Sum
+                        total_ded = pe.breakdown_deductions.filter(is_waived=False).aggregate(
+                            total=Sum('amount')
+                        )['total'] or Decimal('0.00')
+                        pe.deductions = round(total_ded, 2)
+                        
+                        # Update net salary
+                        pe.net_salary = max(Decimal('0.00'), pe.gross_salary - pe.deductions)
+                        pe.save()
+                
+                adj.delete()
+                messages.success(request, f"Successfully removed LOP adjustment. Changes were reversed.")
+        except Exception as e:
+            messages.error(request, f"Failed to remove adjustment: {str(e)}")
+            
+    return redirect('lop_adjustment_list')

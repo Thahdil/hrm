@@ -40,7 +40,7 @@ def attendance_list(request):
     from django.db.models import Q
     User = get_user_model()
     # Filter logs to show only Active employees
-    logs = AttendanceLog.objects.select_related('employee').filter(employee__is_active=True).exclude(employee__status='ARCHIVED').exclude(employee__role='CEO')
+    logs = AttendanceLog.objects.select_related('employee').filter(employee__is_active=True).exclude(employee__is_staff=True).exclude(employee__status='ARCHIVED').exclude(employee__role__iexact='CEO').exclude(employee__role__iexact='ADMIN')
     
     # Handle Manual Entry / Manual Punch Form Submissions
     manual_entry_form = None
@@ -561,7 +561,7 @@ def employee_autocomplete(request):
         is_active=True
     ).exclude(
         status='ARCHIVED'
-    ).exclude(role='CEO')
+    ).exclude(is_staff=True).exclude(role__iexact='CEO').exclude(role__iexact='ADMIN')
     
     # Sort in memory or keep it simple with icontains for now but filter in loop
     # Actually, let's just use istartswith for primary and icontains for secondary
@@ -597,8 +597,34 @@ def payroll_batch_delete(request, pk):
         return redirect('payroll_list')
         
     if request.method == 'POST':
-        batch.delete()
-        messages.success(request, "Payroll batch deleted.")
+        from django.db import transaction
+        from leaves.models import LOPAdjustment, LeaveType, LeaveBalance
+        
+        with transaction.atomic():
+            # Restore Annual Leave balances for any approved LOP adjustments
+            # before cascade-deleting the batch and its entries
+            approved_adjustments = LOPAdjustment.objects.filter(
+                payroll_entry__batch=batch,
+                status=LOPAdjustment.Status.APPROVED
+            ).select_related('employee')
+            
+            for adj in approved_adjustments:
+                try:
+                    ann_type = LeaveType.objects.get(code='ANN')
+                    balance = LeaveBalance.objects.filter(
+                        employee=adj.employee,
+                        leave_type=ann_type,
+                        year=adj.created_at.year
+                    ).first()
+                    if balance:
+                        balance.days_used = max(0.0, float(balance.days_used) - float(adj.requested_annual_leave_days))
+                        balance.save()
+                except LeaveType.DoesNotExist:
+                    pass
+            
+            batch.delete()
+        
+        messages.success(request, "Payroll batch deleted and leave balances restored.")
         
     return redirect('payroll_list')
 

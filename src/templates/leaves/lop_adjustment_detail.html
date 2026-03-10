@@ -1,0 +1,182 @@
+{% extends 'base_modern.html' %}
+{% block title %}Adjustment Details - EONS HRM{% endblock %}
+{% block header_title %}Adjustment Details{% endblock %}
+
+{% block content %}
+<div class="detail-page-container" style="animation: slideScale 0.8s cubic-bezier(0.16, 1, 0.3, 1);">
+    <div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 30px;">
+        
+        <!-- Main Comparison Card -->
+        <div class="glass-card" style="border-radius: 20px; overflow: hidden; background: var(--bg-surface); border: 1px solid var(--border-color); box-shadow: var(--shadow-xl);">
+            
+            <!-- Dynamic Status Header -->
+            <div style="background: linear-gradient(135deg, {% if adj.status == 'PENDING' %}#2563eb 0%, #1e40af 100%{% elif adj.status == 'APPROVED' %}#10b981 0%, #059669 100%{% else %}#ef4444 0%, #dc2626 100%{% endif %}); padding: 30px 40px; color: white; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: -30px; right: -30px; font-size: 150px; opacity: 0.1; transform: rotate(15deg);">
+                    {% if adj.status == 'PENDING' %}<i class="ri-history-line"></i>{% elif adj.status == 'APPROVED' %}<i class="ri-checkbox-circle-fill"></i>{% else %}<i class="ri-close-circle-fill"></i>{% endif %}
+                </div>
+                <div style="position: relative; z-index: 1;">
+                    <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 99px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">
+                        {% if adj.status == 'PENDING' %}Verification Status: Pending{% elif adj.status == 'APPROVED' %}Audit Status: Approved & Verified{% else %}Status: Rejected{% endif %}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <h2 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -0.03em;">{{ adj.employee.full_name }}</h2>
+                            <p style="margin: 5px 0 0; opacity: 0.8; font-size: 14px; font-weight: 600;">{{ adj.employee.employee_id }} • {{ adj.employee.department }}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 12px; opacity: 0.8; font-weight: 700;">REQUEST ID</div>
+                            <div style="font-size: 20px; font-weight: 800;">#{{ adj.id|stringformat:"05d" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- The Big Side-by-Side Comparison (Administrative Logic) -->
+            <div style="padding: 40px;">
+                <div style="display: flex; position: relative; gap: 40px; margin-bottom: 40px; align-items: stretch;">
+                    
+                    <!-- OLD STATUS (LEFT) -->
+                    <div style="flex: 1; background: var(--gray-50); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; position: relative;">
+                        <div style="display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px;">
+                            <i class="ri-time-line" style="color: var(--primary);"></i>
+                            ORIGINAL STATE
+                        </div>
+                        <div style="text-align: center; padding: 10px 0;">
+                            <div style="font-size: 42px; font-weight: 900; color: var(--error); letter-spacing: -0.03em;">{{ adj.original_lop_days|floatformat:1 }}</div>
+                            <div style="font-size: 12px; font-weight: 800; color: var(--error); text-transform: uppercase; margin-top: -5px;">LOP Days Untreated</div>
+                        </div>
+                        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px dashed var(--border-color); font-size: 12px; color: var(--text-secondary);">
+                            Linked Payroll: <strong>{{ adj.payroll_entry.batch.month|date:"F Y"|default:"Manual Override" }}</strong>
+                        </div>
+                    </div>
+
+                    <!-- DIVIDER / FLOW -->
+                    <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 40px; z-index: 2;">
+                        <div style="width: 50px; height: 50px; background: white; border: 2px solid var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 24px; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);">
+                            <i class="ri-arrow-right-fill"></i>
+                        </div>
+                    </div>
+
+                    <!-- PROPOSED NEW STATUS (RIGHT) -->
+                    <div style="flex: 1; background: rgba(37, 99, 235, 0.03); border: 2px solid var(--primary-light); border-radius: 16px; padding: 25px; position: relative;">
+                        <div style="display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 900; color: var(--primary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px;">
+                            <i class="ri-flashlight-fill" style="color: var(--warning);"></i>
+                            PROPOSED STATE
+                        </div>
+                        <div style="display: flex; gap: 15px; flex-direction: column;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 12px 18px; border-radius: 12px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary);">Convert to AL</span>
+                                <span style="font-size: 20px; font-weight: 900; color: var(--primary);">-{{ adj.requested_annual_leave_days|floatformat:1 }} d</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 12px 18px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                                <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary);">Total LOP Remedied</span>
+                                <span style="font-size: 20px; font-weight: 900; color: var(--text-main);">{{ adj.remaining_lop_days|floatformat:1 }} d</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reason Section -->
+                <div style="background: var(--gray-50); border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+                    <div style="font-weight: 800; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">Adjustment Justification</div>
+                    <div style="font-size: 15px; color: var(--text-main); line-height: 1.6; font-style: italic;">"{{ adj.reason }}"</div>
+                    <div style="margin-top: 15px; display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 24px; height: 24px; background: var(--gray-200); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: var(--text-secondary);">
+                            {{ adj.requested_by.full_name|slice:":1"|upper }}
+                        </div>
+                        <span style="font-size: 12px; color: var(--text-secondary);">Requested by: <strong>{{ adj.requested_by.full_name }}</strong></span>
+                    </div>
+                </div>
+
+                <!-- Approval Logic (Audit Trail) -->
+                {% if adj.status == 'PENDING' %}
+                    {% if request.user.is_admin or request.user.is_hr or request.user.is_ceo %}
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 30px;">
+                        <div style="font-weight: 800; font-size: 13px; color: var(--text-main); margin-bottom: 20px;">Review & Verify (HR/ADMIN Actions)</div>
+                        <form method="post" action="{% url 'lop_adjustment_approve' adj.pk %}">
+                            {% csrf_token %}
+                            <div style="margin-bottom: 20px;">
+                                <label style="font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Rejection Comments (If any)</label>
+                                <textarea name="rejection_reason" class="form-textarea" style="width: 100%; border-radius: 12px; border: 1.5px solid var(--border-color); padding: 12px; min-height: 80px;" placeholder="Only required if rejecting..."></textarea>
+                            </div>
+                            <div style="display: flex; gap: 15px;">
+                                <button type="submit" name="action" value="reject" class="premium-button secondary" style="flex: 1; padding: 14px; border-radius: 12px; border: 2px solid var(--gray-200); background: white; font-weight: 700; color: var(--error);">
+                                    <i class="ri-close-circle-line"></i> Reject Conversion
+                                </button>
+                                <button type="submit" name="action" value="approve" class="premium-button primary" style="flex: 2; padding: 14px; border-radius: 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; font-weight: 700; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);">
+                                    <i class="ri-checkbox-circle-line"></i> Verify & Authorize Adjustment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div style="background: rgba(37, 99, 235, 0.05); padding: 20px; border-radius: 12px; text-align: center; font-size: 14px; color: var(--primary); font-weight: 600;">
+                        Wait for Administration (HR/CEO) to verify this adjustment.
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 30px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--gray-50); padding: 20px 25px; border-radius: 16px;">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <div style="width: 40px; height: 40px; background: {% if adj.status == 'APPROVED' %}var(--success-light){% else %}var(--error-light){% endif %}; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: {% if adj.status == 'APPROVED' %}var(--success){% else %}var(--error){% endif %}; font-size: 20px;">
+                                    {% if adj.status == 'APPROVED' %}<i class="ri-checkbox-fill"></i>{% else %}<i class="ri-close-fill"></i>{% endif %}
+                                </div>
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 800; color: var(--text-main);">{{ adj.status|title }} By Admin</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary);">Authorizer: <strong>{{ adj.authorized_by.full_name|upper }}</strong></div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 11px; font-weight: 800; color: var(--text-secondary);">LOCK DATE</div>
+                                <div style="font-size: 14px; font-weight: 700;">{{ adj.authorized_at|date:"d M Y, H:i" }}</div>
+                            </div>
+                        </div>
+                        {% if adj.rejection_reason %}
+                        <div style="margin-top: 15px; padding: 15px 25px; background: rgba(239, 68, 68, 0.03); border: 1px solid rgba(239, 68, 68, 0.1); border-radius: 12px;">
+                            <span style="font-size: 11px; font-weight: 800; color: var(--error); text-transform: uppercase; letter-spacing: 0.05em;">Admin Remarks:</span>
+                            <p style="margin: 5px 0 0; font-size: 13px; color: var(--text-main);">{{ adj.rejection_reason }}</p>
+                        </div>
+                        {% endif %}
+
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px dashed var(--border-color); text-align: right;">
+                            <form method="post" action="{% url 'lop_adjustment_delete' adj.pk %}" onsubmit="return confirm('FULL REVERSAL ALERT: Removing this record will automatically restore the employees original LOP hours in payroll and return the Annual Leave days to their balance. Continue?')">
+                                {% csrf_token %}
+                                <button type="submit" class="premium-button secondary" style="padding: 10px 25px; border-radius: 12px; color: var(--error); border: 2px solid rgba(239, 68, 68, 0.1); font-weight: 800; font-size: 12px; background: transparent; cursor: pointer; transition: all 0.2s;">
+                                    <i class="ri-delete-bin-7-line" style="margin-right: 8px;"></i> REMOVE & REVERSE ADJUSTMENT
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Warning Banner for CEO (as requested) -->
+        {% if request.user.is_ceo and adj.status == 'PENDING' %}
+        <div style="background: linear-gradient(to right, #fff7ed, #ffedd5); border: 1px solid #fb923c; border-radius: 16px; padding: 20px; display: flex; align-items: flex-start; gap: 15px; animation: pulse 2s infinite;">
+            <div style="color: #ea580c; font-size: 24px;">
+                <i class="ri-alert-fill"></i>
+            </div>
+            <div>
+                <h4 style="margin: 0; font-size: 14px; font-weight: 800; color: #9a3412; text-transform: uppercase;">CEO Advisory Banner</h4>
+                <p style="margin: 5px 0 0; font-size: 13px; color: #7c2d12; line-height: 1.5;">
+                    Verify the employee's remaining Leave Balance before authorizing. Converts AL to LOP in case of emergencies might leave the employee with no backup leave for future emergencies.
+                </p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    @keyframes slideScale {
+        from { opacity: 0; transform: translateY(20px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes pulse {
+        0% { border-color: #fb923c; box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.2); }
+        50% { border-color: #f97316; box-shadow: 0 0 0 10px rgba(251, 146, 60, 0); }
+        100% { border-color: #fb923c; box-shadow: 0 0 0 0 rgba(251, 146, 60, 0); }
+    }
+</style>
+{% endblock %}

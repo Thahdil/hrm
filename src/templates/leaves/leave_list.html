@@ -70,8 +70,19 @@
                 </div>
                 
                 {% if not is_admin %}
-                <a href="{% url 'leave_add' %}" class="btn btn-primary" style="border-radius: 12px; font-weight: 700; padding: 12px 24px; color: var(--white); display: flex; align-items: center; gap: 8px;">
-                    <i class="ri-add-line"></i> <span>New Request</span>
+                <div style="display: flex; gap: 10px;">
+                    {% if has_lop_to_convert %}
+                    <a href="{% url 'lop_adjustment_request' %}" class="btn btn-outline" title="Convert LOP to Annual Leave" style="border-radius: 12px; font-weight: 700; padding: 12px 20px; display: flex; align-items: center; gap: 8px; border-color: var(--warning); color: var(--warning);">
+                        <i class="ri-refresh-line"></i> <span>Convert LOP</span>
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'leave_add' %}" class="btn btn-primary" style="border-radius: 12px; font-weight: 700; padding: 12px 24px; color: var(--white); display: flex; align-items: center; gap: 8px;">
+                        <i class="ri-add-line"></i> <span>New Request</span>
+                    </a>
+                </div>
+                {% else %}
+                 <a href="{% url 'lop_adjustment_list' %}" class="btn btn-outline" style="border-radius: 12px; font-weight: 700; padding: 12px 24px; display: flex; align-items: center; gap: 8px;">
+                    <i class="ri-exchange-funds-line"></i> <span>LOP Adjustments</span>
                 </a>
                 {% endif %}
             </div>
@@ -301,11 +312,11 @@
                                     </a>
                                 {% else %}
                                     <!-- View Details (Restricted: Hide from employees as per request) -->
-                                    {% if request.user != leave.employee and leave.status == 'APPROVED' %}
+                                {% if request.user != leave.employee and leave.status == 'APPROVED' %}
                                     <a href="{% url 'leave_detail' leave.pk %}" class="btn" style="width: 32px; height: 32px; border-radius: 8px; background: var(--gray-50); border: 1px solid var(--border-color); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; text-decoration: none;" title="View Details">
                                         <i class="ri-eye-line"></i>
                                     </a>
-                                    {% endif %}
+                                {% endif %}
                                 {% endif %}
 
                                 {% if leave.status == 'PENDING' and leave.assigned_manager == request.user %}

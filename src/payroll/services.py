@@ -622,7 +622,7 @@ class PayrollService:
         from decimal import Decimal
         
         settings = CompanySettings.load()
-        employees = User.objects.filter(is_active=True).exclude(role__in=['CEO', 'ADMIN']).exclude(status='ARCHIVED')
+        employees = User.objects.filter(is_active=True).exclude(is_staff=True).exclude(role__iexact='CEO').exclude(role__iexact='ADMIN').exclude(status='ARCHIVED')
         month_start = batch.month
         
         # Standard basis
@@ -871,7 +871,7 @@ class PayrollService:
                 working_days_count += 1
 
         # 2. Get Employees
-        employees = User.objects.filter(is_active=True).exclude(role__in=['CEO', 'ADMIN']).exclude(status='ARCHIVED')
+        employees = User.objects.filter(is_active=True).exclude(is_staff=True).exclude(role__iexact='CEO').exclude(role__iexact='ADMIN').exclude(status='ARCHIVED')
         
         report_data = []
         for emp in employees:

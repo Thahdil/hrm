@@ -229,3 +229,40 @@ class TicketRequest(models.Model):
 
     def __str__(self):
         return f"Ticket for {self.employee.full_name} to {self.destination}"
+
+class LOPAdjustment(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending Approval"
+        APPROVED = "APPROVED", "Approved"
+        REJECTED = "REJECTED", "Rejected"
+        REVERSED = "REVERSED", "Reversed"
+
+    employee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='lop_adjustments')
+    payroll_entry = models.ForeignKey('payroll.PayrollEntry', on_delete=models.CASCADE, null=True, blank=True, related_name='lop_adjustments')
+    
+    # Side-by-side comparison fields
+    original_lop_days = models.FloatField(help_text="X days of LOP")
+    requested_annual_leave_days = models.FloatField(help_text="Y days of Annual Leave used")
+    remaining_lop_days = models.FloatField(help_text="(X - Y) days of LOP remaining")
+    
+    # Matching payroll's precision
+    converted_hours = models.DecimalField(max_digits=10, decimal_places=2, help_text="Hours deducted from shortfall")
+    
+    reason = models.TextField(help_text="Reason for the waive/conversion")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    
+    # Audit trail
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='requested_lop_adjustments')
+    authorized_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='authorized_lop_adjustments')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    authorized_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"LOP Adjustment for {self.employee.full_name} ({self.requested_annual_leave_days} days)"
+
+    class Meta:
+        verbose_name = "LOP Adjustment"
+        verbose_name_plural = "LOP Adjustments"
+        ordering = ['-created_at']
