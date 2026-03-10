@@ -5,3 +5,5 @@ openpyxl
 xlrd
 lxml
 html5lib
+pymysql
+dotenv
