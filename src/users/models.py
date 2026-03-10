@@ -127,19 +127,19 @@ class CustomUser(AbstractUser):
 
     # Methods
     def is_admin(self):
-        return self.role == self.Role.ADMIN or self.additional_role == self.Role.ADMIN
+        return str(self.role).upper() == self.Role.ADMIN or str(self.additional_role).upper() == self.Role.ADMIN
     
     def is_hr(self):
-        return self.role == self.Role.HR_MANAGER or self.additional_role == self.Role.HR_MANAGER
+        return str(self.role).upper() == self.Role.HR_MANAGER or str(self.additional_role).upper() == self.Role.HR_MANAGER
 
     def is_ceo(self):
-        return self.role == self.Role.CEO or self.additional_role == self.Role.CEO
+        return str(self.role).upper() == self.Role.CEO or str(self.additional_role).upper() == self.Role.CEO
 
     def is_project_manager(self):
-        return self.role == self.Role.PROJECT_MANAGER or self.additional_role == self.Role.PROJECT_MANAGER
+        return str(self.role).upper() == self.Role.PROJECT_MANAGER or str(self.additional_role).upper() == self.Role.PROJECT_MANAGER
         
     def is_employee(self):
-        return self.role == self.Role.EMPLOYEE # Employee is default/base, typically no additional_role check needed unless we want inclusive checking
+        return str(self.role).upper() == self.Role.EMPLOYEE # Employee is default/base, typically no additional_role check needed unless we want inclusive checking
 
     def __str__(self):
         if self.full_name: return self.full_name

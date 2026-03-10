@@ -24,9 +24,9 @@ def employee_list(request):
     
     # Base queryset
     if status_filter == 'archived':
-        queryset = User.objects.filter(role='EMPLOYEE', status='ARCHIVED')
+        queryset = User.objects.filter(role__iexact='EMPLOYEE', status='ARCHIVED')
     else:
-        queryset = User.objects.filter(role='EMPLOYEE', is_active=True).exclude(status='ARCHIVED')
+        queryset = User.objects.filter(role__iexact='EMPLOYEE', is_active=True).exclude(status='ARCHIVED')
     
     # Apply Department Filter
     if dept_filter:
@@ -89,7 +89,7 @@ def employee_list(request):
         'dept_filter': dept_filter,
         'departments': User.Department.choices,
         'total_count': employees.count(),
-        'all_employee_names': User.objects.filter(role='EMPLOYEE', is_active=True).values_list('full_name', flat=True)
+        'all_employee_names': User.objects.filter(role__iexact='EMPLOYEE', is_active=True).values_list('full_name', flat=True)
     })
 
 @login_required

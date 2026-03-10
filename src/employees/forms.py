@@ -111,7 +111,7 @@ class DocumentForm(forms.ModelForm):
         self.fields['expiry_date'].required = True
         if 'employee' in self.fields:
             # Only show users with the EMPLOYEE role
-            self.fields['employee'].queryset = User.objects.filter(role='EMPLOYEE').order_by('full_name')
+            self.fields['employee'].queryset = User.objects.filter(role__iexact='EMPLOYEE').order_by('full_name')
             self.fields['employee'].label_from_instance = lambda obj: f"{obj.full_name or obj.username.title()} ({obj.employee_id or 'No ID'})"
         
         # If user is not Admin, hide employee selection

@@ -199,8 +199,8 @@ def dashboard(request):
         current_year = today.year
         
         # 1. Total Employees & New Joiners
-        total_employees = User.objects.filter(role='EMPLOYEE').count()
-        new_employees_count = User.objects.filter(role='EMPLOYEE', date_joined__month=current_month, date_joined__year=current_year).count()
+        total_employees = User.objects.filter(role__iexact='EMPLOYEE').count()
+        new_employees_count = User.objects.filter(role__iexact='EMPLOYEE', date_joined__month=current_month, date_joined__year=current_year).count()
         if total_employees > 0 and new_employees_count > 0:
             new_emp_percentage = round((new_employees_count / total_employees) * 100, 1)
         else:
@@ -211,7 +211,7 @@ def dashboard(request):
         active_today_count = AttendanceLog.objects.filter(date=today, is_absent=False).count()
         
         # Calculate Attendance Rate
-        active_employees_count = User.objects.filter(role='EMPLOYEE', status='ACTIVE').count()
+        active_employees_count = User.objects.filter(role__iexact='EMPLOYEE', status='ACTIVE').count()
         if active_employees_count > 0:
             attendance_rate = round((active_today_count / active_employees_count) * 100, 1)
         else:
@@ -257,7 +257,7 @@ def dashboard(request):
         from decimal import Decimal
         
         total_liability = Decimal('0.00')
-        active_emps = User.objects.filter(role='EMPLOYEE', status='ACTIVE')
+        active_emps = User.objects.filter(role__iexact='EMPLOYEE', status='ACTIVE')
         for emp in active_emps:
             service = GratuityService(emp)
             result = service.calculate()

@@ -949,6 +949,7 @@ class PayrollService:
                 'days_present': days_present,
                 'leave_count': leave_days,
                 'absent_days': absent_days,
+                'unapproved_leaves': absent_days - leave_days,
                 'total_present_hours': round(total_hours, 2),
                 'average_hours': round(avg_hours, 2),
             })

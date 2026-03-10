@@ -450,7 +450,7 @@ def gratuity_report(request):
     User = get_user_model()
     from datetime import date
     
-    employees = User.objects.filter(role='EMPLOYEE', status='ACTIVE')
+    employees = User.objects.filter(role__iexact='EMPLOYEE', status='ACTIVE')
     report_data = []
     total_liability = 0
     
