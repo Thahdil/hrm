@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import redirect
+from core.utils.email_service import send_external_email
 
 @login_required
 def leave_upload_document(request, pk):
@@ -68,6 +69,20 @@ def leave_verify_document(request, pk):
             leave.verified_by = user
             leave.verification_date = timezone.now()
             leave.save()
+            
+            # Send Email to Employee
+            try:
+                subject = f"Document Verified - Leave {leave.start_date}"
+                body = f"The document you provided for your {leave.leave_type.name} starting {leave.start_date} has been verified as PAID."
+                send_external_email(
+                    sender_name="System",
+                    recipient_emails=[leave.employee.email],
+                    subject=subject,
+                    body=body
+                )
+            except Exception as e:
+                print(f"Email failed: {e}")
+
             messages.success(request, "Document verified. Leave marked as PAID.")
             
         elif action == 'reject':
@@ -91,6 +106,20 @@ def leave_verify_document(request, pk):
                 pass
                 
             leave.save()
+            
+            # Send Email to Employee
+            try:
+                subject = f"Document Rejected - Loss of Pay Processed"
+                body = f"The document provided for your {leave.leave_type.name} starting {leave.start_date} was rejected. Reason: {leave.rejection_reason}. This period has been marked as Loss of Pay (LOP)."
+                send_external_email(
+                    sender_name="System",
+                    recipient_emails=[leave.employee.email],
+                    subject=subject,
+                    body=body
+                )
+            except Exception as e:
+                print(f"Email failed: {e}")
+
             messages.warning(request, "Document rejected. Leave marked as LOSS OF PAY and balance restored.")
             
     return redirect('leave_detail', pk=pk)

@@ -6,6 +6,7 @@ from django.contrib import messages
 from core.models import AuditLog
 from django.db.models import Q
 from payroll.models import PayrollEntry
+from core.utils.email_service import send_external_email
 
 @login_required
 def leave_list(request):
@@ -268,6 +269,19 @@ def leave_create(request):
             
             leave.save()
             
+            # Send Email Notification
+            try:
+                subject = f"{leave.leave_type.name} - {leave.start_date}"
+                body = f"{leave.reason or 'No reason provided'}, {leave.leave_type.name}"
+                send_external_email(
+                    sender_name=request.user.full_name or request.user.username,
+                    recipient_emails=["test.nexteons@gmail.com"],
+                    subject=subject,
+                    body=body
+                )
+            except Exception as e:
+                print(f"Email failed: {e}")
+
             messages.success(request, f"Leave request submitted for {requested_days} days.")
             return redirect('leave_list')
     else:
@@ -421,6 +435,20 @@ def leave_approve(request, pk):
                     leave.approved_by = request.user
                     leave.manager_comment = comment
                     leave.save()
+                    
+                    # Send Email to Employee
+                    try:
+                        subject = f"Leave {action.capitalize()}ed - {leave.start_date}"
+                        body = f"Your leave request for {leave.leave_type.name} starting {leave.start_date} has been {action}ed. Comment: {comment}"
+                        send_external_email(
+                            sender_name="System",
+                            recipient_emails=[leave.employee.email],
+                            subject=subject,
+                            body=body
+                        )
+                    except Exception as e:
+                        print(f"Email failed: {e}")
+
                     messages.success(request, "Leave request approved.")
                 else:
                     messages.error(request, "Only the assigned manager can approve this request.")
@@ -460,6 +488,20 @@ def leave_approve(request, pk):
              leave.approved_by = request.user
              leave.manager_comment = comment
              leave.save()
+             
+             # Send Email to Employee
+             try:
+                 subject = f"Leave Rejected - {leave.start_date}"
+                 body = f"Your leave request for {leave.leave_type.name} starting {leave.start_date} has been rejected. Comment: {comment}"
+                 send_external_email(
+                     sender_name="System",
+                     recipient_emails=[leave.employee.email],
+                     subject=subject,
+                     body=body
+                 )
+             except Exception as e:
+                 print(f"Email failed: {e}")
+
              messages.warning(request, "Leave rejected.")
 
         elif action == 'cancel':
@@ -481,6 +523,20 @@ def leave_approve(request, pk):
 
                 leave.status = LeaveRequest.Status.CANCELLED
                 leave.save()
+                
+                # Send Email to HR
+                try:
+                    subject = f"Leave Request Cancelled - {leave.employee.full_name}"
+                    body = f"Leave request for {leave.leave_type.name} ({leave.start_date}) has been cancelled by the employee."
+                    send_external_email(
+                        sender_name=request.user.full_name or request.user.username,
+                        recipient_emails=["test.nexteons@gmail.com"],
+                        subject=subject,
+                        body=body
+                    )
+                except Exception as e:
+                    print(f"Email failed: {e}")
+
                 messages.info(request, "Leave request cancelled.")
 
     # Redirect logic: prefer 'next' param, then referrer for better UX
