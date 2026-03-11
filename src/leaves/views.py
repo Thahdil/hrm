@@ -135,15 +135,20 @@ def leave_list(request):
                 except LeaveType.DoesNotExist:
                     pass  # No AL leave type configured - button stays hidden
 
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, leaves, default_limit=10)
+
     return render(request, 'leaves/leave_list.html', {
-        'leaves': leaves, 
+        'leaves': page_obj, 
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True,
         'is_admin': is_admin, 
         'balances': balances,
         'upcoming_meetings': upcoming_meetings,
         'has_lop_to_convert': has_lop_to_convert,
         'latest_lop_entry': latest_lop_entry
     })
-
 @login_required
 def leave_create(request):
     # Eligibility Logic
@@ -326,7 +331,15 @@ def ticket_list(request):
         else:
             tickets = TicketRequest.objects.none()
             
-    return render(request, 'leaves/ticket_list.html', {'tickets': tickets})
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, tickets, default_limit=10)
+            
+    return render(request, 'leaves/ticket_list.html', {
+        'tickets': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True
+    })
 
 @login_required
 def ticket_create(request):
@@ -785,8 +798,16 @@ def lop_adjustment_list(request):
         adjustments = LOPAdjustment.objects.filter(employee=user).order_by('-created_at')
     else:
         adjustments = LOPAdjustment.objects.all().order_by('-created_at')
-        
-    return render(request, 'leaves/lop_adjustment_list.html', {'adjustments': adjustments})
+
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, adjustments, default_limit=10)
+    
+    return render(request, 'leaves/lop_adjustment_list.html', {
+        'adjustments': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True
+    })
 
 @login_required
 def lop_adjustment_detail(request, pk):
@@ -924,10 +945,16 @@ def lop_adjustment_report(request):
         total_days=Sum('requested_annual_leave_days')
     ).order_by('-total_days')[:10]
     
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, adjustments, default_limit=10)
+    
     return render(request, 'leaves/lop_adjustment_log.html', {
-        'adjustments': adjustments,
+        'adjustments': page_obj,
         'stats': stats,
-        'trends': trends
+        'trends': trends,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True
     })
 
 @login_required
@@ -1034,7 +1061,15 @@ def lop_adjustment_bulk(request):
             
             return redirect('lop_adjustment_bulk')
             
-    return render(request, 'leaves/lop_adjustment_bulk.html', {'pending': pending})
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, pending, default_limit=10)
+            
+    return render(request, 'leaves/lop_adjustment_bulk.html', {
+        'pending': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True
+    })
 
 @login_required
 def lop_adjustment_delete(request, pk):

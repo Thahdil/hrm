@@ -15,12 +15,25 @@ def user_list(request):
         return redirect('dashboard')
         
     role_filter = request.GET.get('role')
+    search_query = request.GET.get('q')
     qs = User.objects.all().order_by('-date_joined')
-    if role_filter:
-        from django.db.models import Q
-        qs = qs.filter(Q(role=role_filter) | Q(additional_role=role_filter))
     
-    return render(request, 'users/user_list.html', {'users': qs})
+    from django.db.models import Q
+    if role_filter:
+        qs = qs.filter(Q(role=role_filter) | Q(additional_role=role_filter))
+        
+    if search_query:
+        qs = qs.filter(
+            Q(username__icontains=search_query) |
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(full_name__icontains=search_query)
+        )
+    
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, qs, default_limit=10)
+    
+    return render(request, 'users/user_list.html', {'users': page_obj, 'paginator': paginator, 'page_obj': page_obj, 'is_paginated': True})
 
 @login_required
 def user_create(request):

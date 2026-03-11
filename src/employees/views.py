@@ -47,10 +47,12 @@ def employee_list(request):
         
     employees = queryset.order_by('-date_joined').prefetch_related('documents', 'leave_requests')
     
-    today = timezone.localdate()
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, employees, default_limit=10)
     
-    # Enhance employee objects with computed status for the dashboard
-    for emp in employees:
+    today = timezone.localdate()
+    # Enhance employee objects with computed status for the dashboard - ON CURRENT PAGE ONLY
+    for emp in page_obj:
         # 1. On Leave Status
         # Check if leave_requests relation exists (it should via FK related_name)
         if hasattr(emp, 'leave_requests'):
@@ -83,12 +85,15 @@ def employee_list(request):
             emp.gratuity_estimate = 0
             
     return render(request, 'employees/employee_list.html', {
-        'employees': employees, 
+        'employees': page_obj, 
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True,
         'current_status': status_filter,
         'search_query': search_query,
         'dept_filter': dept_filter,
         'departments': User.Department.choices,
-        'total_count': employees.count(),
+        'total_count': paginator.count,
         'all_employee_names': User.objects.filter(role__iexact='EMPLOYEE', is_active=True).values_list('full_name', flat=True)
     })
 
@@ -137,7 +142,15 @@ def document_list(request):
         # ESS: Only own documents
         documents = DocumentVault.objects.select_related('employee').filter(employee=user).order_by('expiry_date')
             
-    return render(request, 'employees/document_list.html', {'documents': documents})
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, documents, default_limit=10)
+            
+    return render(request, 'employees/document_list.html', {
+        'documents': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True
+    })
 
 @login_required
 def document_upload(request):

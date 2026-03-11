@@ -30,8 +30,14 @@ def meeting_list(request):
     else:
         meetings = base_qs.filter(end_time__gte=today).order_by('start_time')
     
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, meetings, default_limit=10)
+    
     return render(request, 'meetings/meeting_list.html', {
-        'meetings': meetings, 
+        'meetings': page_obj, 
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True,
         'filter_type': filter_type
     })
 

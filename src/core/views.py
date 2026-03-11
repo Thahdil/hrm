@@ -89,10 +89,14 @@ def system_logs(request):
     if action_filter:
         logs = logs.filter(action=action_filter)
     
-    logs = logs[:200]  # Limit to 200 most recent
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, logs, default_limit=20)
     
     context = {
-        'logs': logs,
+        'logs': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True,
         'modules': AuditLog.Module.choices,
         'actions': AuditLog.Action.choices,
         'selected_module': module_filter,

@@ -1,0 +1,102 @@
+{% if is_paginated or paginator %}
+<div class="pagination-container glass-card" style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding: 16px 24px; background: var(--bg-surface); border-radius: 16px; border: 1px solid var(--border-color);">
+    
+    <div class="pagination-limit" style="display: flex; align-items: center; gap: 8px;">
+        <label for="per_page{{ unique_id }}" style="font-size: 13px; font-weight: 600; color: var(--gray-600);">Rows per page:</label>
+        <select id="per_page{{ unique_id }}" class="premium-select" style="padding: 6px 12px; font-size: 13px; min-width: 60px; border-radius: 8px;" onchange="updatePaginationLimit(this.value)">
+            <option value="10" {% if request.GET.limit == '10' or not request.GET.limit and page_obj.paginator.per_page <= 10 %}selected{% endif %}>10</option>
+            <option value="20" {% if request.GET.limit == '20' or not request.GET.limit and page_obj.paginator.per_page == 20 %}selected{% endif %}>20</option>
+            <option value="50" {% if request.GET.limit == '50' or not request.GET.limit and page_obj.paginator.per_page == 50 %}selected{% endif %}>50</option>
+            <option value="100" {% if request.GET.limit == '100' or not request.GET.limit and page_obj.paginator.per_page == 100 %}selected{% endif %}>100</option>
+            <option value="all" {% if request.GET.limit == 'all' %}selected{% endif %}>All</option>
+        </select>
+    </div>
+
+    <div class="pagination-info" style="font-size: 13px; font-weight: 600; color: var(--gray-500);">
+        {% if paginator.count > 0 %}
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ paginator.count }} entries
+        {% else %}
+            No entries found
+        {% endif %}
+    </div>
+
+    <div class="pagination-controls" style="display: flex; gap: 4px;">
+        {% if page_obj.has_previous %}
+            <button class="page-btn" onclick="updatePaginationPage({{ page_obj.previous_page_number }})"><i class="ri-arrow-left-s-line"></i></button>
+        {% else %}
+            <button class="page-btn disabled" disabled><i class="ri-arrow-left-s-line"></i></button>
+        {% endif %}
+
+        {% for num in paginator.page_range %}
+            {% if page_obj.number == num %}
+                <button class="page-btn active">{{ num }}</button>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <button class="page-btn" onclick="updatePaginationPage({{ num }})">{{ num }}</button>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <button class="page-btn" onclick="updatePaginationPage({{ page_obj.next_page_number }})"><i class="ri-arrow-right-s-line"></i></button>
+        {% else %}
+            <button class="page-btn disabled" disabled><i class="ri-arrow-right-s-line"></i></button>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    if (typeof updatePaginationLimit !== 'function') {
+        window.updatePaginationLimit = function(limit) {
+            let url = new URL(window.location.href);
+            url.searchParams.set('limit', limit);
+            url.searchParams.set('page', '1'); // Reset to page 1 on limit change
+            window.location.href = url.href;
+        }
+
+        window.updatePaginationPage = function(page) {
+            let url = new URL(window.location.href);
+            url.searchParams.set('page', page);
+            if(!url.searchParams.has('limit')) {
+                let limitSelects = document.querySelectorAll('select[id^="per_page"]');
+                if(limitSelects.length > 0) {
+                    url.searchParams.set('limit', limitSelects[0].value);
+                }
+            }
+            window.location.href = url.href;
+        }
+    }
+</script>
+
+<style>
+    .page-btn {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-surface);
+        color: var(--gray-600);
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .page-btn:hover:not(.disabled):not(.active) {
+        background: var(--gray-50);
+        color: var(--primary);
+        border-color: var(--primary);
+    }
+    .page-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    .page-btn.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: var(--bg-surface);
+        color: var(--gray-400);
+    }
+</style>
+{% endif %}

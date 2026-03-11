@@ -4,21 +4,26 @@
 {% block header_title %}Audit Trail & Logs{% endblock %}
 
 {% block content %}
-<div class="flex-1" style="width: 100%; display: flex; flex-direction: column;">
-    <!-- Page Header -->
-    <div style="margin-bottom: 24px;">
-        <h3 class="section-title">System Audit Trail</h3>
-        <p style="color: var(--gray-500); font-size: 0.875rem; margin-top: 4px;">
-            Comprehensive tracking of all actions performed in the system with change history.
-        </p>
+<div class="audit-trail-container flex-1" style="animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; padding-bottom: 40px;">
+    <!-- Page Header Card -->
+    <div class="glass-card" style="margin-bottom: 32px; padding: 32px; border-radius: 24px; background: var(--bg-surface); box-shadow: 0 10px 40px rgba(0,0,0,0.04); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <h1 style="font-size: 28px; font-weight: 800; color: var(--gray-900); margin: 0; letter-spacing: -0.02em;">Audit Trail & Logs</h1>
+            <p style="font-size: 15px; color: var(--gray-500); margin: 6px 0 0 0;">Comprehensive tracking of all actions performed in the system with change history.</p>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <a href="{% url 'system_logs' %}" class="premium-button outline" style="text-decoration: none;">
+                <i class="ri-refresh-line"></i>
+                <span>Refresh Logs</span>
+            </a>
+        </div>
     </div>
 
-    <!-- Filters Card -->
-    <div class="section-wrapper" style="margin-bottom: 24px;">
-        <form method="get" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: end;">
-            <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.875rem; color: var(--gray-700);">Module</label>
-                <select name="module" class="form-select" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-family: var(--font-sans); font-size: 0.875rem; background: white;">
+    <!-- Advanced Filter Bar -->
+    <div class="glass-card" style="margin-bottom: 32px; padding: 20px; border-radius: 24px; background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--border-color);">
+        <form method="get" style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+            <div class="filter-group" style="flex: 1; min-width: 200px;">
+                <select name="module" class="premium-select" style="width: 100%;" onchange="this.form.submit()">
                     <option value="">All Modules</option>
                     {% for value, label in modules %}
                     <option value="{{ value }}" {% if selected_module == value %}selected{% endif %}>{{ label }}</option>
@@ -26,165 +31,335 @@
                 </select>
             </div>
             
-            <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.875rem; color: var(--gray-700);">Action</label>
-                <select name="action" class="form-select" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-family: var(--font-sans); font-size: 0.875rem; background: white;">
+            <div class="filter-group" style="flex: 1; min-width: 200px;">
+                <select name="action" class="premium-select" style="width: 100%;" onchange="this.form.submit()">
                     <option value="">All Actions</option>
                     {% for value, label in actions %}
                     <option value="{{ value }}" {% if selected_action == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div style="display: flex; gap: 8px;">
-                <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">
+            
+            <div style="display: flex; gap: 12px;">
+                <button type="submit" class="premium-button primary">
                     <i class="ri-filter-3-line"></i> Filter
                 </button>
-                <a href="{% url 'system_logs' %}" class="btn btn-outline" style="padding: 10px 20px;">Clear</a>
+                <a href="{% url 'system_logs' %}" class="premium-button secondary">Clear</a>
             </div>
         </form>
     </div>
 
-    <!-- Audit Table Card -->
-    <div class="section-wrapper full-height-card flex-1" style="overflow: hidden;">
+    <!-- Data Table Card -->
+    <div class="glass-card full-height-card flex-1" style="border-radius: 24px; background: var(--bg-surface); box-shadow: 0 10px 40px rgba(0,0,0,0.04); border: 1px solid var(--border-color); overflow: hidden;">
         <div class="card-body-scroll">
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="border-bottom: 2px solid var(--gray-200); position: sticky; top: 0; z-index: 10; background: var(--gray-50);">
-                        <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600); white-space: nowrap;">Time</th>
-                        <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">User</th>
-                        <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">Module</th>
-                        <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">Action</th>
-                        <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">Object</th>
-                        <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600);">Changes</th>
-                        <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600); white-space: nowrap;">IP Address</th>
+            <table class="premium-table">
+                <thead style="position: sticky; top: 0; z-index: 10; background: var(--gray-50); box-shadow: 0 1px 0 var(--border-color);">
+                    <tr>
+                        <th style="padding-left: 32px; width: 120px;">Time</th>
+                        <th>User</th>
+                        <th>Module</th>
+                        <th>Action</th>
+                        <th>Object</th>
+                        <th style="max-width: 250px;">Changes</th>
+                        <th style="padding-right: 32px;">IP Address</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for log in logs %}
-                    <tr style="border-bottom: 1px solid var(--gray-100); transition: background-color 0.15s ease;" onmouseover="this.style.backgroundColor='var(--gray-50)'" onmouseout="this.style.backgroundColor='transparent'">
-                        <td style="padding: 16px 12px; color: var(--gray-600); font-size: 0.875rem; white-space: nowrap;">
+                    <tr>
+                        <td style="padding-left: 32px; font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--gray-500); white-space: nowrap;">
                             {{ log.timestamp|date:"M d, H:i" }}
                         </td>
-                        <td style="padding: 16px 12px; font-weight: 500; font-size: 0.875rem; color: var(--gray-900);">
-                            {{ log.user.full_name|default:log.user.username|default:"System" }}
+                        <td>
+                            <div style="font-weight: 700; color: var(--gray-900); font-size: 14px;">
+                                {{ log.user.full_name|default:log.user.username|default:"System"|upper }}
+                            </div>
                         </td>
-                        <td style="padding: 16px 12px;">
-                            <span style="display: inline-block; padding: 4px 10px; border-radius: var(--radius); font-size: 0.75rem; font-weight: 600; background: var(--info-light); color: var(--primary-dark);">
-                                {{ log.get_module_display }}
-                            </span>
+                        <td>
+                            <span class="dept-pill">{{ log.get_module_display }}</span>
                         </td>
-                        <td style="padding: 16px 12px;">
+                        <td>
                             {% if log.action == 'CREATE' %}
-                            <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 4px;">
-                                <i class="ri-add-circle-line"></i> Created
-                            </span>
+                            <span class="status-pill success"><i class="ri-add-circle-line" style="margin-right: 4px;"></i> Created</span>
                             {% elif log.action == 'UPDATE' %}
-                            <span class="badge badge-warning" style="display: inline-flex; align-items: center; gap: 4px;">
-                                <i class="ri-edit-line"></i> Updated
-                            </span>
+                            <span class="status-pill warning"><i class="ri-edit-line" style="margin-right: 4px;"></i> Updated</span>
                             {% elif log.action == 'DELETE' %}
-                            <span class="badge badge-error" style="display: inline-flex; align-items: center; gap: 4px;">
-                                <i class="ri-delete-bin-line"></i> Deleted
-                            </span>
+                            <span class="status-pill danger"><i class="ri-delete-bin-line" style="margin-right: 4px;"></i> Deleted</span>
                             {% elif log.action == 'LOGIN' %}
-                            <span class="badge badge-info" style="display: inline-flex; align-items: center; gap: 4px;">
-                                <i class="ri-login-box-line"></i> Login
-                            </span>
+                            <span class="status-pill info"><i class="ri-login-box-line" style="margin-right: 4px;"></i> Login</span>
                             {% elif log.action == 'LOGOUT' %}
-                            <span class="badge" style="display: inline-flex; align-items: center; gap: 4px; background: var(--gray-100); color: var(--gray-700);">
-                                <i class="ri-logout-box-line"></i> Logout
-                            </span>
+                            <span class="status-pill secondary"><i class="ri-logout-box-line" style="margin-right: 4px;"></i> Logout</span>
                             {% elif log.action == 'APPROVE' %}
-                            <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 4px;">
-                                <i class="ri-checkbox-circle-line"></i> Approved
-                            </span>
+                            <span class="status-pill success"><i class="ri-checkbox-circle-line" style="margin-right: 4px;"></i> Approved</span>
                             {% elif log.action == 'REJECT' %}
-                            <span class="badge badge-error" style="display: inline-flex; align-items: center; gap: 4px;">
-                                <i class="ri-close-circle-line"></i> Rejected
-                            </span>
+                            <span class="status-pill danger"><i class="ri-close-circle-line" style="margin-right: 4px;"></i> Rejected</span>
                             {% elif log.action == 'EXPORT' %}
-                            <span class="badge" style="display: inline-flex; align-items: center; gap: 4px; background: #F3E8FF; color: #7C3AED;">
-                                <i class="ri-download-line"></i> Export
-                            </span>
+                            <span class="desig-pill" style="display: inline-flex; align-items: center; gap: 4px;"><i class="ri-download-line"></i> Export</span>
                             {% elif log.action == 'IMPORT' %}
-                            <span class="badge" style="display: inline-flex; align-items: center; gap: 4px; background: #F3E8FF; color: #7C3AED;">
-                                <i class="ri-upload-line"></i> Import
-                            </span>
+                            <span class="desig-pill" style="display: inline-flex; align-items: center; gap: 4px;"><i class="ri-upload-line"></i> Import</span>
                             {% else %}
-                            <span class="badge" style="background: var(--gray-100); color: var(--gray-700);">{{ log.get_action_display }}</span>
+                            <span class="status-pill secondary">{{ log.get_action_display }}</span>
                             {% endif %}
                         </td>
-                        <td style="padding: 16px 12px;">
-                            <div style="font-weight: 500; font-size: 0.875rem; color: var(--gray-900);">{{ log.object_repr|default:"-"|truncatewords:10 }}</div>
+                        <td>
+                            <div style="font-weight: 600; font-size: 14px; color: var(--gray-800);">{{ log.object_repr|default:"-"|truncatewords:8 }}</div>
                             {% if log.content_type %}
-                            <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 2px;">{{ log.content_type }}</div>
+                            <div style="font-size: 12px; font-weight: 500; color: var(--gray-400); margin-top: 4px; font-family: var(--font-mono);">{{ log.content_type }}</div>
                             {% endif %}
                         </td>
-                        <td style="padding: 16px 12px; max-width: 300px;">
+                        <td style="max-width: 250px;">
                             {% if log.changes %}
-                            <details style="cursor: pointer;">
-                                <summary style="color: var(--primary); font-weight: 500; font-size: 0.875rem; list-style: none; display: flex; align-items: center; gap: 4px;">
+                            <details style="cursor: pointer; position: relative;">
+                                <summary style="color: var(--primary); font-weight: 600; font-size: 13px; list-style: none; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(37, 99, 235, 0.05); border-radius: 8px; transition: all 0.2s;">
                                     <i class="ri-eye-line"></i> View Changes
                                 </summary>
-                                <div style="margin-top: 12px; padding: 12px; background: var(--gray-50); border-radius: var(--radius); font-size: 0.8rem; font-family: var(--font-mono); max-height: 200px; overflow-y: auto; border: 1px solid var(--gray-200);">
+                                <div style="margin-top: 12px; padding: 16px; background: var(--gray-50); border-radius: 12px; font-size: 12px; font-family: var(--font-mono); max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
                                     {% for field, change in log.changes.items %}
-                                    <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-200);">
-                                        <strong style="color: var(--gray-700);">{{ field }}:</strong><br>
+                                    <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--gray-200);">
+                                        <strong style="color: var(--gray-900); font-size: 13px; margin-bottom: 6px; display: block;">{{ field }}</strong>
                                         {% if change.old %}
-                                        <span style="color: var(--error); display: block; margin-top: 4px;">- {{ change.old }}</span>
+                                        <div style="color: var(--error); display: flex; gap: 8px; margin-top: 4px;">
+                                            <span style="user-select: none;">-</span> 
+                                            <span style="word-break: break-all;">{{ change.old }}</span>
+                                        </div>
                                         {% endif %}
                                         {% if change.new %}
-                                        <span style="color: var(--success); display: block; margin-top: 4px;">+ {{ change.new }}</span>
+                                        <div style="color: var(--success); display: flex; gap: 8px; margin-top: 4px;">
+                                            <span style="user-select: none;">+</span> 
+                                            <span style="word-break: break-all;">{{ change.new }}</span>
+                                        </div>
                                         {% endif %}
                                         {% if change.new_values %}
-                                        <span style="color: var(--info); display: block; margin-top: 4px;">{{ change }}</span>
+                                        <div style="color: var(--primary); display: flex; gap: 8px; margin-top: 4px;">
+                                            <span style="word-break: break-all;">{{ change }}</span>
+                                        </div>
                                         {% endif %}
                                     </div>
                                     {% endfor %}
                                 </div>
                             </details>
                             {% else %}
-                            <span style="color: var(--gray-400);">-</span>
+                            <span style="color: var(--gray-300); font-weight: 600;">—</span>
                             {% endif %}
                         </td>
-                        <td style="padding: 16px 12px; font-size: 0.8rem; color: var(--gray-600); font-family: var(--font-mono);">
+                        <td style="padding-right: 32px; font-size: 12px; font-weight: 600; color: var(--gray-400); font-family: var(--font-mono);">
                             {{ log.ip_address|default:"-" }}
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" style="padding: 80px 20px;">
-                            <div style="text-align: center; background: linear-gradient(135deg, #EFF6FF 0%, #F0F9FF 100%); border-radius: var(--radius-md); padding: 48px;">
-                                <div style="width: 80px; height: 80px; margin: 0 auto 24px; background: white; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md);">
-                                    <i class="ri-file-list-3-line" style="font-size: 40px; color: var(--primary);"></i>
-                                </div>
-                                <h4 style="font-size: 1.25rem; font-weight: 600; color: var(--gray-900); margin-bottom: 8px;">No audit logs found</h4>
-                                <p style="font-size: 0.875rem; color: var(--gray-600); max-width: 400px; margin: 0 auto;">
-                                    Logs will appear here as users perform actions in the system. All activities are automatically tracked for security and compliance.
-                                </p>
+                        <td colspan="7" style="padding: 100px; text-align: center;">
+                            <div style="color: var(--gray-300); font-size: 64px; margin-bottom: 16px;">
+                                <i class="ri-file-list-3-line"></i>
                             </div>
+                            <h4 style="margin: 0; color: var(--gray-500); font-weight: 600;">No audit logs found</h4>
+                            <p style="margin: 8px 0 0; color: var(--gray-400); font-size: 14px;">Logs will appear here as users perform actions in the system.</p>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+        {% include 'includes/pagination.html' with unique_id='_logs' %}
     </div>
 
     <!-- Info Box Card -->
-    <div class="section-wrapper" style="margin-top: 24px; background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1px solid var(--success-light);">
-        <div style="display: flex; align-items: start; gap: 16px;">
-            <div style="flex-shrink: 0; width: 40px; height: 40px; background: var(--success); border-radius: var(--radius); display: flex; align-items: center; justify-content: center;">
-                <i class="ri-shield-check-line" style="font-size: 20px; color: white;"></i>
+    <div class="glass-card" style="margin-top: 32px; padding: 24px; border-radius: 20px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(52, 211, 153, 0.05) 100%); border: 1px solid rgba(16, 185, 129, 0.2); flex-shrink: 0;">
+        <div style="display: flex; align-items: start; gap: 20px;">
+            <div style="flex-shrink: 0; width: 48px; height: 48px; background: var(--success); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(16, 185, 129, 0.2);">
+                <i class="ri-shield-check-fill" style="font-size: 24px; color: white;"></i>
             </div>
             <div style="flex: 1;">
-                <h4 style="font-weight: 600; color: #065F46; margin-bottom: 8px; font-size: 1rem;">Comprehensive Audit Logging Active</h4>
-                <p style="font-size: 0.875rem; margin: 0; color: #047857; line-height: 1.6;">
+                <h4 style="font-weight: 700; color: var(--gray-900); margin: 0 0 8px 0; font-size: 16px;">Comprehensive Audit Logging Active</h4>
+                <p style="font-size: 14px; margin: 0; color: var(--gray-600); line-height: 1.6;">
                     All system actions are automatically tracked including logins, data modifications, approvals, and exports. 
-                    Changes show old and new values for compliance. Logs are retained indefinitely for security and regulatory purposes.
+                    Changes show old and new values for compliance. Logs are retained securely.
                 </p>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .premium-input {
+        width: 100%;
+        padding: 12px 16px;
+        background: var(--bg-body);
+        border: 2px solid var(--border-color);
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .premium-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .premium-select {
+        padding: 12px 16px;
+        background: var(--bg-body);
+        border: 2px solid var(--border-color);
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--gray-700);
+        cursor: pointer;
+    }
+
+    .premium-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 14px;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .premium-button.primary {
+        background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
+        color: white;
+        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+    }
+
+    .premium-button.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 25px -5px rgba(37, 99, 235, 0.4);
+    }
+
+    .premium-button.secondary {
+        background: var(--gray-100);
+        color: var(--gray-700);
+        text-decoration: none;
+    }
+
+    .premium-button.secondary:hover {
+        background: var(--gray-200);
+    }
+
+    .premium-button.outline {
+        background: transparent;
+        border: 2px solid var(--border-color);
+        color: var(--gray-700);
+    }
+
+    .premium-button.outline:hover {
+        border-color: var(--gray-300);
+        background: var(--gray-50);
+    }
+
+    .premium-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .premium-table th {
+        background: var(--gray-50);
+        padding: 18px 20px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--gray-400);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .premium-table td {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+
+    .premium-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .premium-table tr:hover td {
+        background: rgba(37, 99, 235, 0.01);
+    }
+
+    .dept-pill {
+        padding: 6px 14px;
+        background: var(--gray-50);
+        color: var(--gray-600);
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .desig-pill {
+        padding: 4px 12px;
+        background: var(--badge-purple-bg);
+        color: var(--badge-purple-text);
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .status-pill {
+        padding: 6px 12px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .status-pill.success { background: var(--badge-green-bg); color: var(--badge-green-text); }
+    .status-pill.warning { background: var(--badge-yellow-bg); color: var(--badge-yellow-text); }
+    .status-pill.danger { background: var(--badge-red-bg); color: var(--badge-red-text); }
+    .status-pill.secondary { background: var(--gray-100); color: var(--gray-600); }
+    .status-pill.info { background: var(--badge-blue-bg); color: var(--badge-blue-text); }
+
+    /* Modern Floating Scrollbar */
+    .card-body-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: transparent transparent;
+        transition: scrollbar-color 0.3s;
+    }
+    .card-body-scroll:hover {
+        scrollbar-color: var(--gray-300) transparent;
+    }
+    .card-body-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+    .card-body-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .card-body-scroll::-webkit-scrollbar-thumb {
+        background: transparent;
+        border-radius: 10px;
+        transition: background 0.3s;
+    }
+    .card-body-scroll:hover::-webkit-scrollbar-thumb {
+        background: var(--gray-300);
+    }
+    .card-body-scroll::-webkit-scrollbar-thumb:hover {
+        background: var(--gray-400);
+    }
+
+    details > summary {
+        list-style: none; /* Hide default triangle in FF */
+    }
+    details > summary::-webkit-details-marker {
+        display: none; /* Hide default triangle in Chrome/Safari */
+    }
+    details[open] summary {
+        background: rgba(37, 99, 235, 0.1) !important;
+        color: var(--primary-dark) !important;
+    }
+</style>
 {% endblock %}

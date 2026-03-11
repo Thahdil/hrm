@@ -32,11 +32,20 @@ def project_list(request):
     completed_projects = Project.objects.filter(is_active=False).prefetch_related('assigned_employees')
     all_employees = User.objects.filter(is_active=True).exclude(role__in=['ADMIN', 'CEO', 'PROJECT_MANAGER']).order_by('full_name')
     
+    from core.utils.pagination import get_paginated_data
+    paginator_active, page_obj_active = get_paginated_data(request, active_projects, default_limit=10)
+    # We might want separate pagination for completed, but for now let's just paginate active
+    # or both with the same control. 
+    # Actually, let's just pass the same pagination context for active.
+    
     context = {
-        'active_projects': active_projects,
-        'completed_projects': completed_projects,
+        'active_projects': page_obj_active,
+        'completed_projects': completed_projects, # Keep all completed for now or paginate separately? 
         'all_employees': all_employees,
         'is_authorized': is_authorized,
+        'paginator': paginator_active,
+        'page_obj': page_obj_active,
+        'is_paginated': True
     }
     return render(request, 'projects/project_list.html', context)
 
@@ -169,11 +178,17 @@ def project_detail(request, pk):
         else:
             cursor = cursor.replace(month=cursor.month - 1)
 
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, logs, default_limit=10)
+
     context = {
         'project': project,
         'stats': stats,
         'employee_stats': employee_stats,
-        'logs': logs,
+        'logs': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True,
         'selected_month': selected_month,
         'selected_year': selected_year,
         'show_all': show_all,

@@ -9,7 +9,15 @@ from django.contrib import messages
 @login_required
 def payroll_list(request):
     batches = PayrollBatch.objects.all().order_by('-month')
-    return render(request, 'payroll/payroll_list.html', {'batches': batches})
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, batches, default_limit=10)
+    
+    return render(request, 'payroll/payroll_list.html', {
+        'batches': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True
+    })
 
 @login_required
 def payroll_detail(request, pk):
@@ -25,9 +33,15 @@ def payroll_detail(request, pk):
         total_ot=Sum('ot_pay')
     )
     
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, entries, default_limit=10)
+
     return render(request, 'payroll/payroll_detail.html', {
         'batch': batch, 
-        'entries': entries,
+        'entries': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True,
         'total_net': totals['total_net'] or 0,
         'total_deductions': totals['total_deductions'] or 0,
         'total_ot': totals['total_ot'] or 0
@@ -283,8 +297,14 @@ def attendance_list(request):
     else:
         real_log_count = logs.count()
 
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, logs, default_limit=20)
+    
     return render(request, 'payroll/attendance_list.html', {
-        'logs': logs,
+        'logs': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True,
         'real_log_count': real_log_count,
         'reconstructed_count': reconstructed_count,
         'search_query': search_query,
@@ -411,7 +431,15 @@ def my_payslips(request):
     from .models import PayrollEntry
     payslips = PayrollEntry.objects.filter(employee=employee).select_related('batch').order_by('-batch__month')
     
-    return render(request, 'payroll/my_payslips.html', {'payslips': payslips})
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, payslips, default_limit=10)
+    
+    return render(request, 'payroll/my_payslips.html', {
+        'payslips': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True
+    })
 
 @login_required
 def my_attendance(request):
@@ -435,8 +463,14 @@ def my_attendance(request):
         today = timezone.now().date()
         logs = logs.filter(date__month=today.month, date__year=today.year)
 
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, logs, default_limit=20)
+
     return render(request, 'payroll/my_attendance.html', {
-        'logs': logs,
+        'logs': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True,
         'start_date': start_date,
         'end_date': end_date
     })
@@ -482,8 +516,14 @@ def gratuity_report(request):
         })
         total_liability += gratuity_amount
 
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, report_data, default_limit=10)
+
     return render(request, 'payroll/gratuity_report.html', {
-        'report_data': report_data,
+        'report_data': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True,
         'total_liability': round(total_liability, 2),
         'today': today
     })
@@ -764,8 +804,14 @@ def manage_overtime(request):
             
         return redirect(f"{request.path}?month={month_str}&search={search_query}")
 
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, logs, default_limit=10)
+
     return render(request, 'payroll/manage_ot.html', {
-        'logs': logs,
+        'logs': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True,
         'selected_month': month_str,
         'search_query': search_query,
         'total_ot_hours': total_ot_hours,
@@ -812,8 +858,14 @@ def attendance_summary(request):
                 filtered_data.append(row)
         report_data = filtered_data
 
+    from core.utils.pagination import get_paginated_data
+    paginator, page_obj = get_paginated_data(request, report_data, default_limit=10)
+
     return render(request, 'payroll/attendance_summary.html', {
-        'report_data': report_data,
+        'report_data': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'is_paginated': True,
         'selected_month': month_str,
         'report_date': report_date,
         'search_query': search_query,

@@ -414,7 +414,7 @@
         <div id="section-active">
 
         <div class="row" style="gap: 20px;">
-            {% for project in active_projects %}
+            {% for project in page_obj_active %}
             <div class="col-md-6 project-card-wrapper" data-name="{{ project.name|lower }}" style="margin-bottom: 24px;">
                 <a href="{% url 'project_detail' project.id %}" style="text-decoration: none; color: inherit; display: block; height: 100%;">
                 <div class="project-card" style="height: 100%; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
@@ -473,6 +473,7 @@
             </div>
             {% endfor %}
         </div>
+        {% include 'includes/pagination.html' with unique_id='_projects' %}
         </div><!-- end section-active -->
 
         <!-- Completed Tab Content -->

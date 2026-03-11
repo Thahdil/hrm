@@ -8,14 +8,28 @@
 {% block content %}
 <div class="flex-1 dashboard-grid" style="padding-bottom: 80px;">
     <div class="card full-height-card flex-1 no-padding overflow-hidden" style="display: flex; flex-direction: column;">
-        <div class="card-header-actions p-6 border-bottom mb-0">
+        <div class="card-header-actions p-6 border-bottom mb-0" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
             <div>
                 <h3 class="card-title">Registered Users</h3>
                 <p class="card-subtitle">Manage system users and access control</p>
             </div>
-            <a href="{% url 'user_create' %}" class="btn btn-primary">
-                <i class="ri-user-add-line"></i> Create User
-            </a>
+            <div style="display: flex; gap: 16px; align-items: center;">
+                <form method="GET" style="margin: 0; position: relative;" id="user-search-form">
+                    {% if request.GET.from %}
+                    <input type="hidden" name="from" value="{{ request.GET.from }}">
+                    {% endif %}
+                    {% if request.GET.role %}
+                    <input type="hidden" name="role" value="{{ request.GET.role }}">
+                    {% endif %}
+                    <i class="ri-search-line" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400); pointer-events: none;"></i>
+                    <input type="text" name="q" id="user-search-input" value="{{ request.GET.q|default:'' }}" placeholder="Search users by name..." 
+                           style="width: 280px; height: 38px; padding-left: 36px; padding-right: 12px; border-radius: 6px; border: 1px solid var(--gray-300); background: var(--bg-surface); font-size: 14px; outline: none; transition: border-color 0.2s;"
+                           onfocus="this.style.borderColor='var(--primary)';" onblur="this.style.borderColor='var(--gray-300)';">
+                </form>
+                <a href="{% url 'user_create' %}" class="btn btn-primary" style="white-space: nowrap;">
+                    <i class="ri-user-add-line"></i> Create User
+                </a>
+            </div>
         </div>
 
         <div class="card-body-scroll" style="flex: 1; overflow: auto; position: relative;">
@@ -79,6 +93,7 @@
             </tbody>
         </table>
             </div>
+            {% include 'includes/pagination.html' with unique_id='_users' %}
         </div>
     </div>
 </div>
