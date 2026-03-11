@@ -6,8 +6,6 @@
         <select id="per_page{{ unique_id }}" class="premium-select" style="padding: 6px 12px; font-size: 13px; min-width: 60px; border-radius: 8px;" onchange="updatePaginationLimit(this.value)">
             <option value="10" {% if request.GET.limit == '10' or not request.GET.limit and page_obj.paginator.per_page <= 10 %}selected{% endif %}>10</option>
             <option value="20" {% if request.GET.limit == '20' or not request.GET.limit and page_obj.paginator.per_page == 20 %}selected{% endif %}>20</option>
-            <option value="50" {% if request.GET.limit == '50' or not request.GET.limit and page_obj.paginator.per_page == 50 %}selected{% endif %}>50</option>
-            <option value="100" {% if request.GET.limit == '100' or not request.GET.limit and page_obj.paginator.per_page == 100 %}selected{% endif %}>100</option>
             <option value="all" {% if request.GET.limit == 'all' %}selected{% endif %}>All</option>
         </select>
     </div>
