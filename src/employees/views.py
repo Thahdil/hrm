@@ -48,7 +48,7 @@ def employee_list(request):
     employees = queryset.order_by('-date_joined').prefetch_related('documents', 'leave_requests')
     
     from core.utils.pagination import get_paginated_data
-    paginator, page_obj = get_paginated_data(request, employees, default_limit=10)
+    paginator, page_obj = get_paginated_data(request, employees, default_limit=10, unique_id='_emps')
     
     today = timezone.localdate()
     # Enhance employee objects with computed status for the dashboard - ON CURRENT PAGE ONLY
@@ -143,7 +143,7 @@ def document_list(request):
         documents = DocumentVault.objects.select_related('employee').filter(employee=user).order_by('expiry_date')
             
     from core.utils.pagination import get_paginated_data
-    paginator, page_obj = get_paginated_data(request, documents, default_limit=10)
+    paginator, page_obj = get_paginated_data(request, documents, default_limit=10, unique_id='_docs')
             
     return render(request, 'employees/document_list.html', {
         'documents': page_obj,

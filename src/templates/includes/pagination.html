@@ -3,11 +3,16 @@
     
     <div class="pagination-limit" style="display: flex; align-items: center; gap: 8px;">
         <label for="per_page{{ unique_id }}" style="font-size: 13px; font-weight: 600; color: var(--gray-600);">Rows per page:</label>
-        <select id="per_page{{ unique_id }}" class="premium-select" style="padding: 6px 12px; font-size: 13px; min-width: 60px; border-radius: 8px;" onchange="updatePaginationLimit(this.value)">
-            <option value="10" {% if request.GET.limit == '10' or not request.GET.limit and page_obj.paginator.per_page <= 10 %}selected{% endif %}>10</option>
-            <option value="20" {% if request.GET.limit == '20' or not request.GET.limit and page_obj.paginator.per_page == 20 %}selected{% endif %}>20</option>
-            <option value="all" {% if request.GET.limit == 'all' %}selected{% endif %}>All</option>
+        {% with limit_param="limit"|add:unique_id|default:"limit" %}
+        <select id="per_page{{ unique_id }}" class="premium-select" style="padding: 6px 12px; font-size: 13px; min-width: 60px; border-radius: 8px;" onchange="updatePaginationLimit(this.value, '{{ unique_id }}')">
+            {% with current_limit=request.GET|dictsort:"items" %}
+            {# Basic hack: If request.GET won't let us use dynamic keys strictly we use JS. But since Django can't do request.GET[param], we pass the actual page_obj values instead! #}
+            {% endwith %}
+            <option value="10" {% if page_obj.paginator.per_page <= 10 and page_obj.paginator.per_page != 1000000 %}selected{% endif %}>10</option>
+            <option value="20" {% if page_obj.paginator.per_page == 20 %}selected{% endif %}>20</option>
+            <option value="all" {% if page_obj.paginator.per_page == 1000000 %}selected{% endif %}>All</option>
         </select>
+        {% endwith %}
     </div>
 
     <div class="pagination-info" style="font-size: 13px; font-weight: 600; color: var(--gray-500);">
@@ -20,7 +25,7 @@
 
     <div class="pagination-controls" style="display: flex; gap: 4px;">
         {% if page_obj.has_previous %}
-            <button class="page-btn" onclick="updatePaginationPage({{ page_obj.previous_page_number }})"><i class="ri-arrow-left-s-line"></i></button>
+            <button class="page-btn" onclick="updatePaginationPage({{ page_obj.previous_page_number }}, '{{ unique_id }}')"><i class="ri-arrow-left-s-line"></i></button>
         {% else %}
             <button class="page-btn disabled" disabled><i class="ri-arrow-left-s-line"></i></button>
         {% endif %}
@@ -29,12 +34,12 @@
             {% if page_obj.number == num %}
                 <button class="page-btn active">{{ num }}</button>
             {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                <button class="page-btn" onclick="updatePaginationPage({{ num }})">{{ num }}</button>
+                <button class="page-btn" onclick="updatePaginationPage({{ num }}, '{{ unique_id }}')">{{ num }}</button>
             {% endif %}
         {% endfor %}
 
         {% if page_obj.has_next %}
-            <button class="page-btn" onclick="updatePaginationPage({{ page_obj.next_page_number }})"><i class="ri-arrow-right-s-line"></i></button>
+            <button class="page-btn" onclick="updatePaginationPage({{ page_obj.next_page_number }}, '{{ unique_id }}')"><i class="ri-arrow-right-s-line"></i></button>
         {% else %}
             <button class="page-btn disabled" disabled><i class="ri-arrow-right-s-line"></i></button>
         {% endif %}
@@ -43,20 +48,28 @@
 
 <script>
     if (typeof updatePaginationLimit !== 'function') {
-        window.updatePaginationLimit = function(limit) {
+        window.updatePaginationLimit = function(limit, uniqueId) {
             let url = new URL(window.location.href);
-            url.searchParams.set('limit', limit);
-            url.searchParams.set('page', '1'); // Reset to page 1 on limit change
+            // Use a unique parameter name per table if uniqueId is provided, fallback to 'limit'
+            let paramName = uniqueId ? ('limit' + uniqueId) : 'limit';
+            let pageParam = uniqueId ? ('page' + uniqueId) : 'page';
+            
+            url.searchParams.set(paramName, limit);
+            url.searchParams.set(pageParam, '1'); // Reset to page 1 on limit change
             window.location.href = url.href;
         }
 
-        window.updatePaginationPage = function(page) {
+        window.updatePaginationPage = function(page, uniqueId) {
             let url = new URL(window.location.href);
-            url.searchParams.set('page', page);
-            if(!url.searchParams.has('limit')) {
-                let limitSelects = document.querySelectorAll('select[id^="per_page"]');
-                if(limitSelects.length > 0) {
-                    url.searchParams.set('limit', limitSelects[0].value);
+            let paramName = uniqueId ? ('limit' + uniqueId) : 'limit';
+            let pageParam = uniqueId ? ('page' + uniqueId) : 'page';
+            
+            url.searchParams.set(pageParam, page);
+            
+            if(!url.searchParams.has(paramName)) {
+                let limitSelect = document.getElementById('per_page' + (uniqueId || ''));
+                if(limitSelect) {
+                    url.searchParams.set(paramName, limitSelect.value);
                 }
             }
             window.location.href = url.href;

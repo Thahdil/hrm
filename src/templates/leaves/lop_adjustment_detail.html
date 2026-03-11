@@ -1,0 +1,82 @@
+{% extends 'base_modern.html' %}
+{% block title %}LOP Adjustment Detail - EONS HRM{% endblock %}
+{% block header_title %}Adjustment Details{% endblock %}
+
+{% block content %}
+<div class="form-page-container" style="padding-bottom: 0; animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);">
+    <div class="glass-card" style="max-width: 900px; margin: 0 auto; overflow: hidden; box-shadow: var(--shadow-lg); border-radius: 16px; background: var(--bg-surface); border: 1px solid var(--border-color);">
+        
+        <div style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); padding: 15px 25px; color: white; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1;">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 800;">LOP Adjustment #{{ adj.id }}</h2>
+                <span class="badge" style="background: white; color: var(--primary); font-weight: 800; padding: 4px 12px; border-radius: 20px; font-size: 11px;">
+                    {{ adj.status }}
+                </span>
+            </div>
+        </div>
+
+        <div style="padding: 30px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                <!-- Left: Info -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px;">Employee</label>
+                        <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">{{ adj.employee.full_name }}</div>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px;">Payroll Period</label>
+                        <div style="font-weight: 600; color: var(--text-main);">{{ adj.payroll_entry.batch.month|date:"F Y" }}</div>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px;">Reason</label>
+                        <div style="background: var(--gray-50); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); color: var(--text-secondary); font-size: 13px;">
+                            {{ adj.reason|default:"No reason provided" }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Stats -->
+                <div style="background: var(--gray-50); padding: 25px; border-radius: 16px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-secondary); font-weight: 600;">Original LOP</span>
+                            <span style="font-weight: 800; color: var(--text-main);">{{ adj.original_lop_days }} Days</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-secondary); font-weight: 600;">Converted to AL</span>
+                            <span style="font-weight: 800; color: #10b981;">- {{ adj.requested_annual_leave_days }} Days</span>
+                        </div>
+                        <div style="height: 1px; background: var(--border-color); margin: 5px 0;"></div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-secondary); font-weight: 700;">Remaining LOP</span>
+                            <span style="font-weight: 800; color: var(--error);">{{ adj.remaining_lop_days }} Days</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <a href="{% url 'lop_adjustment_list' %}" class="btn" style="display: flex; align-items: center; gap: 8px; color: var(--text-secondary); text-decoration: none; font-weight: 700;">
+                    <i class="ri-arrow-left-line"></i> Back to List
+                </a>
+                
+                {% if adj.status == 'PENDING' and user.is_staff or user.is_admin or user.is_hr %}
+                <form method="post" action="{% url 'lop_adjustment_approve' adj.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="premium-button primary" style="background: #10b981; border-radius: 12px; font-size: 13px; padding: 10px 25px;">
+                        <i class="ri-check-double-line"></i> Approve Adjustment
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}

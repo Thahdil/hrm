@@ -1,0 +1,108 @@
+{% extends 'base_modern.html' %}
+{% load static %}
+
+{% block title %}Bulk LOP Approval - EONS HRM{% endblock %}
+{% block header_title %}Bulk LOP Approval{% endblock %}
+
+{% block content %}
+<div class="flex-1 dashboard-grid" style="animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);">
+    <div class="card full-height-card">
+        <div class="card-header border-bottom">
+            <h3 class="card-title">Pending LOP Conversions</h3>
+            <p class="card-subtitle">Review and approve multiple requests at once</p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="card-body-scroll p-0" style="flex: 1; overflow: auto; max-height: 60vh;">
+                <table class="premium-table">
+                    <thead>
+                        <tr>
+                            <th style="padding: 16px 24px; width: 40px;">
+                                <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)">
+                            </th>
+                            <th style="padding: 16px;">EMPLOYEE</th>
+                            <th style="padding: 16px;">MONTH</th>
+                            <th style="padding: 16px; text-align: center;">CONVERTED (DAYS)</th>
+                            <th style="padding: 16px; text-align: right;">DATE REQUESTED</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for adj in pending %}
+                        <tr>
+                            <td style="padding: 16px 24px;">
+                                <input type="checkbox" name="selected_ids" value="{{ adj.id }}" class="adj-checkbox">
+                            </td>
+                            <td style="padding: 16px; font-weight: 600;">{{ adj.employee.full_name }}</td>
+                            <td style="padding: 16px;">{{ adj.payroll_entry.batch.month|date:"F Y" }}</td>
+                            <td style="padding: 16px; text-align: center;">
+                                <span class="badge badge-info">{{ adj.requested_annual_leave_days }} Days</span>
+                            </td>
+                            <td style="padding: 16px; text-align: right; color: var(--text-secondary);">
+                                {{ adj.created_at|date:"M d, Y" }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="padding: 100px; text-align: center; color: var(--text-secondary);">
+                                <i class="ri-checkbox-circle-line" style="font-size: 48px; opacity: 0.2; display: block; margin-bottom: 10px;"></i>
+                                All clear! No pending LOP adjustments.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if pending %}
+            <div class="card-footer border-top" style="padding: 24px; background: var(--gray-50); display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 13px; color: var(--text-secondary);">
+                    <span id="selectedCount">0</span> requests selected
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button type="submit" name="action" value="reject" class="btn" style="background: var(--error-light); color: var(--error); border: 1px solid var(--error-border); font-weight: 700;" onclick="return confirm('Reject selected requests?')">
+                        Reject Selected
+                    </button>
+                    <button type="submit" name="action" value="approve" class="btn" style="background: var(--success); color: white; border: none; font-weight: 700; padding: 10px 30px;" onclick="return confirm('Approve selected requests?')">
+                        Approve & Apply Conversions
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </form>
+        
+        {% include 'includes/pagination.html' with unique_id='_pending' %}
+    </div>
+</div>
+
+<script>
+function toggleSelectAll(source) {
+    checkboxes = document.getElementsByClassName('adj-checkbox');
+    for(var i=0, n=checkboxes.length;i<n;i++) {
+        checkboxes[i].checked = source.checked;
+    }
+    updateCount();
+}
+
+function updateCount() {
+    const count = document.querySelectorAll('.adj-checkbox:checked').length;
+    document.getElementById('selectedCount').innerText = count;
+}
+
+document.querySelectorAll('.adj-checkbox').forEach(cb => {
+    cb.addEventListener('change', updateCount);
+});
+</script>
+
+<style>
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .adj-checkbox {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}

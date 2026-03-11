@@ -33,7 +33,7 @@ def project_list(request):
     all_employees = User.objects.filter(is_active=True).exclude(role__in=['ADMIN', 'CEO', 'PROJECT_MANAGER']).order_by('full_name')
     
     from core.utils.pagination import get_paginated_data
-    paginator_active, page_obj_active = get_paginated_data(request, active_projects, default_limit=10)
+    paginator_active, page_obj_active = get_paginated_data(request, active_projects, default_limit=10, unique_id='_projects')
     # We might want separate pagination for completed, but for now let's just paginate active
     # or both with the same control. 
     # Actually, let's just pass the same pagination context for active.
@@ -179,7 +179,7 @@ def project_detail(request, pk):
             cursor = cursor.replace(month=cursor.month - 1)
 
     from core.utils.pagination import get_paginated_data
-    paginator, page_obj = get_paginated_data(request, logs, default_limit=10)
+    paginator, page_obj = get_paginated_data(request, logs, default_limit=10, unique_id='_projdet')
 
     context = {
         'project': project,

@@ -71,11 +71,6 @@
                 
                 {% if not is_admin %}
                 <div style="display: flex; gap: 10px;">
-                    {% if has_lop_to_convert %}
-                    <a href="{% url 'lop_adjustment_request' %}" class="btn btn-outline" title="Convert LOP to Annual Leave" style="border-radius: 12px; font-weight: 700; padding: 12px 20px; display: flex; align-items: center; gap: 8px; border-color: var(--warning); color: var(--warning);">
-                        <i class="ri-refresh-line"></i> <span>Convert LOP</span>
-                    </a>
-                    {% endif %}
                     <a href="{% url 'leave_add' %}" class="btn btn-primary" style="border-radius: 12px; font-weight: 700; padding: 12px 24px; color: var(--white); display: flex; align-items: center; gap: 8px;">
                         <i class="ri-add-line"></i> <span>New Request</span>
                     </a>
@@ -291,7 +286,7 @@
                                     {% if leave.status == 'CANCELLED' and leave.employee == request.user %}
                                     <form method="POST" action="{% url 'leave_delete' leave.pk %}" style="display: inline;">
                                         {% csrf_token %}
-                                        <button type="submit" style="width: 28px; height: 28px; border-radius: 6px; background: var(--gray-50); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Delete">
+                                        <button type="submit" style="width: 28px; height: 28px; border-radius: 6px; background: var(--gray-50); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Delete" onclick="return confirm('Are you sure you want to delete this cancelled request?');">
                                             <i class="ri-delete-bin-line"></i>
                                         </button>
                                     </form>
@@ -353,7 +348,7 @@
                                 {% if leave.status == 'CANCELLED' and leave.employee == request.user %}
                                 <form method="POST" action="{% url 'leave_delete' leave.pk %}" style="display: inline;">
                                     {% csrf_token %}
-                                    <button type="submit" style="width: 32px; height: 32px; border-radius: 8px; background: var(--gray-50); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Delete">
+                                    <button type="submit" style="width: 32px; height: 32px; border-radius: 8px; background: var(--gray-50); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Delete" onclick="return confirm('Are you sure you want to delete this cancelled request?');">
                                         <i class="ri-delete-bin-line"></i>
                                     </button>
                                 </form>

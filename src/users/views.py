@@ -31,7 +31,7 @@ def user_list(request):
         )
     
     from core.utils.pagination import get_paginated_data
-    paginator, page_obj = get_paginated_data(request, qs, default_limit=10)
+    paginator, page_obj = get_paginated_data(request, qs, default_limit=10, unique_id='_users')
     
     return render(request, 'users/user_list.html', {'users': page_obj, 'paginator': paginator, 'page_obj': page_obj, 'is_paginated': True})
 

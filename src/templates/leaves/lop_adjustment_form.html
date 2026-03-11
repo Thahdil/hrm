@@ -1,0 +1,119 @@
+{% extends 'base_modern.html' %}
+{% block title %}LOP Conversion Request - EONS HRM{% endblock %}
+{% block header_title %}LOP Conversion Request{% endblock %}
+
+{% block content %}
+<div class="form-page-container" style="padding-bottom: 0; animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);">
+    <div class="glass-card" style="max-width: 100%; margin: 0 auto; overflow: hidden; box-shadow: var(--shadow-lg); border-radius: 16px; background: var(--bg-surface); border: 1px solid var(--border-color);">
+        
+        <div style="background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%); padding: 12px 25px; color: white; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; opacity: 0.1; font-size: 80px; transform: rotate(15deg);">
+                <i class="ri-refresh-line"></i>
+            </div>
+            <div style="position: relative; z-index: 1; display: flex; align-items: center; gap: 15px;">
+                <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 2px 10px; border-radius: 99px; font-size: 9px; font-weight: 700; backdrop-filter: blur(4px); color: white;">
+                    <i class="ri-exchange-line"></i> CONVERSION PORTAL
+                </div>
+                <h2 style="margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em;">Convert LOP to Annual Leave</h2>
+            </div>
+        </div>
+
+        <div style="padding: 25px;">
+            <div style="display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: start;">
+                
+                <div>
+                    <form method="post" class="modern-form">
+                        {% csrf_token %}
+                        <div class="form-grid-layout" style="display: grid; gap: 16px;">
+                            {% for field in form %}
+                            <div class="form-group">
+                                <label for="{{ field.id_for_label }}" style="font-size: 12px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;">
+                                    {{ field.label }}
+                                </label>
+                                <div class="input-wrapper" style="position: relative;">
+                                    {{ field }}
+                                </div>
+                                {% if field.help_text %}
+                                <span style="color: var(--text-secondary); font-size: 12px; display: flex; align-items: center; gap: 6px; padding-left: 4px;">
+                                    <i class="ri-question-line" style="color: var(--primary);"></i> {{ field.help_text }}
+                                </span>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                <span style="color: var(--error); font-size: 12px; font-weight: 700; padding-left: 4px; margin-top: 4px;">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end; align-items: center;">
+                            <a href="{% url 'leave_list' %}" class="premium-button secondary" style="text-decoration: none; padding: 10px 24px; font-size: 13px; border-radius: 12px;">
+                                <span>Cancel</span>
+                            </a>
+                            <button type="submit" class="premium-button primary" style="padding: 10px 32px; font-size: 13px; border-radius: 12px; background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);">
+                                <span>Process Conversion</span>
+                                <i class="ri-check-line"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Eligibility Stats -->
+                    <div style="background: rgba(245, 158, 11, 0.05); padding: 20px; border-radius: 16px; border: 1px solid rgba(245, 158, 11, 0.1);">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                            <div style="width: 32px; height: 32px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--warning); box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                                <i class="ri-scales-3-line" style="font-size: 20px;"></i>
+                            </div>
+                            <h4 style="margin: 0; font-size: 11px; font-weight: 800; color: var(--warning); text-transform: uppercase;">Available for Conversion</h4>
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">LOP Avoidable</span>
+                                <span style="font-size: 16px; font-weight: 800; color: var(--text-main); font-family: monospace;">{{ max_lop }} Days</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">Available AL</span>
+                                <span style="font-size: 16px; font-weight: 800; color: #10b981; font-family: monospace;">{{ max_al }} Days</span>
+                            </div>
+                            <div style="height: 1px; background: var(--border-color);"></div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">Hourly Rate</span>
+                                <span style="font-size: 18px; font-weight: 900; color: var(--primary); font-family: monospace;">AED {{ hourly_rate|floatformat:2 }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background: var(--gray-50); padding: 15px; border-radius: 12px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; border: 1px dashed var(--border-color);">
+                        <i class="ri-information-line" style="color: var(--primary); margin-right: 4px;"></i>
+                        Converting LOP will deduct days from your Annual Leave balance and recalculate your net salary for the affected period.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .modern-form input, .modern-form textarea, .modern-form select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        background: var(--input-bg);
+        color: var(--text-main);
+        font-size: 14px;
+        font-weight: 600;
+        outline: none;
+        transition: all 0.2s;
+    }
+    .modern-form input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+</style>
+{% endblock %}

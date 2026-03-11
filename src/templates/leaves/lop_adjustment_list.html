@@ -1,0 +1,55 @@
+{% extends 'base_modern.html' %}
+{% load static %}
+
+{% block title %}LOP Adjustments - EONS HRM{% endblock %}
+{% block header_title %}LOP Adjustments{% endblock %}
+
+{% block content %}
+<div class="flex-1 dashboard-grid">
+    <div class="card full-height-card">
+        <div class="card-header border-bottom">
+            <h3 class="card-title">Loss of Pay Conversions</h3>
+            <p class="card-subtitle">Manage LOP to Annual Leave conversions</p>
+        </div>
+        <div class="card-body-scroll p-0" style="flex: 1; overflow: auto;">
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th style="padding: 16px 24px;">EMPLOYEE</th>
+                        <th style="padding: 16px;">MONTH</th>
+                        <th style="padding: 16px; text-align: center;">CONVERTED (DAYS)</th>
+                        <th style="padding: 16px; text-align: center;">STATUS</th>
+                        <th style="padding: 16px; text-align: right;">ACTION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for adj in adjustments %}
+                    <tr>
+                        <td style="padding: 16px 24px;">{{ adj.employee.full_name|default:adj.employee.username }}</td>
+                        <td style="padding: 16px;">{{ adj.payroll_entry.batch.month|date:"F Y"|default:"--" }}</td>
+                        <td style="padding: 16px; text-align: center; font-weight: bold;">{{ adj.requested_annual_leave_days }}</td>
+                        <td style="padding: 16px; text-align: center;">
+                            {% if adj.status == 'APPROVED' %}
+                            <span class="badge badge-success" style="background: var(--status-approved-bg); color: var(--status-approved-text); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;">APPROVED</span>
+                            {% elif adj.status == 'REJECTED' %}
+                            <span class="badge badge-error" style="background: var(--status-rejected-bg); color: var(--status-rejected-text); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;">REJECTED</span>
+                            {% else %}
+                            <span class="badge badge-warning" style="background: var(--status-pending-bg); color: var(--status-pending-text); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;">PENDING</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 16px; text-align: right;">
+                            <a href="{% url 'lop_adjustment_detail' adj.pk %}" class="btn btn-sm btn-outline"><i class="ri-eye-line"></i> View</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="padding: 60px; text-align: center; color: var(--text-secondary);">No LOP adjustments found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'includes/pagination.html' with unique_id='_adjs' %}
+    </div>
+</div>
+{% endblock %}

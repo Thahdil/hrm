@@ -90,7 +90,7 @@ def system_logs(request):
         logs = logs.filter(action=action_filter)
     
     from core.utils.pagination import get_paginated_data
-    paginator, page_obj = get_paginated_data(request, logs, default_limit=20)
+    paginator, page_obj = get_paginated_data(request, logs, default_limit=20, unique_id='_logs')
     
     context = {
         'logs': page_obj,

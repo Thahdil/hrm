@@ -136,7 +136,7 @@ def leave_list(request):
                     pass  # No AL leave type configured - button stays hidden
 
     from core.utils.pagination import get_paginated_data
-    paginator, page_obj = get_paginated_data(request, leaves, default_limit=10)
+    paginator, page_obj = get_paginated_data(request, leaves, default_limit=10, unique_id='_leaves')
 
     return render(request, 'leaves/leave_list.html', {
         'leaves': page_obj, 
@@ -332,7 +332,7 @@ def ticket_list(request):
             tickets = TicketRequest.objects.none()
             
     from core.utils.pagination import get_paginated_data
-    paginator, page_obj = get_paginated_data(request, tickets, default_limit=10)
+    paginator, page_obj = get_paginated_data(request, tickets, default_limit=10, unique_id='_tickets')
             
     return render(request, 'leaves/ticket_list.html', {
         'tickets': page_obj,
@@ -632,6 +632,9 @@ def check_updates(request):
     user = request.user
     
     # Return status of the user's recent requests (last 20 for coverage)
+    recent_requests = LeaveRequest.objects.filter(employee=user).order_by('-updated_at')[:20]
+    data = [{'id': r.id, 'status': r.status} for r in recent_requests]
+    
     return JsonResponse({'requests': data})
 
 @login_required
@@ -800,7 +803,7 @@ def lop_adjustment_list(request):
         adjustments = LOPAdjustment.objects.all().order_by('-created_at')
 
     from core.utils.pagination import get_paginated_data
-    paginator, page_obj = get_paginated_data(request, adjustments, default_limit=10)
+    paginator, page_obj = get_paginated_data(request, adjustments, default_limit=10, unique_id='_adjs')
     
     return render(request, 'leaves/lop_adjustment_list.html', {
         'adjustments': page_obj,
@@ -946,7 +949,7 @@ def lop_adjustment_report(request):
     ).order_by('-total_days')[:10]
     
     from core.utils.pagination import get_paginated_data
-    paginator, page_obj = get_paginated_data(request, adjustments, default_limit=10)
+    paginator, page_obj = get_paginated_data(request, adjustments, default_limit=10, unique_id='_adjs')
     
     return render(request, 'leaves/lop_adjustment_log.html', {
         'adjustments': page_obj,
@@ -1062,7 +1065,7 @@ def lop_adjustment_bulk(request):
             return redirect('lop_adjustment_bulk')
             
     from core.utils.pagination import get_paginated_data
-    paginator, page_obj = get_paginated_data(request, pending, default_limit=10)
+    paginator, page_obj = get_paginated_data(request, pending, default_limit=10, unique_id='_pending')
             
     return render(request, 'leaves/lop_adjustment_bulk.html', {
         'pending': page_obj,

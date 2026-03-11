@@ -71,9 +71,8 @@
                     <label style="font-size: 11px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Quick Search</label>
                     <div style="position: relative;">
                         <i class="ri-search-line" style="position: absolute; left: 14px; top: 12px; color: var(--gray-400); font-size: 18px;"></i>
-                        <input type="text" name="q" value="{{ search_query }}" placeholder="Search Employee..." 
-                               style="width: 100%; height: 42px; border-radius: 12px; border: 1px solid var(--border-color); padding-left: 44px; font-size: 14px; font-weight: 500; background: var(--input-bg); color: var(--text-main);"
-                               oninput="debounceSearch()">
+                        <input type="text" name="q" value="{{ search_query }}" placeholder="Search Employee... (Press Enter to search)" 
+                               style="width: 100%; height: 42px; border-radius: 12px; border: 1px solid var(--border-color); padding-left: 44px; font-size: 14px; font-weight: 500; background: var(--input-bg); color: var(--text-main);">
                     </div>
                 </div>
                 
@@ -526,14 +525,6 @@
 </style>
 
 <script>
-    let searchTimer;
-    function debounceSearch() {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => {
-            document.getElementById('summaryFilterForm').submit();
-        }, 500);
-    }
-
     function navigateToDetail(employeePk, monthStr) {
         const [year, month] = monthStr.split('-').map(Number);
         const lastDay = new Date(year, month, 0).getDate();

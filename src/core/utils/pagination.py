@@ -1,7 +1,11 @@
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
-def get_paginated_data(request, queryset, default_limit=10):
-    limit = request.GET.get('limit', str(default_limit))
+def get_paginated_data(request, queryset, default_limit=10, unique_id=None):
+    # Retrieve the limit parameter, adding the unique_id if provided
+    limit_param = 'limit' + str(unique_id) if unique_id else 'limit'
+    page_param = 'page' + str(unique_id) if unique_id else 'page'
+    
+    limit = request.GET.get(limit_param, str(default_limit))
     
     if limit == 'all':
         # Use an arbitrarily large limit to display all items
@@ -15,7 +19,7 @@ def get_paginated_data(request, queryset, default_limit=10):
             limit = default_limit
 
     paginator = Paginator(queryset, limit)
-    page = request.GET.get('page', '1')
+    page = request.GET.get(page_param, '1')
     
     try:
         page_obj = paginator.page(page)
