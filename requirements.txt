@@ -7,4 +7,5 @@ lxml
 html5lib
 pymysql
 mssql-django
+requests
 dotenv
