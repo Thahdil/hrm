@@ -14,3 +14,4 @@ db_unified.dbml
 # Media and attachments
 src/media/sif_files/*
 !src/media/sif_files/.gitkeep
+src/media/leave_documents/Screenshot_2026-03-12_at_11.12.07AM.png

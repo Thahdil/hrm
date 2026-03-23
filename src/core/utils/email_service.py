@@ -21,5 +21,9 @@ def send_external_email(sender_name, recipient_emails, subject, body):
         logger.info(f"Email sent successfully to {recipient_emails}")
         return True
     except Exception as e:
-        logger.error(f"Failed to send email to {recipient_emails}: {str(e)}")
+        error_msg = str(e)
+        if hasattr(e, 'response') and e.response is not None:
+            error_msg += f" | Response: {e.response.text}"
+        logger.error(f"Failed to send email to {recipient_emails}: {error_msg}")
+        print(f"EMAIL_DEBUG: {error_msg}")
         return False

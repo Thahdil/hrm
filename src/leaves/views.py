@@ -275,7 +275,7 @@ def leave_create(request):
                 body = f"{leave.reason or 'No reason provided'}, {leave.leave_type.name}"
                 send_external_email(
                     sender_name=request.user.full_name or request.user.username,
-                    recipient_emails=["test.nexteons@gmail.com"],
+                    recipient_emails=["hr@nexteons.com"],
                     subject=subject,
                     body=body
                 )
@@ -438,10 +438,10 @@ def leave_approve(request, pk):
                     
                     # Send Email to Employee
                     try:
-                        subject = f"Leave {action.capitalize()}ed - {leave.start_date}"
-                        body = f"Your leave request for {leave.leave_type.name} starting {leave.start_date} has been {action}ed. Comment: {comment}"
+                        subject = f"Leave Approved - {leave.start_date}"
+                        body = f"Your leave request for {leave.leave_type.name} starting {leave.start_date} has been approved. Comment: {comment}"
                         send_external_email(
-                            sender_name="System",
+                            sender_name="HR",
                             recipient_emails=[leave.employee.email],
                             subject=subject,
                             body=body
@@ -490,17 +490,20 @@ def leave_approve(request, pk):
              leave.save()
              
              # Send Email to Employee
-             try:
-                 subject = f"Leave Rejected - {leave.start_date}"
-                 body = f"Your leave request for {leave.leave_type.name} starting {leave.start_date} has been rejected. Comment: {comment}"
-                 send_external_email(
-                     sender_name="System",
-                     recipient_emails=[leave.employee.email],
-                     subject=subject,
-                     body=body
-                 )
-             except Exception as e:
-                 print(f"Email failed: {e}")
+             if leave.employee.email:
+                 try:
+                     subject = f"Leave Rejected - {leave.start_date}"
+                     body = f"Your leave request for {leave.leave_type.name} starting {leave.start_date} has been rejected. Comment: {comment}"
+                     send_external_email(
+                         sender_name="HR",
+                         recipient_emails=[leave.employee.email],
+                         subject=subject,
+                         body=body
+                     )
+                 except Exception as e:
+                     print(f"Email failed: {e}")
+             else:
+                 print(f"Email skipped: No email found for employee {leave.employee.username}")
 
              messages.warning(request, "Leave rejected.")
 
@@ -530,7 +533,7 @@ def leave_approve(request, pk):
                     body = f"Leave request for {leave.leave_type.name} ({leave.start_date}) has been cancelled by the employee."
                     send_external_email(
                         sender_name=request.user.full_name or request.user.username,
-                        recipient_emails=["test.nexteons@gmail.com"],
+                        recipient_emails=["hr@nexteons.com"],
                         subject=subject,
                         body=body
                     )
@@ -961,6 +964,21 @@ def lop_adjustment_approve(request, pk):
                     adj.authorized_at = timezone.now()
                     adj.save()
                     
+                    # Send Email
+                    if adj.employee.email:
+                        try:
+                            period = adj.payroll_entry.batch.month.strftime('%B %Y') if (adj.payroll_entry and adj.payroll_entry.batch) else "N/A"
+                            subject = f"LOP Adjustment Approved"
+                            body = f"Your request to convert LOP for the period {period} has been approved. {adj.requested_annual_leave_days} days have been converted to Annual Leave."
+                            send_external_email(
+                                sender_name="HR",
+                                recipient_emails=[adj.employee.email],
+                                subject=subject,
+                                body=body
+                            )
+                        except Exception as e:
+                            print(f"Email failed: {e}")
+
                     messages.success(request, f"Approved: {adj.requested_annual_leave_days} days converted.")
             except ValueError as e:
                 messages.error(request, str(e))
@@ -974,6 +992,23 @@ def lop_adjustment_approve(request, pk):
             adj.rejection_reason = request.POST.get('rejection_reason', '')
             adj.authorized_by = user
             adj.save()
+            
+            if adj.employee.email:
+                try:
+                    period = adj.payroll_entry.batch.month.strftime('%B %Y') if (adj.payroll_entry and adj.payroll_entry.batch) else "N/A"
+                    subject = f"LOP Adjustment Rejected"
+                    body = f"Your request to convert LOP for the period {period} has been rejected. Reason: {adj.rejection_reason}"
+                    send_external_email(
+                        sender_name="HR",
+                        recipient_emails=[adj.employee.email],
+                        subject=subject,
+                        body=body
+                    )
+                except Exception as e:
+                    print(f"Email failed: {e}")
+            else:
+                print(f"Email skipped: No email found for employee {adj.employee.username}")
+
             messages.warning(request, "Adjustment request rejected.")
             
     return redirect('lop_adjustment_detail', pk=pk)
@@ -1102,12 +1137,42 @@ def lop_adjustment_bulk(request):
                             adj.authorized_by = user
                             adj.authorized_at = timezone.now()
                             adj.save()
+                            
+                            # Send Email
+                            if adj.employee.email:
+                                try:
+                                    subject = f"LOP Adjustment Approved"
+                                    body = f"Your request to convert LOP has been approved."
+                                    send_external_email(
+                                        sender_name="HR",
+                                        recipient_emails=[adj.employee.email],
+                                        subject=subject,
+                                        body=body
+                                    )
+                                except Exception as e:
+                                    print(f"Email failed: {e}")
+
                             count += 1
                             
                         elif action == 'reject':
                             adj.status = LOPAdjustment.Status.REJECTED
                             adj.authorized_by = user
                             adj.save()
+
+                            # Send Email to Employee
+                            if adj.employee.email:
+                                try:
+                                    subject = f"LOP Adjustment Rejected"
+                                    body = f"Your request to convert LOP has been rejected."
+                                    send_external_email(
+                                        sender_name="HR",
+                                        recipient_emails=[adj.employee.email],
+                                        subject=subject,
+                                        body=body
+                                    )
+                                except Exception as e:
+                                    print(f"Email failed: {e}")
+
                             count += 1
                 except Exception as e:
                     errors.append(f"Error processing request for {adj.employee.full_name}: {str(e)}")

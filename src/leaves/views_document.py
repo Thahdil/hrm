@@ -71,17 +71,20 @@ def leave_verify_document(request, pk):
             leave.save()
             
             # Send Email to Employee
-            try:
-                subject = f"Document Verified - Leave {leave.start_date}"
-                body = f"The document you provided for your {leave.leave_type.name} starting {leave.start_date} has been verified as PAID."
-                send_external_email(
-                    sender_name="System",
-                    recipient_emails=[leave.employee.email],
-                    subject=subject,
-                    body=body
-                )
-            except Exception as e:
-                print(f"Email failed: {e}")
+            if leave.employee.email:
+                try:
+                    subject = f"Document Verified - Leave {leave.start_date}"
+                    body = f"The document you provided for your {leave.leave_type.name} starting {leave.start_date} has been verified as PAID."
+                    send_external_email(
+                        sender_name="HR",
+                        recipient_emails=[leave.employee.email],
+                        subject=subject,
+                        body=body
+                    )
+                except Exception as e:
+                    print(f"Email failed: {e}")
+            else:
+                print(f"Email skipped: No email found for employee {leave.employee.username}")
 
             messages.success(request, "Document verified. Leave marked as PAID.")
             
@@ -108,17 +111,20 @@ def leave_verify_document(request, pk):
             leave.save()
             
             # Send Email to Employee
-            try:
-                subject = f"Document Rejected - Loss of Pay Processed"
-                body = f"The document provided for your {leave.leave_type.name} starting {leave.start_date} was rejected. Reason: {leave.rejection_reason}. This period has been marked as Loss of Pay (LOP)."
-                send_external_email(
-                    sender_name="System",
-                    recipient_emails=[leave.employee.email],
-                    subject=subject,
-                    body=body
-                )
-            except Exception as e:
-                print(f"Email failed: {e}")
+            if leave.employee.email:
+                try:
+                    subject = f"Document Rejected - Loss of Pay Processed"
+                    body = f"The document provided for your {leave.leave_type.name} starting {leave.start_date} was rejected. Reason: {leave.rejection_reason}. This period has been marked as Loss of Pay (LOP)."
+                    send_external_email(
+                        sender_name="HR",
+                        recipient_emails=[leave.employee.email],
+                        subject=subject,
+                        body=body
+                    )
+                except Exception as e:
+                    print(f"Email failed: {e}")
+            else:
+                print(f"Email skipped: No email found for employee {leave.employee.username}")
 
             messages.warning(request, "Document rejected. Leave marked as LOSS OF PAY and balance restored.")
             
