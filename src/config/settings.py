@@ -3,8 +3,6 @@ load_dotenv()
 from pathlib import Path
 import os
 from cryptography.fernet import Fernet
-import pymysql
-pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -104,15 +102,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': os.environ.get('DB_NAME'),
-#         'USER': os.environ.get('DB_USER'),
+#         'ENGINE': 'mssql',
+#         'NAME': os.environ.get('DB_NAME'),        
+#         'USER': os.environ.get('DB_USER'),       
 #         'PASSWORD': os.environ.get('DB_PASSWORD'),
-#         'HOST': os.environ.get('DB_HOST'),
-#         'PORT': os.environ.get('DB_PORT'),
+#         'HOST': os.environ.get('DB_HOST'),        
+#         'PORT': os.environ.get('DB_PORT', 1433),  
 #         'OPTIONS': {
-#             'ssl': {'ssl-mode': 'REQUIRED'},
-#             'connect_timeout': 20,
+#             'driver': 'ODBC Driver 18 for SQL Server',
+#             'extra_params': 'TrustServerCertificate=yes;Encrypt=no',
 #         },
 #     }
 # }

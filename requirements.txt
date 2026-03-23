@@ -6,4 +6,5 @@ xlrd
 lxml
 html5lib
 pymysql
+mssql-django
 dotenv
