@@ -9,3 +9,5 @@ pymysql
 mssql-django
 requests
 dotenv
+pillow
+pyodbc
