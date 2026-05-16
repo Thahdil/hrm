@@ -201,13 +201,52 @@
                                 <br><strong>Note: previous document was rejected.</strong>
                                 {% endif %}
                             </p>
-                            <form method="post" action="{% url 'leave_upload_document' leave.id %}" enctype="multipart/form-data">
+                            <form id="document-upload-form" method="post" action="{% url 'leave_upload_document' leave.id %}" enctype="multipart/form-data">
                                 {% csrf_token %}
-                                <input type="file" name="attachment" accept=".pdf,.jpg,.jpeg,.png" required style="margin-bottom: 12px; width: 100%; color: var(--text-main);">
-                                <button type="submit" class="btn" style="background: var(--primary); color: white; border: none; width: 100%; cursor: pointer;">
+                                <input type="file" id="document-file-input" name="attachment" accept=".pdf,.jpg,.jpeg,.png" required style="margin-bottom: 12px; width: 100%; color: var(--text-main);">
+                                <button type="submit" id="document-submit-btn" class="btn" style="background: var(--primary); color: white; border: none; width: 100%; cursor: pointer;">
                                     <i class="ri-upload-cloud-line"></i> Upload Certificate
                                 </button>
                             </form>
+                            <script>
+                                document.getElementById('document-upload-form').addEventListener('submit', function(e) {
+                                    e.preventDefault();
+                                    const fileInput = document.getElementById('document-file-input');
+                                    const btn = document.getElementById('document-submit-btn');
+                                    const file = fileInput.files[0];
+                                    
+                                    if (!file) return;
+                                    
+                                    // Visual Loading State
+                                    btn.style.pointerEvents = 'none';
+                                    btn.style.opacity = '0.8';
+                                    btn.innerHTML = '<i class="ri-loader-4-line" style="animation: spin 1s linear infinite; display: inline-block;"></i> Processing...';
+                                    
+                                    const reader = new FileReader();
+                                    reader.onload = function(event) {
+                                        const base64String = event.target.result;
+                                        
+                                        fetch('{% url "leave_upload_document" leave.id %}', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                                            },
+                                            body: JSON.stringify({
+                                                file_name: file.name,
+                                                file_data: base64String
+                                            })
+                                        }).then(response => {
+                                            window.location.reload();
+                                        }).catch(err => {
+                                            console.error("Upload failed", err);
+                                            alert("Upload failed. Please try again.");
+                                            window.location.reload();
+                                        });
+                                    };
+                                    reader.readAsDataURL(file);
+                                });
+                            </script>
                         </div>
                         {% else %}
                         <div style="padding: 20px; text-align: center; color: var(--text-secondary); background: var(--gray-50); border-radius: 8px; margin-bottom: 16px;">

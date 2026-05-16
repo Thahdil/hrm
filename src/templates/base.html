@@ -7,8 +7,8 @@
     <title>{% block title %}EONS HRM{% endblock %}</title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{% static 'img/tab_logo.png' %}?v={{ timestamp|default:'1.0' }}">
-    <link rel="shortcut icon" type="image/png" href="{% static 'img/tab_logo.png' %}?v={{ timestamp|default:'1.0' }}">
+    <link rel="icon" type="image/png" href="https://eonshrm.s3.ap-south-1.amazonaws.com/static/img/tab_logo.png">
+    <link rel="shortcut icon" type="image/png" href="https://eonshrm.s3.ap-south-1.amazonaws.com/static/img/tab_logo.png">
         
     <!-- Google Fonts - Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,7 +30,7 @@
             <!-- Logo Header -->
             <div class="sidebar-header">
                 <a href="{% url 'dashboard' %}" class="sidebar-logo" style="display: flex; justify-content: center; width: 100%; padding: 0;">
-                    <img src="{% static 'img/logo_color.png' %}" alt="EONS HRM" style="width: 100%; height: auto; max-width: 100%; object-fit: contain;">
+                    <img src="https://eonshrm.s3.ap-south-1.amazonaws.com/static/img/logo_color.png" alt="EONS HRM" style="width: 100%; height: auto; max-width: 100%; object-fit: contain;">
                 </a>
             </div>
             
@@ -215,7 +215,7 @@
         const checkLogo = new Image();
         checkLogo.onload = () => console.log("✅ Tab Logo (Favicon) is shown/loaded successfully");
         checkLogo.onerror = () => console.error("❌ Tab Logo (Favicon) failed to load");
-        checkLogo.src = "{% static 'img/tab_logo.png' %}";
+        checkLogo.src = "https://eonshrm.s3.ap-south-1.amazonaws.com/static/img/tab_logo.png";
 
         /* ========================================
            THEME SWITCHER LOGIC
@@ -258,6 +258,35 @@
                 }
             });
         })();
+
+        // Form Submission Double-Click Prevention & Loading State
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (form.classList.contains('no-disable')) return; // Allow opt-out
+            
+            const submitBtns = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+            submitBtns.forEach(btn => {
+                if (form.checkValidity()) {
+                    setTimeout(() => {
+                        btn.style.pointerEvents = 'none';
+                        btn.style.opacity = '0.8';
+                        if (btn.tagName === 'BUTTON') {
+                            btn.innerHTML = '<i class="ri-loader-4-line" style="animation: spin 1s linear infinite; display: inline-block;"></i> Loading...';
+                        } else if (btn.tagName === 'INPUT') {
+                            btn.value = 'Loading...';
+                        }
+                    }, 10);
+                }
+            });
+        });
+
+        // Global CSS rule for the spin animation
+        if (!document.getElementById('spin-animation')) {
+            const style = document.createElement('style');
+            style.id = 'spin-animation';
+            style.innerHTML = '@keyframes spin { 100% { transform: rotate(360deg); } }';
+            document.head.appendChild(style);
+        }
     </script>
     
     {% block extra_js %}{% endblock %}

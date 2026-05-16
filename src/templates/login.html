@@ -12,8 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{% static 'img/tab_logo.png' %}?v={{ timestamp|default:'1.0' }}">
-    <link rel="shortcut icon" type="image/png" href="{% static 'img/tab_logo.png' %}?v={{ timestamp|default:'1.0' }}">
+    <link rel="icon" type="image/png" href="https://eonshrm.s3.ap-south-1.amazonaws.com/static/img/tab_logo.png">
+    <link rel="shortcut icon" type="image/png" href="https://eonshrm.s3.ap-south-1.amazonaws.com/static/img/tab_logo.png">
     
     <!-- Remix Icons -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
@@ -733,7 +733,7 @@
     <!-- Left Side - Branding -->
     <div class="login-branding">
         <div class="branding-content">
-            <img src="{% static 'img/logo_color.png' %}" alt="EONS HRM" class="brand-logo">
+            <img src="https://eonshrm.s3.ap-south-1.amazonaws.com/static/img/tab_logo.png" alt="EONS HRM" class="brand-logo">
             <h1 class="branding-title">EONS HRM</h1>
             <p class="branding-subtitle">
                 Streamline your workforce management with our comprehensive HR solution
@@ -900,7 +900,7 @@
     const checkLogo = new Image();
     checkLogo.onload = () => console.log("✅ Tab Logo (Favicon) is shown/loaded successfully");
     checkLogo.onerror = () => console.error("❌ Tab Logo (Favicon) failed to load");
-    checkLogo.src = "{% static 'img/tab_logo.png' %}";
+    checkLogo.src = "https://eonshrm.s3.ap-south-1.amazonaws.com/static/img/tab_logo.png";
 </script>
 
 </body>
