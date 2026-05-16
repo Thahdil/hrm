@@ -2,6 +2,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import redirect
 from core.utils.email_service import send_external_email
+import json
+import base64
+from django.core.files.base import ContentFile
 
 @login_required
 def leave_upload_document(request, pk):
@@ -20,11 +23,28 @@ def leave_upload_document(request, pk):
          messages.error(request, "Document upload is not required or allowed at this stage.")
          return redirect('leave_detail', pk=pk)
          
-    if request.method == 'POST' and request.FILES.get('attachment'):
-        leave.attachment = request.FILES['attachment']
-        leave.document_status = LeaveRequest.DocumentStatus.UPLOADED
-        leave.save()
-        messages.success(request, "Medical certificate uploaded successfully. Waiting for HR verification.")
+    if request.method == 'POST':
+        if request.content_type == 'application/json':
+            try:
+                data = json.loads(request.body)
+                file_data = data.get('file_data')
+                file_name = data.get('file_name')
+                if file_data and file_name:
+                    if ';base64,' in file_data:
+                        format, imgstr = file_data.split(';base64,')
+                    else:
+                        imgstr = file_data
+                    leave.attachment = ContentFile(base64.b64decode(imgstr), name=file_name)
+                    leave.document_status = LeaveRequest.DocumentStatus.UPLOADED
+                    leave.save()
+                    messages.success(request, "Medical certificate uploaded successfully. Waiting for HR verification.")
+            except Exception as e:
+                messages.error(request, "Failed to parse document upload.")
+        elif request.FILES.get('attachment'):
+            leave.attachment = request.FILES['attachment']
+            leave.document_status = LeaveRequest.DocumentStatus.UPLOADED
+            leave.save()
+            messages.success(request, "Medical certificate uploaded successfully. Waiting for HR verification.")
         
         # Log
         from core.models import AuditLog
