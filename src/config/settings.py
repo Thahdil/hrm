@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-uae-hrms-dev-key-2024')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = ['*']
 
@@ -30,7 +30,9 @@ CSRF_COOKIE_NAME = 'csrftoken' # Standard name
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_PATH = '/'
 CSRF_TRUSTED_ORIGINS = [
+    "https://eonshrm.nexteons.salonsyncs.com",
     "https://rooster-classic-reliably.ngrok-free.app",
+    "https://bzwn72kgl3.execute-api.ap-south-1.amazonaws.com",
 ]
 
 
@@ -61,6 +63,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Must be directly after SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -103,14 +106,20 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': os.environ.get('DB_NAME'),        
-        'USER': os.environ.get('DB_USER'),       
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
         'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),        
-        'PORT': os.environ.get('DB_PORT', 1433),  
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': '1433',
+        'CONN_MAX_AGE': 600,
+        'CONN_HEALTH_CHECKS': True,
         'OPTIONS': {
             'driver': 'ODBC Driver 18 for SQL Server',
-            'extra_params': 'TrustServerCertificate=yes;Encrypt=no',
+            'extra_params': (
+                'Encrypt=yes;'
+                'TrustServerCertificate=yes;'
+                'Connection Timeout=30;'
+            ),
         },
     }
 }
@@ -144,13 +153,36 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'static_root'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# WhiteNoise — serve static files from Lambda container
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_MAX_AGE = 31536000  # Cache 1 year (WhiteNoise adds content-hash to filenames)
+WHITENOISE_SKIP_COMPRESS = [
+    'jpg', 'jpeg', 'png', 'gif', 'webp', 'ico',
+    'woff', 'woff2', 'ttf', 'eot',
+    'pdf', 'zip',
+]
 
 # Media Files (Secure Docs)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Django 5 storage config
+STORAGES = {
+    "default": {
+        "BACKEND": "core.storage.S3PresignedStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
+
+# --- S3 MEDIA UPLOAD CONFIG ---
+S3_UPLOAD_API = os.environ.get('S3_UPLOAD_API')    # e.g. https://api.example.com/presign
+S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME')  # project/bucket name passed to presign API
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
