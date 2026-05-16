@@ -106,6 +106,23 @@ def system_logs(request):
     return render(request, 'system_logs.html', context)
 
 @login_required
+def clear_system_logs(request):
+    user = request.user
+    if not user.is_staff and not (user.is_admin() or user.is_ceo()):
+        from django.contrib import messages
+        messages.error(request, "Permission denied.")
+        return redirect('dashboard')
+        
+    if request.method == 'POST':
+        from .models import AuditLog
+        from django.contrib import messages
+        count = AuditLog.objects.count()
+        AuditLog.objects.all().delete()
+        messages.success(request, f"Successfully cleared {count} audit logs.")
+        
+    return redirect('system_logs')
+
+@login_required
 def company_profile(request):
     user = request.user
     if not user.is_staff and not (user.is_admin() or user.is_ceo()):
@@ -118,7 +135,22 @@ def company_profile(request):
     settings_obj = CompanySettings.load()
     
     if request.method == 'POST':
-        form = CompanySettingsForm(request.POST, request.FILES, instance=settings_obj)
+        if request.content_type == 'application/json':
+            import json, base64
+            from django.core.files.base import ContentFile
+            data = json.loads(request.body)
+            
+            post_data = {k: v for k, v in data.items() if k not in ['file_data', 'file_name']}
+            
+            files_data = {}
+            if data.get('file_data') and data.get('file_name'):
+                imgstr = data['file_data'].split(';base64,')[1] if ';base64,' in data['file_data'] else data['file_data']
+                files_data['logo'] = ContentFile(base64.b64decode(imgstr), name=data['file_name'])
+                
+            form = CompanySettingsForm(post_data, files_data, instance=settings_obj)
+        else:
+            form = CompanySettingsForm(request.POST, request.FILES, instance=settings_obj)
+
         if form.is_valid():
             form.save()
             messages.success(request, "Company Profile updated successfully.")

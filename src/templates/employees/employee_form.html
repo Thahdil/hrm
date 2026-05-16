@@ -29,7 +29,7 @@
         </div>
 
         <div style="padding: 25px 40px; flex: 1; overflow-y: auto; background: var(--bg-body);">
-            <form method="post" enctype="multipart/form-data" class="modern-form" style="height: 100%; display: flex; flex-direction: column;">
+            <form id="employee-profile-form" method="post" class="modern-form" style="height: 100%; display: flex; flex-direction: column;">
                 {% csrf_token %}
 
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; flex: 1;">
@@ -244,12 +244,69 @@
         border: 1.5px solid var(--border-color);
     }
 
-    input[type="date"]::-webkit-calendar-picker-indicator {
-        opacity: 0;
-        position: absolute;
-        right: 15px;
-        width: 20px;
-        cursor: pointer;
-    }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    dateInputs.forEach(input => {
+        input.addEventListener('click', function() {
+            if (this.showPicker) {
+                this.showPicker();
+            }
+        });
+    });
+
+    const form = document.getElementById('employee-profile-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const btn = form.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.style.pointerEvents = 'none';
+                btn.style.opacity = '0.8';
+                btn.innerHTML = '<i class="ri-loader-4-line" style="animation: spin 1s linear infinite; display: inline-block;"></i> Saving...';
+            }
+            
+            const formData = new FormData(form);
+            const payload = {};
+            formData.forEach((value, key) => {
+                if (key !== 'csrfmiddlewaretoken') {
+                    payload[key] = value;
+                }
+            });
+
+            // Handle checkboxes explicitly so JSON gets boolean true/false
+            const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                payload[cb.name] = cb.checked;
+            });
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(payload)
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = '{% url "employee_list" %}';
+                } else {
+                    response.text().then(text => {
+                        console.error("Error:", text);
+                        alert("Error saving employee.");
+                        window.location.reload();
+                    });
+                }
+            }).catch(err => {
+                console.error("Error:", err);
+                alert("Error saving employee.");
+                window.location.reload();
+            });
+        });
+    }
+});
+</script>
 {% endblock %}

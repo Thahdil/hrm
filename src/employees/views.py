@@ -104,7 +104,12 @@ def employee_create(request):
          return redirect('dashboard')
          
     if request.method == 'POST':
-        form = EmployeeForm(request.POST)
+        if request.content_type == 'application/json':
+            import json
+            data = json.loads(request.body)
+            form = EmployeeForm(data)
+        else:
+            form = EmployeeForm(request.POST)
         if form.is_valid():
             emp = form.save()
             messages.success(request, "Employee created successfully!")
@@ -124,7 +129,12 @@ def employee_edit(request, pk):
     employee = get_object_or_404(User, pk=pk)
     
     if request.method == 'POST':
-        form = EmployeeForm(request.POST, instance=employee)
+        if request.content_type == 'application/json':
+            import json
+            data = json.loads(request.body)
+            form = EmployeeForm(data, instance=employee)
+        else:
+            form = EmployeeForm(request.POST, instance=employee)
         if form.is_valid():
             form.save()
             messages.success(request, "Employee updated successfully!")
@@ -155,7 +165,27 @@ def document_list(request):
 @login_required
 def document_upload(request):
     if request.method == 'POST':
-        form = DocumentForm(request.POST, request.FILES, user=request.user)
+        if request.content_type == 'application/json':
+            import json, base64
+            from django.core.files.base import ContentFile
+            data = json.loads(request.body)
+            
+            post_data = {
+                'employee': data.get('employee'),
+                'document_type': data.get('document_type'),
+                'issue_date': data.get('issue_date'),
+                'expiry_date': data.get('expiry_date'),
+            }
+            
+            files_data = {}
+            if data.get('file_data') and data.get('file_name'):
+                imgstr = data['file_data'].split(';base64,')[1] if ';base64,' in data['file_data'] else data['file_data']
+                files_data['file'] = ContentFile(base64.b64decode(imgstr), name=data['file_name'])
+                
+            form = DocumentForm(post_data, files_data, user=request.user)
+        else:
+            form = DocumentForm(request.POST, request.FILES, user=request.user)
+
         if form.is_valid():
             doc = form.save(commit=False)
             # If standard user, force own ID

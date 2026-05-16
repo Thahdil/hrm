@@ -15,7 +15,7 @@
                 </div>
             </div>
             
-            <form method="post" enctype="multipart/form-data">
+            <form id="company-profile-form" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
@@ -158,4 +158,60 @@
         height: 16px;
     }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('company-profile-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const btn = form.querySelector('button[type="submit"]');
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.8';
+            btn.innerHTML = '<i class="ri-loader-4-line" style="animation: spin 1s linear infinite; display: inline-block;"></i> Saving...';
+
+            const fileInput = form.querySelector('input[type="file"]');
+            const file = fileInput ? fileInput.files[0] : null;
+            
+            const formData = new FormData(form);
+            const payload = {};
+            formData.forEach((value, key) => {
+                if (key !== 'logo' && key !== 'csrfmiddlewaretoken') {
+                    payload[key] = value;
+                }
+            });
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    payload['file_data'] = event.target.result;
+                    payload['file_name'] = file.name;
+                    submitJSON(payload);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                submitJSON(payload);
+            }
+        });
+    }
+
+    function submitJSON(payload) {
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(payload)
+        }).then(response => {
+            window.location.href = '{% url "system_admin" %}';
+        }).catch(err => {
+            console.error("Upload failed", err);
+            alert("Upload failed. Please try again.");
+            window.location.reload();
+        });
+    }
+});
+</script>
 {% endblock %}

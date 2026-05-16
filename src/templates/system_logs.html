@@ -16,6 +16,12 @@
                 <i class="ri-refresh-line"></i>
                 <span>Refresh Logs</span>
             </a>
+            <form action="{% url 'clear_system_logs' %}" method="post" onsubmit="return confirm('Are you sure you want to permanently delete all audit logs? This action cannot be undone.');" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="premium-button danger" style="background: var(--error); color: white; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 700; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 15px -3px rgba(239, 68, 68, 0.3)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                    <i class="ri-delete-bin-line"></i> Clear All Logs
+                </button>
+            </form>
         </div>
     </div>
 
