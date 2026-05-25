@@ -475,36 +475,36 @@
         });
 
         // --- Live Updates Logic ---
-        function checkForUpdates() {
-            fetch("{% url 'api_check_updates' %}")
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.requests) {
-                        // Create a unique hash of the current state
-                        const currentHash = JSON.stringify(data.requests.map(r => ({id: r.id, status: r.status})));
-                        const lastHash = localStorage.getItem('leave_requests_hash');
+        // function checkForUpdates() {
+        //     fetch("{% url 'api_check_updates' %}")
+        //         .then(response => {
+        //             if (!response.ok) throw new Error('Network response was not ok');
+        //             return response.json();
+        //         })
+        //         .then(data => {
+        //             if (data.requests) {
+        //                 // Create a unique hash of the current state
+        //                 const currentHash = JSON.stringify(data.requests.map(r => ({id: r.id, status: r.status})));
+        //                 const lastHash = localStorage.getItem('leave_requests_hash');
                         
-                        // Compare with stored hash
-                        if (lastHash && lastHash !== currentHash) {
-                             console.log("Leave data changed, reloading...");
-                             location.reload(); 
-                        }
+        //                 // Compare with stored hash
+        //                 if (lastHash && lastHash !== currentHash) {
+        //                      console.log("Leave data changed, reloading...");
+        //                      location.reload(); 
+        //                 }
                         
-                        // Store new hash
-                        localStorage.setItem('leave_requests_hash', currentHash);
-                    }
-                })
-                .catch(err => console.error("Update check failed", err));
-        }
+        //                 // Store new hash
+        //                 localStorage.setItem('leave_requests_hash', currentHash);
+        //             }
+        //         })
+        //         .catch(err => console.error("Update check failed", err));
+        // }
 
         // Poll every 5 seconds
-        setInterval(checkForUpdates, 5000);
+        // setInterval(checkForUpdates, 5000);
         
         // Initial check to prime the hash
-        checkForUpdates();
+        // checkForUpdates();
 
     });
 </script>
